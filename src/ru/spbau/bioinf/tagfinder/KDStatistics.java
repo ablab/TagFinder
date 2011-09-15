@@ -97,10 +97,16 @@ public class KDStatistics {
 
         int d = 0;
 
+        String sequenceReversed = new StringBuffer(sequence).reverse().toString();
+
         for (int i = 0; i < n; i++) {
             Peak peak =  peaks.get(i);
             if (kValues[peak.getComponentId()] == k) {
                 int nextD = getD(peak, sequence);
+                if (nextD > d) {
+                    d = nextD;
+                }
+                nextD = getD(peak, sequenceReversed);
                 if (nextD > d) {
                     d = nextD;
                 }
