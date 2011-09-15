@@ -1,12 +1,10 @@
 package ru.spbau.bioinf.tagfinder;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class KDStatistics {
 
@@ -24,6 +22,7 @@ public class KDStatistics {
             if (msAlignResults.containsKey(scanId)) {
                 String sequence = proteins.get(msAlignResults.get(scanId)).getSimplifiedAcids();
                 KD kd = kdStat.findKd(scan, sequence);
+                System.out.println(scanId + " " + kd.toString());
                 if (stat.containsKey(kd)) {
                     stat.put(kd, 1 + stat.get(kd));
                 } else {
@@ -40,14 +39,12 @@ public class KDStatistics {
     }
 
     public KD findKd(Scan scan, String sequence) {
-        KD ans = null;
-
         List<Peak> peaks = scan.getPeaks();
         Collections.sort(peaks);
-        double[] edges = new double[Acids.acids.size()];
+        double[] edges = new double[Acid.acids.size()];
         int cur = 0;
-        for (double v : Acids.acids.values()) {
-            edges[cur] = v;
+        for (Acid a : Acid.acids.values()) {
+            edges[cur] = a.getMass();
             cur++;
         }
 
@@ -60,12 +57,9 @@ public class KDStatistics {
             Peak peak = peaks.get(i);
             for (int j = i+1; j < n; j++) {
                 Peak next =  peaks.get(j);
-                double diff = next.diff(peak);
-                double error =  next.getValue() * conf.getPpmCoef();
-                double min = diff - error;
-                double max = diff + error;
+                double[] limits = conf.getEdgeLimits(peak, next);
                 for (double edge : edges) {
-                    if (min < edge && max > edge) {
+                    if (match(limits, edge)) {
                         peak.addNext(next);
                         break;
                     }
@@ -93,17 +87,31 @@ public class KDStatistics {
             searchK(kValues, 0, peak);
         }
 
-        int maxK = 0;
+        int k = 0;
 
         for (int kValue : kValues) {
-            if (kValue > maxK) {
-                maxK = kValue;
+            if (kValue > k) {
+                k = kValue;
             }
         }
 
-        ans = new KD(maxK, 0);
+        int d = 0;
 
-        return ans;
+        for (int i = 0; i < n; i++) {
+            Peak peak =  peaks.get(i);
+            if (kValues[peak.getComponentId()] == k) {
+                int nextD = getD(peak, sequence);
+                if (nextD > d) {
+                    d = nextD;
+                }
+            }
+        }
+
+        return new KD(k, d);
+    }
+
+    public static boolean match(double[] limits, double edge) {
+        return limits[0] < edge && limits[1] > edge;
     }
 
     private void searchK(int[] kValues, int len, Peak peak) {
@@ -121,5 +129,45 @@ public class KDStatistics {
         }
 
         peak.setProcessed(true);
+    }
+
+    private int getD(Peak peak, String sequence) {
+        int ans = 0;
+        for (Peak next : peak.getNext()) {
+            double[] limits = conf.getEdgeLimits(peak, next);
+            for (Acid acid : Acid.values()) {
+                if (match(limits, acid.getMass())) {
+                    String pst = acid.name();
+                    int cur = sequence.indexOf(pst);
+                    while (cur >=0) {
+                        int nextAns = getD(next, sequence.substring(cur+1), 1);
+                        if (nextAns > ans) {
+                            ans = nextAns;
+                        }
+                        cur = sequence.indexOf(pst, cur + 1);
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+
+    private int getD(Peak peak, String sequence, int matched) {
+        if (sequence.length() == 0) {
+            return matched;
+        }
+        int ans = matched;
+        for (Peak next : peak.getNext()) {
+            double[] limits = conf.getEdgeLimits(peak, next);
+            Acid acid = Acid.getAcid(sequence.charAt(0));
+            if (match(limits, acid.getMass())) {
+                int nextAns = getD(next, sequence.substring(1), matched + 1);
+                if (nextAns > ans) {
+                    ans = nextAns;
+                }
+            }
+        }
+
+        return ans;
     }
 }
