@@ -61,6 +61,16 @@ public class Configuration {
         return 5.0d/1000000d;
     }
 
+    public double[] getEdgeLimits(Peak peak, Peak next) {
+        double diff = next.diff(peak);
+        double[] limits = new double[2];
+        double error =  next.getValue() * getPpmCoef();
+        limits[0] = diff - error;
+        limits[1] = diff + error;
+        return limits;
+    }
+
+
     private File createDir(String name) {
         File dir = new File(datasetDir, name);
         dir.mkdirs();
@@ -98,7 +108,7 @@ public class Configuration {
     }
 
     public Map<Integer, Scan> getScans() throws IOException {
-        File scanDir = new File(inputDir, "env_multiple_mass");
+        File scanDir = new File(inputDir, "env");
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(".env");
