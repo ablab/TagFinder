@@ -22,6 +22,7 @@ public class Scan {
         precursorCharge = ReaderUtil.getIntValue(prop, "CHARGE");
         precursorMass = ReaderUtil.getDoubleValue(prop, "MONOISOTOPIC_MASS");
         List<String[]> datas;
+        peaks.add(new Peak(0, 0 , 0));
         while ((datas = ReaderUtil.readDataUntil(input, "END ENVELOPE")).size() > 0) {
             double mass = 0;
             double score = 0;
@@ -42,6 +43,7 @@ public class Scan {
             }
             peaks.add(new Peak(mass, score , charge));
         }
+        peaks.add(new Peak(precursorMass, 0, 0));
     }
 
     public int getId() {
