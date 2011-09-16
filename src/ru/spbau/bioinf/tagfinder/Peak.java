@@ -12,7 +12,7 @@ public class Peak implements Comparable<Peak>{
 
     private List<Peak> next = new ArrayList<Peak>();
 
-    private boolean isProcessed = false;
+    private int maxPrefix = 0;
 
     public Peak(double value, double intensity, int charge) {
         this.value = value;
@@ -32,12 +32,12 @@ public class Peak implements Comparable<Peak>{
         return charge;
     }
 
-    public boolean isProcessed() {
-        return isProcessed;
+    public int getMaxPrefix() {
+        return maxPrefix;
     }
 
-    public void setProcessed(boolean processed) {
-        isProcessed = processed;
+    public void setMaxPrefix(int maxPrefix) {
+        this.maxPrefix = maxPrefix;
     }
 
     public int getComponentId() {

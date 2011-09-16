@@ -80,7 +80,7 @@ public class KDStatistics {
 
         int[] kValues = new int[n];
         for (Peak peak : peaks) {
-            peak.setProcessed(false);
+            peak.setMaxPrefix(-1);
         }
 
         for (Peak peak : peaks) {
@@ -121,7 +121,7 @@ public class KDStatistics {
     }
 
     private void searchK(int[] kValues, int len, Peak peak) {
-        if (peak.isProcessed()) {
+        if (peak.getMaxPrefix() >= len) {
             return;
         }
 
@@ -134,7 +134,7 @@ public class KDStatistics {
             searchK(kValues, len + 1, next);
         }
 
-        peak.setProcessed(true);
+        peak.setMaxPrefix(len);
     }
 
     private int getD(Peak peak, String sequence) {
