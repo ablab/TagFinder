@@ -57,14 +57,16 @@ public class Configuration {
     }
 
 
+    private double ppmCoef = 5.0d / 1000000d;
+
     public double getPpmCoef() {
-        return 5.0d/1000000d;
+        return ppmCoef;
     }
 
     public double[] getEdgeLimits(Peak peak, Peak next) {
         double diff = next.diff(peak);
         double[] limits = new double[2];
-        double error =  next.getValue() * getPpmCoef();
+        double error =  (next.getMass() + peak.getMass()) * getPpmCoef() / 2;
         limits[0] = diff - error;
         limits[1] = diff + error;
         return limits;
@@ -108,6 +110,24 @@ public class Configuration {
     }
 
     public Map<Integer, Scan> getScans() throws IOException {
+
+        Map<Integer, Scan> scans = new HashMap<Integer, Scan>();
+
+        File[] msalignFiles = inputDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".msalign");
+            }
+        });
+        if (msalignFiles.length == 1) {
+            BufferedReader input = ReaderUtil.getBufferedReader(msalignFiles[0]);
+            Properties properties;
+            while ((properties = ReaderUtil.readPropertiesUntil(input, "PRECURSOR_MASS")).size() > 0) {
+                Scan scan = new Scan(properties, input);
+                scans.put(scan.getId(), scan);
+            }
+            return scans;
+        }
+
         File scanDir = new File(inputDir, "env");
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
@@ -115,7 +135,6 @@ public class Configuration {
             }
         });
 
-        Map<Integer, Scan> scans = new HashMap<Integer, Scan>();
         for (File file : files) {
             BufferedReader input = ReaderUtil.getBufferedReader(file);
 
