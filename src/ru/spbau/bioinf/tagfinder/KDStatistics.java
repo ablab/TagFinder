@@ -41,12 +41,6 @@ public class KDStatistics {
     public KD findKd(Scan scan, String sequence) {
         List<Peak> peaks = scan.getPeaks();
         Collections.sort(peaks);
-        double[] edges = new double[Acid.acids.size()];
-        int cur = 0;
-        for (Acid a : Acid.acids.values()) {
-            edges[cur] = a.getMass();
-            cur++;
-        }
 
         int n = peaks.size();
         for (int i = 0; i < n; i++) {
@@ -58,8 +52,8 @@ public class KDStatistics {
             for (int j = i+1; j < n; j++) {
                 Peak next =  peaks.get(j);
                 double[] limits = conf.getEdgeLimits(peak, next);
-                for (double edge : edges) {
-                    if (match(limits, edge)) {
+                for (Acid acid : Acid.values()) {
+                    if (acid.match(limits)) {
                         peak.addNext(next);
                         break;
                     }
@@ -116,10 +110,6 @@ public class KDStatistics {
         return new KD(k, d);
     }
 
-    public static boolean match(double[] limits, double edge) {
-        return limits[0] < edge && limits[1] > edge;
-    }
-
     private void searchK(int[] kValues, int len, Peak peak) {
         if (peak.getMaxPrefix() >= len) {
             return;
@@ -142,7 +132,7 @@ public class KDStatistics {
         for (Peak next : peak.getNext()) {
             double[] limits = conf.getEdgeLimits(peak, next);
             for (Acid acid : Acid.values()) {
-                if (match(limits, acid.getMass())) {
+                if (acid.match(limits)) {
                     String pst = acid.name();
                     int cur = sequence.indexOf(pst);
                     while (cur >=0) {
@@ -166,7 +156,7 @@ public class KDStatistics {
         for (Peak next : peak.getNext()) {
             double[] limits = conf.getEdgeLimits(peak, next);
             Acid acid = Acid.getAcid(sequence.charAt(0));
-            if (match(limits, acid.getMass())) {
+            if (acid.match(limits)) {
                 int nextAns = getD(next, sequence.substring(1), matched + 1);
                 if (nextAns > ans) {
                     ans = nextAns;
