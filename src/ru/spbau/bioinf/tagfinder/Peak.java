@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Peak implements Comparable<Peak>{
     private double value;
+    private double mass;
     private double intensity;
     private int charge;
 
@@ -14,14 +15,38 @@ public class Peak implements Comparable<Peak>{
 
     private int maxPrefix = 0;
 
+    private PeakType peakType;
+
     public Peak(double value, double intensity, int charge) {
         this.value = value;
+        this.mass = value;
         this.intensity = intensity;
         this.charge = charge;
+        peakType = PeakType.B;
+    }
+
+    private Peak(double value, double mass, double intensity, int charge) {
+        this.value = value;
+        this.mass = mass;
+        this.intensity = intensity;
+        this.charge = charge;
+        peakType = PeakType.Y;
+    }
+
+    public Peak getYPeak(double precursorMass){
+        return new Peak(precursorMass - value, value, intensity, charge);
+    }
+
+    public PeakType getPeakType() {
+        return peakType;
     }
 
     public double getValue() {
         return value;
+    }
+
+    public double getMass() {
+        return mass;
     }
 
     public double getIntensity() {
