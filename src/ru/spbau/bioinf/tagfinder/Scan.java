@@ -46,6 +46,21 @@ public class Scan {
         peaks.add(new Peak(precursorMass, 0, 0));
     }
 
+    public Scan(Properties prop, BufferedReader input) throws IOException {
+        id = ReaderUtil.getIntValue(prop, "SCANS");
+        precursorMz = ReaderUtil.getDoubleValue(prop, "PRECURSOR_MZ");
+        precursorCharge = ReaderUtil.getIntValue(prop, "PRECURSOR_CHARGE");
+        precursorMass = ReaderUtil.getDoubleValue(prop, "PRECURSOR_MASS");
+        List<String[]> datas = ReaderUtil.readDataUntil(input, "END IONS");
+        for (String[] data : datas) {
+            double mass = Double.parseDouble(data[0]);
+            if (mass < precursorMass - 50) {
+                peaks.add(new Peak(mass, Double.parseDouble(data[1]), Integer.parseInt(data[2])));
+            }
+        }
+    }
+
+
     public int getId() {
         return id;
     }
