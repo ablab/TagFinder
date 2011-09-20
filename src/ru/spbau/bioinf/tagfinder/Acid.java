@@ -36,6 +36,10 @@ public enum Acid {
         return mass;
     }
 
+    public boolean match(double[] limits) {
+       return limits[0] < mass && limits[1] > mass;
+    }
+
     public static HashMap<Character, Acid> acids = new HashMap<Character, Acid>();
 
     static {
