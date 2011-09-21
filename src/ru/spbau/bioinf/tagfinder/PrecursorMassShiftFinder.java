@@ -34,27 +34,24 @@ public class PrecursorMassShiftFinder {
                 Peak next =  peaks.get(j);
                 double sum = peak.getValue() + next.getValue();
                 double delta = sum - precursorMass;
-                double absDelta = Math.abs(delta);
-                for (Acid acid : Acid.values()) {
-                    double error = conf.getPpmCoef() * 3 * sum / 2;
-                    if (acid.match(new double[]{absDelta - error,  absDelta + error})) {
-                        if (delta > 0) {
-                            values.add(delta - acid.getMass());
-                        } else {
-                            values.add(delta + acid.getMass());
-                        }
-                    }
+                double error = conf.getPpmCoef() * 3 * sum / 2;
+                if (-error < delta && error > delta) {
+                    values.add(delta);
                 }
             }
         }
-        if (scan.getId() == -2875) {
+        //int scanId = scan.getId();
+        /*
+        if (scanId == 591 ||scanId == 1562 || scanId == 583 || scanId == 2875 || scanId == 576 || scanId == 1102 ) {
             for (double value : values) {
                 System.out.println(value);
             }
         }
+        */
+
         double delta = StatisticsUtil.getAverage(values);
         if (delta != 0) {
-            System.out.println(scan.getId() + " " + delta + " " + " " + precursorMass + " " + values.size());
+            //System.out.println(scanId + " " + delta + " " + " " + precursorMass + " " + values.size());
         }
         return delta;
     }
