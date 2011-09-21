@@ -22,7 +22,6 @@ public class Scan {
         precursorCharge = ReaderUtil.getIntValue(prop, "CHARGE");
         precursorMass = ReaderUtil.getDoubleValue(prop, "MONOISOTOPIC_MASS");
         List<String[]> datas;
-        peaks.add(new Peak(0, 0 , 0));
         while ((datas = ReaderUtil.readDataUntil(input, "END ENVELOPE")).size() > 0) {
             double mass = 0;
             double score = 0;
@@ -43,7 +42,6 @@ public class Scan {
             }
             peaks.add(new Peak(mass, score , charge));
         }
-        peaks.add(new Peak(precursorMass, 0, 0));
     }
 
     public Scan(Properties prop, BufferedReader input) throws IOException {
@@ -54,7 +52,7 @@ public class Scan {
         List<String[]> datas = ReaderUtil.readDataUntil(input, "END IONS");
         for (String[] data : datas) {
             double mass = Double.parseDouble(data[0]);
-            if (mass < precursorMass - 50) {
+            if (mass < precursorMass) {
                 peaks.add(new Peak(mass, Double.parseDouble(data[1]), Integer.parseInt(data[2])));
             }
         }
