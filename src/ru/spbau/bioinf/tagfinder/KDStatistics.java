@@ -40,6 +40,8 @@ public class KDStatistics {
 
     public KD findKd(Scan scan, String sequence) {
         List<Peak> peaks = scan.getPeaks();
+        peaks.add(new Peak(0, 0, 0));
+        peaks.add(new Peak(scan.getPrecursorMass(), 0, 0));
         Collections.sort(peaks);
 
         int n = peaks.size();
