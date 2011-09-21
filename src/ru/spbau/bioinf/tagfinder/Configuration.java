@@ -104,7 +104,7 @@ public class Configuration {
         String s;
         while ((s = input.readLine()) != null) {
             String[] data = ReaderUtil.getDataArray(s);
-            ans.put(Integer.parseInt(data[2]), Integer.parseInt(data[3]));
+            ans.put(Integer.parseInt(data[7]), Integer.parseInt(data[3]));
         }
         return ans;
     }
@@ -128,7 +128,7 @@ public class Configuration {
             return scans;
         }
 
-        File scanDir = new File(inputDir, "env");
+        File scanDir = new File(inputDir, "env_multiple_mass");
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(".env");
