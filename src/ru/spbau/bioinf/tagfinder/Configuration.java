@@ -104,7 +104,9 @@ public class Configuration {
         String s;
         while ((s = input.readLine()) != null) {
             String[] data = ReaderUtil.getDataArray(s);
-            ans.put(Integer.parseInt(data[7]), Integer.parseInt(data[3]));
+            if (Double.parseDouble(data[data.length - 1]) < 0.0015) {
+                ans.put(Integer.parseInt(data[7]), Integer.parseInt(data[3]));
+            }
         }
         return ans;
     }
