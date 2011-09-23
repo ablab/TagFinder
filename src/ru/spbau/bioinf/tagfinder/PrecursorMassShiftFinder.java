@@ -12,10 +12,9 @@ public class PrecursorMassShiftFinder {
     public static void main(String[] args) throws IOException {
         Configuration conf = new Configuration(args);
         Map<Integer, Scan> scans = conf.getScans();
-        PrecursorMassShiftFinder pmsf = new PrecursorMassShiftFinder();
         int none = 0;
         for (Scan scan : scans.values()) {
-            double v = pmsf.getPrecursorMassShift(conf, scan);
+            double v = getPrecursorMassShift(conf, scan);
             if (v == 0) {
                 none++;
             }
@@ -23,7 +22,34 @@ public class PrecursorMassShiftFinder {
         System.out.println("none = " + none);
     }
 
-    public double getPrecursorMassShift(Configuration conf, Scan scan) {
+    public static List<Double> getAllPossibleShifts(Configuration conf, Scan scan) {
+        List<Peak> peaks = scan.getPeaks();
+        double precursorMass = scan.getPrecursorMass();
+        int n = peaks.size();
+        List<Double> values = new ArrayList<Double>();
+        for (int i = 0; i < n; i++) {
+            Peak peak = peaks.get(i);
+            for (int j = i+1; j < n; j++) {
+                Peak next =  peaks.get(j);
+                double sum = peak.getValue() + next.getValue();
+                double delta = sum - precursorMass;
+                double absDelta = Math.abs(delta);
+                for (Acid acid : Acid.values()) {
+                    double error = conf.getPpmCoef() * 3 * sum / 2;
+                    if (acid.match(new double[]{absDelta - error,  absDelta + error})) {
+                        if (delta > 0) {
+                            values.add(delta - acid.getMass());
+                        } else {
+                            values.add(delta + acid.getMass());
+                        }
+                    }
+                }
+            }
+        }
+        return values;
+    }
+
+    public static double getPrecursorMassShift(Configuration conf, Scan scan) {
         List<Peak> peaks = scan.getPeaks();
         double precursorMass = scan.getPrecursorMass();
         int n = peaks.size();
