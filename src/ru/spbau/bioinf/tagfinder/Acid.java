@@ -9,7 +9,7 @@ public enum Acid {
     P(97.05276),
     V(99.06841),
     T(101.04768),
-    C(103.00919),
+    C(103.00919 + 57.021464),
     I(113.08406),
     //L(113.08406),
     N(114.04293),
@@ -51,4 +51,18 @@ public enum Acid {
     public static Acid getAcid(char ch) {
         return acids.get(ch);
     }
+
+    public static Acid getAcid(double mass) {
+        double d = 1000000;
+        Acid ans = null;
+        for (Acid acid : acids.values()) {
+            double newD = Math.abs(acid.getMass() - mass);
+            if (newD < d) {
+                d = newD;
+                ans = acid;
+            }
+        }
+        return ans;
+    }
+
 }
