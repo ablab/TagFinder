@@ -1,0 +1,47 @@
+<project name="TagFinder project" default="compile" basedir=".">
+
+    <property name="src.dir" value="src"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="xsl.dir" value="xsl"/>
+    <property name="dataset" value="data/salmonella"/>
+    <property name="xml.dir" value="${dataset}/xml"/>
+    <property name="html.dir" value="${dataset}/html"/>
+
+
+    <!-- Temporary build directories -->
+    <property name="build.dir" value="build"/>
+    <property name="build.classes" value="${build.dir}/classes"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+
+
+    <target name="compile" description="Compiles all source code.">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.classes}"/>
+
+        <javac srcdir="${src.dir}"
+               destdir="${build.classes}"
+               debug="on"
+               classpathref="classpath"
+               includeantruntime="on">
+        </javac>
+        <copy file="${src.dir}/log4j.xml" todir="${build.classes}"/>
+        <!-- Exclude unit tests from the final JAR file -->
+        <jar jarfile="tagFinder.jar" basedir="${build.dir}/classes"/>
+    </target>
+
+
+
+    <target name="xslt">
+        <xslt basedir="${xml.dir}" destdir="${html.dir}" includes="scans/scan*.xml" extension=".html"
+              style="${xsl.dir}/scan.xsl">
+            <factory name="net.sf.saxon.TransformerFactoryImpl"/>
+        </xslt>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+</project>
