@@ -29,11 +29,17 @@ public class ValidTags {
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
         Collections.sort(keys);
+        Set<Integer> usedProteins = new HashSet<Integer>();
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
             if (msAlignResults.containsKey(scanId)) {
                 Integer proteinId = msAlignResults.get(scanId);
+                if (usedProteins.contains(proteinId)) {
+                    continue;
+                }
+                usedProteins.add(proteinId);
+
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
                 String reverseSequence = getReverse(sequence);
                 KDStatistics kdStatistics = new KDStatistics(conf);
@@ -42,8 +48,8 @@ public class ValidTags {
 
 
                 List<Peak> peaks =
-                            //scan.getStandardSpectrum()
-                            scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
+                            scan.createStandardSpectrum()
+                            //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
                     ;
 
                 kdStatistics.generateEdges(peaks);
