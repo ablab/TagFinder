@@ -3,8 +3,10 @@ package ru.spbau.bioinf.tagfinder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class KDStatistics {
 
@@ -19,12 +21,17 @@ public class KDStatistics {
         Map<KD, Integer> stat = new HashMap<KD, Integer>();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
+        Set<Integer> usedProteins = new HashSet<Integer>();
         Collections.sort(keys);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
             if (msAlignResults.containsKey(scanId)) {
                 Integer proteinId = msAlignResults.get(scanId);
+                if (usedProteins.contains(proteinId)) {
+                    continue;
+                }
+                usedProteins.add(proteinId);
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
                 KD kd =
                         kdStat.
