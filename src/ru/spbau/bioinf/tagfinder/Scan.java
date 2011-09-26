@@ -72,6 +72,16 @@ public class Scan {
         return peaks;
     }
 
+    public List<Peak> createStandardSpectrum() {
+        List<Peak> peaks = new ArrayList<Peak>();
+        peaks.addAll(this.peaks);
+        peaks.add(new Peak(0, 0, 0));
+        peaks.add(new Peak(getPrecursorMass(), 0, 0));
+        Collections.sort(peaks);
+        return peaks;
+    }
+
+
     public List<Peak> createSpectrumWithYPeaks(double precursorMassShift) {
         List<Peak> peaks = new ArrayList<Peak>();
         peaks.addAll(this.peaks);
