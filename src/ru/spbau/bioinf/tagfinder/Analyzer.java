@@ -21,7 +21,9 @@ public class Analyzer {
         Configuration conf = new Configuration(args);
         Analyzer analyzer = new Analyzer(conf);
         Map<Integer, Scan> scans = conf.getScans();
-        int scanId = 3008;
+        int scanId = 3008
+        //890
+         ;
         Scan scan = scans.get(scanId);
 
         //analyzer.printEdges(scan);
@@ -135,20 +137,28 @@ public class Analyzer {
 
         Table table = new Table();
         table.addTag(0, 0, bestTag);
-        for (int i = 0; i < bestTag.length - 1; i++) {
-            bestTag[i].removeNext(bestTag[i + 1]);
-        }
+        clearPath(bestTag);
 
         int top = 1;
         for (int i = bestTag.length - 2; i >= 0; i--) {
             Peak peak = bestTag[i];
+            for (Peak p : peaks) {
+                p.setMaxPrefix(-1);
+            }
             Peak[] nextTag = findBestTag(peak, new Peak[]{}, 0, new Peak[500]);
             if (nextTag.length > 1) {
-                table.addTag(-top, i * 2 + 2 , nextTag);
+                table.addTag(-top, i * 2 , nextTag);
+                clearPath(nextTag);
                 top++;
             }
         }
         return table;
+    }
+
+    private void clearPath(Peak[] bestTag) {
+        for (int i = 0; i < bestTag.length - 1; i++) {
+            bestTag[i].removeNext(bestTag[i + 1]);
+        }
     }
 
     private Peak[] findBestTag(Peak peak, Peak[] best, int len, Peak[] prefix) {
@@ -158,7 +168,7 @@ public class Analyzer {
 
         prefix[len] = peak;
 
-        if (len > best.length) {
+        if (len >= best.length) {
             best = new Peak[len +1];
             System.arraycopy(prefix, 0, best, 0, len + 1);
         }
