@@ -85,6 +85,10 @@ public class Peak implements Comparable<Peak>{
         }
     }
 
+    public void removeNext(Peak peak) {
+        next.remove(peak);
+    }
+
     public void clearNext() {
         next.clear();
     }
