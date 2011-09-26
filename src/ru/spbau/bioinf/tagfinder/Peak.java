@@ -8,10 +8,12 @@ public class Peak implements Comparable<Peak>{
     private double mass;
     private double intensity;
     private int charge;
+    private List<Peak> copies = new ArrayList<Peak>();
 
     private int componentId;
 
     private List<Peak> next = new ArrayList<Peak>();
+    private List<Peak> prev = new ArrayList<Peak>();
 
     private int maxPrefix = 0;
 
@@ -87,14 +89,45 @@ public class Peak implements Comparable<Peak>{
 
     public void removeNext(Peak peak) {
         next.remove(peak);
+        peak.removePrev(this);
     }
 
-    public void clearNext() {
+    public void removePrev(Peak peak) {
+        prev.remove(peak);
+    }
+
+    public void clearEdges() {
         next.clear();
+        prev.clear();
     }
 
     public List<Peak> getNext() {
         return next;
+    }
+
+    public List<Peak> getPrev() {
+        return prev;
+    }
+
+    public boolean isParent(Peak peak) {
+        return next.containsAll(peak.getNext()) && prev.containsAll(peak.getPrev());
+    }
+
+    public void populatePrev() {
+        for (Peak peak : next) {
+            peak.addCopy(this);
+        }
+    }
+
+    public void addCopy(Peak peak) {
+        copies.add(peak);
+        for (Peak p : peak.getNext()) {
+            p.removePrev(peak);
+        }
+        for (Peak p : peak.getPrev()) {
+            p.removeNext(peak);
+        }
+
     }
 
     private void doUpdateComponentId(Peak peak) {
