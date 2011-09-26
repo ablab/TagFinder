@@ -41,7 +41,9 @@ public class Scan {
                     score = Double.parseDouble(data[1]);
                 }
             }
-            peaks.add(new Peak(mass, score , charge));
+            if (mass > 0) {
+                peaks.add(new Peak(mass, score , charge));
+            }
         }
     }
 
