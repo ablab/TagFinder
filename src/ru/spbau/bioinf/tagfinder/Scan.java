@@ -5,6 +5,7 @@ import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -68,6 +69,19 @@ public class Scan {
     }
 
     public List<Peak> getPeaks() {
+        return peaks;
+    }
+
+    public List<Peak> createSpectrumWithYPeaks(double precursorMassShift) {
+        List<Peak> peaks = new ArrayList<Peak>();
+        peaks.addAll(this.peaks);
+        peaks.add(new Peak(0, 0, 0));
+        double newPrecursorMass = precursorMass + precursorMassShift;
+        peaks.add(new Peak(newPrecursorMass, 0, 0));
+        for (Peak peak : this.peaks) {
+             peaks.add(peak.getYPeak(newPrecursorMass));
+        }
+        Collections.sort(peaks);
         return peaks;
     }
 
