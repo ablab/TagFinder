@@ -97,7 +97,7 @@ public class KDStatistics {
             List<Peak> peaks = new ArrayList<Peak>();
             peaks.addAll(scan.getPeaks());
             for (Peak peak : peaks) {
-                peak.clearNext();
+                peak.clearEdges();
             }
             peaks.add(new Peak(0, 0, 0));
             double newPrecursorMass = scan.getPrecursorMass() + precursorMassShift;
