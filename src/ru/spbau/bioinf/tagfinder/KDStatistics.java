@@ -8,14 +8,14 @@ import java.util.Map;
 
 public class KDStatistics {
 
-    private static Configuration conf;
+    private Configuration conf;
 
     public static void main(String[] args) throws Exception {
-        conf = new Configuration(args);
+        Configuration conf = new Configuration(args);
         List<Protein> proteins = conf.getProteins();
         Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
-        KDStatistics kdStat = new KDStatistics();
+        KDStatistics kdStat = new KDStatistics(conf);
         Map<KD, Integer> stat = new HashMap<KD, Integer>();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
@@ -46,6 +46,10 @@ public class KDStatistics {
         for (KD value : values) {
             System.out.println(value.toString() + " - " + stat.get(value));
         }
+    }
+
+    public KDStatistics(Configuration conf) {
+        this.conf = conf;
     }
 
     public KD findKd(Scan scan, String sequence) {
@@ -111,19 +115,7 @@ public class KDStatistics {
             peaks.get(i).setComponentId(i);
         }
 
-        for (int i = 0; i < n; i++) {
-            Peak peak = peaks.get(i);
-            for (int j = i+1; j < n; j++) {
-                Peak next =  peaks.get(j);
-                double[] limits = conf.getEdgeLimits(peak, next);
-                for (Acid acid : Acid.values()) {
-                    if (acid.match(limits)) {
-                        peak.addNext(next);
-                        break;
-                    }
-                }
-            }
-        }
+        generateEdges(peaks);
 
         boolean done;
 
@@ -172,6 +164,23 @@ public class KDStatistics {
         }
 
         return new KD(k, d);
+    }
+
+    public void generateEdges(List<Peak> peaks) {
+        int n = peaks.size();
+        for (int i = 0; i < n; i++) {
+            Peak peak = peaks.get(i);
+            for (int j = i+1; j < n; j++) {
+                Peak next =  peaks.get(j);
+                double[] limits = conf.getEdgeLimits(peak, next);
+                for (Acid acid : Acid.values()) {
+                    if (acid.match(limits)) {
+                        peak.addNext(next);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private void searchK(int[] kValues, int len, Peak peak, Peak[] prefix) {
