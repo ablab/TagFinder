@@ -73,17 +73,29 @@ public class Analyzer {
         for (int i = 0; i < n; i++) {
             peaks.get(i).setComponentId(i);
         }
-        for (int i = 0; i < n; i++) {
-            Peak peak = peaks.get(i);
-            for (int j = i+1; j < n; j++) {
-                Peak next =  peaks.get(j);
-                double[] limits = conf.getEdgeLimits(peak, next);
-                for (Acid acid : Acid.values()) {
-                    if (acid.match(limits)) {
-                        peak.addNext(next);
-                        break;
-                    }
+
+        new KDStatistics(conf).generateEdges(peaks);
+
+        for (Peak peak : peaks) {
+            peak.populatePrev();
+        }
+
+        int i = 0;
+        while (i < peaks.size() - 1) {
+            Peak p1 = peaks.get(i);
+            Peak p2 = peaks.get(i + 1);
+            if (p2.getValue() - p1.getValue() < 0.1) {
+                if (p1.isParent(p2)) {
+                    peaks.remove(p2);
+                    p1.addCopy(p2);
+                } else if (p2.isParent(p1)) {
+                    peaks.remove(p1);
+                    p2.addCopy(p1);
+                } else {
+                    i++;
                 }
+            } else {
+                i++;
             }
         }
 
