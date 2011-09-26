@@ -33,6 +33,9 @@
 
     <xsl:template match="peak">
         <a href="#" title="{value}">
+            <xsl:attribute name="style">
+                background-color:<xsl:value-of select="color"/>;text-decoration:none;color:black;
+            </xsl:attribute>
             <xsl:choose>
                 <xsl:when test="type = 'B'">&gt;</xsl:when>
                 <xsl:otherwise>&lt;</xsl:otherwise>
