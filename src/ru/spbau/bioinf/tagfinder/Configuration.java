@@ -26,6 +26,7 @@ public class Configuration {
     private File datasetDir;
 
     private File inputData;
+    private File xmlScansDir;
 
     public Configuration(String args[]) {
         String dataset = "data/salmonella";
@@ -52,6 +53,8 @@ public class Configuration {
         xmlDir = createDir("xml");
         xmlSpectrumsDir = createDir(xmlDir, "spectrums");
         xmlProteinsDir = createDir(xmlDir, "proteins");
+
+        xmlScansDir = new File(xmlDir, "scans");
 
         createDir("html");
     }
@@ -109,6 +112,10 @@ public class Configuration {
             }
         }
         return ans;
+    }
+
+    public File getScanXmlFile(Scan scan) {
+        return new File(xmlScansDir, "scan" + scan.getId() + ".xml");
     }
 
     public Map<Integer, Scan> getScans() throws IOException {
