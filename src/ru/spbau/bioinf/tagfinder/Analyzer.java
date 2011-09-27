@@ -40,13 +40,6 @@ public class Analyzer {
         double precursorMassShift = PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
         List<Peak> peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
 
-        double[] edges = new double[Acid.acids.size()];
-        int cur = 0;
-        for (Acid a : Acid.acids.values()) {
-            edges[cur] = a.getMass();
-            cur++;
-        }
-
         int n = peaks.size();
 
         for (int i = 0; i < n; i++) {
@@ -138,33 +131,55 @@ public class Analyzer {
     }
 
     private Table getComponentView(List<Peak> peaks) {
+        Table table = new Table();
+
+        int row = 0;
+
+        Peak[] firstTag = null;
+        Peak[] bestTag;
+        do {
+            initMaxPrefix(peaks);
+            bestTag = new Peak[]{};
+            for (Peak peak : peaks) {
+                bestTag = findBestTag(peak, bestTag, 0, new Peak[500]);
+            }
+
+            if (bestTag.length > 1) {
+                int bestCol = 0;
+                if (firstTag == null) {
+                    firstTag = bestTag;
+                } else {
+
+                    double score = 10E+30;
+                    for (int col = -bestTag.length + 1; col < firstTag.length - 1; col++) {
+                        int match = 0;
+                        double total = 0;
+                        for (int i = 0; i < bestTag.length; i++) {
+                            int pos = col + i;
+                            if (pos >= 0 && pos < firstTag.length) {
+                                match++;
+                                total += Math.abs(firstTag[pos].getValue() - bestTag[i].getValue());
+                            }
+                        }
+                        double newScore = total / match;
+                        if (newScore < score) {
+                            score = newScore;
+                            bestCol = col;
+                        }
+                    }
+                }
+                table.addTag(row, bestCol * 2, bestTag);
+                clearPath(bestTag);
+                row++;
+            }
+        } while (bestTag.length > 1);
+        return table;
+    }
+
+    private void initMaxPrefix(List<Peak> peaks) {
         for (Peak peak : peaks) {
             peak.setMaxPrefix(-1);
         }
-
-        Peak[] bestTag = {};
-        for (Peak peak : peaks) {
-            bestTag = findBestTag(peak, bestTag, 0, new Peak[500]);
-        }
-
-        Table table = new Table();
-        table.addTag(0, 0, bestTag);
-        clearPath(bestTag);
-
-        int top = 1;
-        for (int i = bestTag.length - 2; i >= 0; i--) {
-            Peak peak = bestTag[i];
-            for (Peak p : peaks) {
-                p.setMaxPrefix(-1);
-            }
-            Peak[] nextTag = findBestTag(peak, new Peak[]{}, 0, new Peak[500]);
-            if (nextTag.length > 1) {
-                table.addTag(-top, i * 2 , nextTag);
-                clearPath(nextTag);
-                top++;
-            }
-        }
-        return table;
     }
 
     private void clearPath(Peak[] bestTag) {
