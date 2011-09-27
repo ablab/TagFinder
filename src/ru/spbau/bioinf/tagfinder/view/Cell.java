@@ -11,6 +11,10 @@ public class Cell {
         this.content = content;
     }
 
+    public int getCol() {
+        return col;
+    }
+
     public Content getContent() {
         return content;
     }
