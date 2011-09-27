@@ -102,6 +102,11 @@ public class Table {
                     if (colors.containsKey(p)) {
                         peakContent.setColor(colors.get(p));
                     }
+                    Content topCell = rows.get(0).getContent(cell.getCol());
+                    if (topCell != null) {
+                        Peak top = ((PeakContent) topCell).getPeak();
+                        peakContent.setMod(p.getValue() - top.getValue());
+                    }
                 }
             }
         }
