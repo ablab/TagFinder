@@ -32,19 +32,29 @@
     </xsl:template>
 
     <xsl:template match="peak">
-        <a href="#" title="{value}">
+        <a href="#">
             <xsl:attribute name="style">
                 background-color:<xsl:value-of select="color"/>;text-decoration:none;color:black;
             </xsl:attribute>
-            <xsl:choose>
-                <xsl:when test="type = 'B'">&gt;</xsl:when>
-                <xsl:otherwise>&lt;</xsl:otherwise>
-            </xsl:choose>
+            <xsl:attribute name="title">
+                <xsl:if test="mod != 0"><xsl:value-of select="format-number(mod, '#.##')"/>&#160;</xsl:if>
+                <xsl:value-of select="format-number(value, '#.###')"/>
+            </xsl:attribute>
+            <xsl:apply-templates select="type"/>
         </a>
     </xsl:template>
 
     <xsl:template match="acid">
         <xsl:value-of select="name"/>
     </xsl:template>
+
+    <xsl:template match="type">
+        <xsl:choose>
+            <xsl:when test=". = 'B'">&gt;</xsl:when>
+            <xsl:otherwise>&lt;</xsl:otherwise>
+        </xsl:choose>
+
+    </xsl:template>
+
 
 </xsl:stylesheet>
