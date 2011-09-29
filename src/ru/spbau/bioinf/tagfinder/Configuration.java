@@ -8,6 +8,7 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,18 +122,24 @@ public class Configuration {
 
     public Map<Integer, List<Peak>> getMSAlignPeaks() throws IOException {
         getMSAlignResults();
+        Map<Integer, Scan> scans = getScans();
         BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "no_digestion_result_detail.txt"));
         Map<Integer, List<Peak>> ans = new HashMap<Integer, List<Peak>>();
         String s;
         Properties properties;
         while ((properties = ReaderUtil.readPropertiesUntil(input, "BEGIN MATCH_PAIR")).size() > 0) {
             int scanId = spectrums.get(Integer.parseInt(properties.getProperty("SPECTRUM_ID")));
+            double precursorMass = scans.get(scanId).getPrecursorMass();
             List<Peak> peaks = new ArrayList<Peak>();
             peaks.add(new Peak(0,0 ,0));
             while(!(s = input.readLine()).equals("END MATCH_PAIR")) {
                 String[] data = ReaderUtil.getDataArray(s);
-                peaks.add(new Peak(Double.parseDouble(data[3]), 0, 0));
+                double mass = Double.parseDouble(data[3]);
+                double peak = "B".equals(data[4]) ? mass : precursorMass - mass;
+                peaks.add(new Peak(peak, 0, 0));
             }
+            peaks.add(new Peak(precursorMass, 0, 0));
+            Collections.sort(peaks);
             ans.put(scanId, peaks);
             ReaderUtil.readPropertiesUntil(input, "END PRSM");
         }
