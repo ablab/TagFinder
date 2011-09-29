@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,8 @@ public class Configuration {
     }
 
 
+    private Map<Integer, Integer> spectrums = new HashMap<Integer, Integer>();
+
     private double ppmCoef = 5.0d / 1000000d;
 
     public double getPpmCoef() {
@@ -107,9 +110,31 @@ public class Configuration {
         String s;
         while ((s = input.readLine()) != null) {
             String[] data = ReaderUtil.getDataArray(s);
+            int scanId = Integer.parseInt(data[7]);
+            spectrums.put(Integer.parseInt(data[2]), scanId);
             if (Double.parseDouble(data[data.length - 1]) < 0.0015) {
-                ans.put(Integer.parseInt(data[7]), Integer.parseInt(data[3]));
+                ans.put(scanId, Integer.parseInt(data[3]));
             }
+        }
+        return ans;
+    }
+
+    public Map<Integer, List<Peak>> getMSAlignPeaks() throws IOException {
+        getMSAlignResults();
+        BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "no_digestion_result_detail.txt"));
+        Map<Integer, List<Peak>> ans = new HashMap<Integer, List<Peak>>();
+        String s;
+        Properties properties;
+        while ((properties = ReaderUtil.readPropertiesUntil(input, "BEGIN MATCH_PAIR")).size() > 0) {
+            int scanId = spectrums.get(Integer.parseInt(properties.getProperty("SPECTRUM_ID")));
+            List<Peak> peaks = new ArrayList<Peak>();
+            peaks.add(new Peak(0,0 ,0));
+            while(!(s = input.readLine()).equals("END MATCH_PAIR")) {
+                String[] data = ReaderUtil.getDataArray(s);
+                peaks.add(new Peak(Double.parseDouble(data[3]), 0, 0));
+            }
+            ans.put(scanId, peaks);
+            ReaderUtil.readPropertiesUntil(input, "END PRSM");
         }
         return ans;
     }
