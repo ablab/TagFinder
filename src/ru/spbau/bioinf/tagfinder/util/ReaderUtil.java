@@ -79,6 +79,7 @@ public class ReaderUtil {
 
     public static PrintWriter createOutputFile(File file)
             throws UnsupportedEncodingException, FileNotFoundException {
+        file.getParentFile().mkdirs();
         return new PrintWriter(new OutputStreamWriter(
                 new FileOutputStream(file), "UTF-8"));
     }
