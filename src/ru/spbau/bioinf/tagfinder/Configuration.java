@@ -62,6 +62,10 @@ public class Configuration {
     }
 
 
+    public File getInputDir() {
+        return inputDir;
+    }
+
     private Map<Integer, Integer> spectrums = new HashMap<Integer, Integer>();
 
     private double ppmCoef = 5.0d / 1000000d;
@@ -169,7 +173,10 @@ public class Configuration {
             return scans;
         }
 
-        File scanDir = new File(inputDir, "env_multiple_mass");
+        File scanDir = new File(inputDir,
+            "env_multiple_mass"
+            //"env2"
+        );
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(".env");
