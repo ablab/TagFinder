@@ -3,7 +3,9 @@ package ru.spbau.bioinf.tagfinder;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +63,13 @@ public class Scan {
         }
     }
 
+    public Scan(Scan original, List<Peak> peaks) {
+        id = original.getId();
+        precursorMz = original.getPrecursorMz();
+        precursorCharge = original.getPrecursorCharge();
+        precursorMass = original.getPrecursorMass();
+        this.peaks.addAll(peaks);
+    }
 
     public int getId() {
         return id;
@@ -72,6 +81,14 @@ public class Scan {
 
     public List<Peak> getPeaks() {
         return peaks;
+    }
+
+    public int getPrecursorCharge() {
+        return precursorCharge;
+    }
+
+    public double getPrecursorMz() {
+        return precursorMz;
     }
 
     public List<Peak> createStandardSpectrum() {
@@ -97,4 +114,33 @@ public class Scan {
         return peaks;
     }
 
+    public void save(File dir) throws IOException {
+        File file = new File(dir, "scan_" + id + ".env");
+        PrintWriter out = ReaderUtil.createOutputFile(file);
+        out.println("BEGIN SPECTRUM");
+        out.println("ID -1");
+        out.println("SCANS "  + id);
+        out.println("Ms_LEVEL 2");
+        out.println("ENVELOPE_NUMBER "  + peaks.size());
+        out.println("MONOISOTOPIC_MASS " + precursorMass);
+        out.println("CHARGE " + precursorCharge);
+
+        for (Peak peak : peaks) {
+                out.println("BEGIN ENVELOPE");
+                out.println("REF_IDX 0");
+                out.println("CHARGE " + peak.getCharge());
+                out.println("SCORE " + peak.getIntensity());
+                out.println("THEO_PEAK_NUM 2 REAL_PEAK_NUM 2");
+                out.println("THEO_MONO_MZ 295.0114742929687 REAL_MONO_MZ 295.0114742929687");
+                out.println("THEO_MONO_MASS 294.0041982347717 REAL_MONO_MASS " + peak.getMass());
+                out.println("THEO_INTE_SUM 49471.15545654297 REAL_INTE_SUM 49471.15545654297");
+                out.println("295.01092529296875 43400.988214475015 true 55 295.01092529296875 48567.5703125");
+                out.println("296.01386829296877 6070.167242067955 true 57 296.0268859863281 903.5851440429688");
+                out.println("END ENVELOPE");
+        }
+
+        out.println("END SPECTRUM");
+        out.close();
+
+    }
 }
