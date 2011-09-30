@@ -139,8 +139,10 @@ public class Configuration {
             while(!(s = input.readLine()).equals("END MATCH_PAIR")) {
                 String[] data = ReaderUtil.getDataArray(s);
                 double mass = Double.parseDouble(data[3]);
-                double peak = "B".equals(data[4]) ? mass : precursorMass - mass;
-                peaks.add(new Peak(peak, 0, 0));
+                boolean isB = "B".equals(data[4]);
+                double value = isB ? mass : precursorMass - mass;
+                Peak peak = isB ? new Peak(value, 0, 0) : new Peak(precursorMass - mass, mass, 0, 0);
+                peaks.add(peak);
             }
             peaks.add(new Peak(precursorMass, 0, 0));
             Collections.sort(peaks);
