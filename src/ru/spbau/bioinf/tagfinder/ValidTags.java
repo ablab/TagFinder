@@ -3,12 +3,16 @@ package ru.spbau.bioinf.tagfinder;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class ValidTags {
+
+    private static final int MAX_GAPPED_TAG = 1000;
 
     private Configuration conf;
 
@@ -33,6 +37,7 @@ public class ValidTags {
         Collections.sort(keys);
         ValidTags validTags = new ValidTags(conf);
         Set<Integer> usedProteins = new HashSet<Integer>();
+        Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -43,7 +48,7 @@ public class ValidTags {
                 }
                 usedProteins.add(proteinId);
                 if (scanId == 1946) {
-                    //continue;
+                    continue;
                 }
 
 
@@ -55,17 +60,33 @@ public class ValidTags {
 
 
                 List<Peak> peaks =
-                            scan.createStandardSpectrum()
+                             msAlignPeaks.get(scanId)
+                            //scan.createStandardSpectrum()
                             //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
                     ;
 
 
+                filterMonotags(peaks);
+
                 //kdStatistics.generateEdges(peaks);
                 //printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, reverseSequence);
+
 
                 validTags.gap = 3;
                 kdStatistics.generateGapEdges(peaks, validTags.gap);
                 validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, reverseSequence);
+
+            }
+        }
+    }
+
+    private static void filterMonotags(List<Peak> peaks) {
+        for (Peak peak : peaks) {
+            for (Iterator<Peak> iterator = peak.getNext().iterator(); iterator.hasNext(); ) {
+                Peak next = iterator.next();
+                if (next.getPeakType() != peak.getPeakType()) {
+                    iterator.remove();
+                }
             }
         }
     }
@@ -82,7 +103,7 @@ public class ValidTags {
                 filteredTags.add(tag);
             }
         }
-        int[][] stat = new int[1000][2];
+        long[][] stat = new long[1000][2];
         for (String tag : filteredTags) {
             int len = tag.length();
             if (sequence.contains(tag) || reverseSequence.contains(tag)) {
@@ -95,7 +116,7 @@ public class ValidTags {
     }
 
     private void printGappedTagInfo(List<Peak> peaks, int scanId, Integer proteinId, String sequence, String reverseSequence) {
-        int[][] stat = new int[1000][2];
+        long[][] stat = new long[1000][2];
         for (Peak peak : peaks) {
             Set<Integer> starts = new HashSet<Integer>();
             Set<Integer> reverseStarts = new HashSet<Integer>();
@@ -108,10 +129,14 @@ public class ValidTags {
         printStat(stat, proteinId, scanId);
     }
 
-    private void processGappedTags(int[][] stat, Peak peak, int prefix, String sequence, String reverseSequence, Set<Integer> starts, Set<Integer>reverseStarts) {
+    private void processGappedTags(long[][] stat, Peak peak, int prefix, String sequence, String reverseSequence, Set<Integer> starts, Set<Integer>reverseStarts) {
         if (prefix > 0) {
             stat[prefix][0]++;
         }
+        if (prefix > MAX_GAPPED_TAG) {
+            return;
+        }
+
         List<Peak> nextPeaks = peak.getNext();
         for (Peak next : nextPeaks) {
             double[] limits = conf.getEdgeLimits(peak, next);
@@ -125,12 +150,37 @@ public class ValidTags {
         }
     }
 
-    private void processWrongGappedTags(int[][] stat, Peak peak, int prefix) {
+    private Map<Peak, long[]>  wrong = new HashMap<Peak, long[]>();
+
+    private void processWrongGappedTags(long[][] stat, Peak peak, int prefix) {
+        /*
+        if (wrong.containsKey(peak)) {
+            long[] delta = wrong.get(peak);
+            for (int i = 0; i < delta.length - prefix; i++) {
+                stat[i + prefix][1] += delta[i];
+            }
+            return;
+        } */
         List<Peak> nextPeaks = peak.getNext();
         stat[prefix][1]++;
+        long[] statOrig = new long[stat.length];
+        for (int i = 0; i < statOrig.length; i++) {
+            statOrig[i] = stat[i][1];
+        }
+
+        if (prefix > MAX_GAPPED_TAG) {
+            return;
+        }
         for (Peak next : nextPeaks) {
             processWrongGappedTags(stat, next, prefix + 1);
         }
+        /*
+        long[] delta = new long[stat.length];
+        for (int i = prefix; i < stat.length; i ++) {
+            delta[i-prefix] = stat[i][1] - statOrig[i];
+        }
+        wrong.put(peak, delta);
+        */
     }
 
     private Set<Integer> getNextStarts(String sequence, Set<Integer> starts, double[] limits) {
@@ -164,11 +214,11 @@ public class ValidTags {
         return nextStarts;
     }
 
-    private static void printStat(int[][] stat, Integer proteinId, int scanId) {
+    private static void printStat(long[][] stat, Integer proteinId, int scanId) {
         System.out.print(scanId + " " +  proteinId);
         for (int i = 1; i < stat.length; i++) {
-            int good = stat[i][0];
-            int total = good + stat[i][1];
+            long good = stat[i][0];
+            long total = good + stat[i][1];
             if (total > 0) {
                 System.out.print(" " + df.format((100d * good)/total));
             } else {
@@ -178,7 +228,7 @@ public class ValidTags {
         System.out.println();
     }
 
-    private static String getReverse(String tag) {
+    public static String getReverse(String tag) {
         return new StringBuilder(tag).reverse().toString();
     }
 
