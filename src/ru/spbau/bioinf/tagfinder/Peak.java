@@ -27,7 +27,7 @@ public class Peak implements Comparable<Peak>{
         peakType = PeakType.B;
     }
 
-    private Peak(double value, double mass, double intensity, int charge) {
+    public Peak(double value, double mass, double intensity, int charge) {
         this.value = value;
         this.mass = mass;
         this.intensity = intensity;
