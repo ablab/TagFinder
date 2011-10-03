@@ -1,10 +1,11 @@
 package ru.spbau.bioinf.tagfinder;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class UnmatchedScansGenerator {
     private Configuration conf;
@@ -15,6 +16,7 @@ public class UnmatchedScansGenerator {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
+        Configuration conf2 = new Configuration(args, "mod2");
         List<Protein> proteins = conf.getProteins();
         Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
@@ -22,7 +24,7 @@ public class UnmatchedScansGenerator {
         keys.addAll(scans.keySet());
         Collections.sort(keys);
 
-
+        KDStatistics kdStatistics = new KDStatistics(conf);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -32,7 +34,8 @@ public class UnmatchedScansGenerator {
                 String reverseSequence = ValidTags.getReverse(sequence);
 
                 List<Peak> peaks = scan.createStandardSpectrum();
-                List<Peak> removed = new ArrayList<Peak>();
+                kdStatistics.generateEdges(peaks);
+                Set<Peak> removed = new HashSet<Peak>();
                 for (Peak p1 : peaks) {
                     for (Peak p2 : p1.getNext()) {
                         for (Acid a1 : Acid.values()) {
@@ -60,14 +63,21 @@ public class UnmatchedScansGenerator {
                         }
                     }
                 }
-                for (Peak peak : peaks) {
-                    if (peak.getIntensity() == 0) {
-                        removed.add(peak);
+                if (removed.size() > 0) {
+                    System.out.println(scanId + " removed.size() = " + removed.size());
+                    for (Peak peak : removed) {
+                        System.out.println(peak.getValue());
                     }
+
+                    for (Peak peak : peaks) {
+                        if (peak.getIntensity() == 0) {
+                            removed.add(peak);
+                        }
+                    }
+                    peaks.removeAll(removed);
+                    Scan filtered = new Scan(scan, peaks);
+                    filtered.save(conf2.getModifiedScansDir());
                 }
-                peaks.removeAll(removed);
-                Scan filtered = new Scan(scan, peaks);
-                filtered.save(new File(conf.getInputDir(), "env2"));
             }
         }
     }
