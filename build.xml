@@ -35,7 +35,7 @@
 
 
     <target name="xslt">
-        <xslt basedir="${xml.dir}" destdir="${html.dir}" includes="scans/scan*.xml" extension=".html"
+        <xslt basedir="${xml.dir}" destdir="${html.dir}" includes="scans/**/*.xml" extension=".html"
               style="${xsl.dir}/scan.xsl">
             <factory name="net.sf.saxon.TransformerFactoryImpl"/>
         </xslt>
