@@ -18,16 +18,21 @@ public class Analyzer {
     }
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration(args);
+        Configuration conf = new Configuration(args
+                , "mod2"
+        );
         Analyzer analyzer = new Analyzer(conf);
         Map<Integer, Scan> scans = conf.getScans();
-        int scanId = 3008
-        //890
-         ;
-        Scan scan = scans.get(scanId);
+        for (int scanId : scans.keySet()) {
+            //int scanId = 510;
+            //int scanId = 3008
+            //890
 
-        //analyzer.printEdges(scan);
-        analyzer.showPasses(scan);
+            Scan scan = scans.get(scanId);
+
+            //analyzer.printEdges(scan);
+            analyzer.showPasses(scan);
+        }
     }
 
     private void printEdges(Scan scan) throws Exception {
@@ -207,7 +212,5 @@ public class Analyzer {
         peak.setMaxPrefix(len);
 
         return best;
-
     }
-
 }
