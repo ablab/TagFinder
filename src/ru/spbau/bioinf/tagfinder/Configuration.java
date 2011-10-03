@@ -30,13 +30,39 @@ public class Configuration {
     private File inputData;
     private File xmlScansDir;
 
-    public Configuration(String args[]) {
+    private String mod = null;
+
+    public Configuration(String[] arg1, String... arg2) {
+        int n = 0;
+        if (arg1 != null) {
+            n += arg1.length;
+        }
+        String[] a = new String[n + arg2.length];
+        for (int i = 0; i < arg1.length; i++) {
+            a[i] = arg1[i];
+        }
+        for (int i = 0; i < arg2.length; i++) {
+            a[i + n] = arg2[i];
+        }
+        init(a);
+    }
+    public Configuration(String... args) {
+        init(args);
+    }
+
+    private void init(String[] args) {
         String dataset = "data/salmonella";
         if (args != null) {
-            if (args.length > 0) {
-                dataset = args[0];
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if (arg.startsWith("mod")) {
+                    mod = arg.substring(3);
+                } else if (i == 0){
+                    dataset = args[0];
+                }
             }
         }
+
         datasetDir = new File(dataset);
         inputDir = createDir("input");
         File[] proteinDatabases = inputDir.listFiles(new FilenameFilter() {
@@ -57,6 +83,9 @@ public class Configuration {
         xmlProteinsDir = createDir(xmlDir, "proteins");
 
         xmlScansDir = new File(xmlDir, "scans");
+        if (mod != null) {
+            xmlScansDir = new File(xmlScansDir, "mod" + mod);
+        }
 
         createDir("html");
     }
@@ -156,6 +185,9 @@ public class Configuration {
         return new File(xmlScansDir, "scan" + scan.getId() + ".xml");
     }
 
+    public File getModifiedScansDir() {
+        return new File(inputDir, "env" + mod);
+    }
     public Map<Integer, Scan> getScans() throws IOException {
 
         Map<Integer, Scan> scans = new HashMap<Integer, Scan>();
@@ -176,8 +208,7 @@ public class Configuration {
         }
 
         File scanDir = new File(inputDir,
-            "env_multiple_mass"
-            //"env2"
+            mod == null ? "env_multiple_mass" : "env" + mod
         );
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
