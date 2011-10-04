@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class ValidTags {
 
-    private static final int MAX_GAPPED_TAG = 1000;
+    private static final int MAX_GAPPED_TAG = 10000;
 
     private Configuration conf;
 
@@ -60,19 +60,19 @@ public class ValidTags {
 
 
                 List<Peak> peaks =
-                             msAlignPeaks.get(scanId)
-                            //scan.createStandardSpectrum()
+                             //msAlignPeaks.get(scanId)
+                            scan.createStandardSpectrum()
                             //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
                     ;
 
 
-                filterMonotags(peaks);
+                //filterMonotags(peaks);
 
-                //kdStatistics.generateEdges(peaks);
+                //GraphUtil.generateEdges(conf, peaks);
                 //printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, reverseSequence);
 
 
-                validTags.gap = 3;
+                validTags.gap = 2;
                 kdStatistics.generateGapEdges(peaks, validTags.gap);
                 validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, reverseSequence);
 
