@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class UnmatchedScansGenerator {
-    private static final String TAGS_MODE = "mod2";
-    private static final String SHARED_MODE = "mod3";
+    public static final String TAGS_MODE = "mod2";
+    public static final String SHARED_MODE = "mod3";
     private Configuration conf;
 
     public UnmatchedScansGenerator(Configuration conf) {
@@ -50,9 +50,6 @@ public class UnmatchedScansGenerator {
 
                 if (removed.size() > 0) {
                     System.out.println(scanId + " removed.size() = " + removed.size());
-                    for (Peak peak : removed) {
-                        System.out.println(peak.getValue());
-                    }
 
                     for (Peak peak : peaks) {
                         if (peak.getIntensity() == 0) {
