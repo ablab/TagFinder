@@ -143,11 +143,7 @@ public class Analyzer {
         Peak[] firstTag = null;
         Peak[] bestTag;
         do {
-            initMaxPrefix(peaks);
-            bestTag = new Peak[]{};
-            for (Peak peak : peaks) {
-                bestTag = findBestTag(peak, bestTag, 0, new Peak[500]);
-            }
+            bestTag = GraphUtil.findBestTag(peaks);
 
             if (bestTag.length > 1) {
                 int bestCol = 0;
@@ -181,36 +177,10 @@ public class Analyzer {
         return table;
     }
 
-    private void initMaxPrefix(List<Peak> peaks) {
-        for (Peak peak : peaks) {
-            peak.setMaxPrefix(-1);
-        }
-    }
-
     private void clearPath(Peak[] bestTag) {
         for (int i = 0; i < bestTag.length - 1; i++) {
             bestTag[i].removeNext(bestTag[i + 1]);
         }
     }
 
-    private Peak[] findBestTag(Peak peak, Peak[] best, int len, Peak[] prefix) {
-        if (peak.getMaxPrefix() >= len) {
-            return best;
-        }
-
-        prefix[len] = peak;
-
-        if (len >= best.length) {
-            best = new Peak[len +1];
-            System.arraycopy(prefix, 0, best, 0, len + 1);
-        }
-
-        for (Peak next : peak.getNext()) {
-            best = findBestTag(next, best, len + 1, prefix);
-        }
-
-        peak.setMaxPrefix(len);
-
-        return best;
-    }
 }
