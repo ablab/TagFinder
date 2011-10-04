@@ -19,7 +19,7 @@ public class Analyzer {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args
-                , "mod2"
+                , "mod3"
         );
         Analyzer analyzer = new Analyzer(conf);
         Map<Integer, Scan> scans = conf.getScans();
@@ -72,7 +72,7 @@ public class Analyzer {
             peaks.get(i).setComponentId(i);
         }
 
-        new KDStatistics(conf).generateEdges(peaks);
+        GraphUtil.generateEdges(conf, peaks);
 
         for (Peak peak : peaks) {
             peak.populatePrev();
