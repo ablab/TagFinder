@@ -122,7 +122,7 @@ public class KDStatistics {
             peaks.get(i).setComponentId(i);
         }
 
-        generateEdges(peaks);
+        GraphUtil.generateEdges(conf, peaks);
 
         boolean done;
 
@@ -171,23 +171,6 @@ public class KDStatistics {
         }
 
         return new KD(k, d);
-    }
-
-    public void generateEdges(List<Peak> peaks) {
-        int n = peaks.size();
-        for (int i = 0; i < n; i++) {
-            Peak peak = peaks.get(i);
-            for (int j = i+1; j < n; j++) {
-                Peak next =  peaks.get(j);
-                double[] limits = conf.getEdgeLimits(peak, next);
-                for (Acid acid : Acid.values()) {
-                    if (acid.match(limits)) {
-                        peak.addNext(next);
-                        break;
-                    }
-                }
-            }
-        }
     }
 
     public void generateGapEdges(List<Peak> peaks, int allow) {
