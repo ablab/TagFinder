@@ -111,6 +111,7 @@ public class Analyzer {
         Document doc = new Document();
         Element root = new Element("scan");
         doc.setRootElement(root);
+        XmlUtil.addElement(root, "precursor-mass", scan.getPrecursorMass());
 
         boolean[] componentDone = new boolean[n];
 
@@ -124,7 +125,6 @@ public class Analyzer {
                     }
                 }
                 if (component.size() > 1) {
-                    System.out.println("componentId = " + componentId);
                     Table table = getComponentView(component);
                     root.addContent(table.toXML());
                     componentDone[componentId] = true;
