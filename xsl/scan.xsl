@@ -2,14 +2,25 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
     <xsl:output encoding="UTF-8" method="html" omit-xml-declaration="yes" indent="yes"/>
 
+    <xsl:variable name="width">500</xsl:variable>
 
     <xsl:template match="scan">
         <html>
             <title>Spectrum graph</title>
             <body>
+                <table width="{$width}"><tr><td bgcolor="black"></td></tr></table>
+                <xsl:apply-templates select="table" mode="line"/>
                 <xsl:apply-templates select="table"/>
             </body>
         </html>
+    </xsl:template>
+
+    <xsl:template match="table" mode="line">
+        <table width="{$width}" height="15">
+            <tr><td width="{($width * min) div ../precursor-mass}"></td>
+            <td bgcolor="black" width="{($width * (max - min)) div ../precursor-mass}"></td>
+            <td width="{($width * (../precursor-mass - max)) div ../precursor-mass}"></td></tr>
+        </table>
     </xsl:template>
 
     <xsl:template match="table">
