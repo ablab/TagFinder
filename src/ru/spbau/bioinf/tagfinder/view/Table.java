@@ -3,6 +3,7 @@ package ru.spbau.bioinf.tagfinder.view;
 import org.jdom.Element;
 import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Peak;
+import ru.spbau.bioinf.tagfinder.util.XmlUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -111,8 +112,11 @@ public class Table {
             }
         }
 
+        double min = Double.MAX_VALUE;
+        double max = 0;
         for (int r = rLimits[0]; r <= rLimits[1]; r++) {
             Element row = new Element("row");
+
             for (int c = cLimits[0]; c <= cLimits[1];  c++) {
                 Element cell = new Element("cell");
                 if (rows.containsKey(r)) {
@@ -120,11 +124,23 @@ public class Table {
                     if (content != null) {
                         cell.addContent(content.toXml());
                     }
+                    if (content instanceof PeakContent) {
+                        Peak peak = ((PeakContent)content).getPeak();
+                        double value = peak.getValue();
+                        if (min > value) {
+                            min = value;
+                        }
+                        if (max < value) {
+                            max = value;
+                        }
+                    }
                 }
                 row.addContent(cell);
             }
             table.addContent(row);
         }
+        XmlUtil.addElement(table, "min", min);
+        XmlUtil.addElement(table, "max", max);
         return table;
     }
 }
