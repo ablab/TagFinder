@@ -19,7 +19,7 @@ public class Analyzer {
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args
-                , "mod3"
+                , UnmatchedScansGenerator.SHARED_MODE
         );
         Analyzer analyzer = new Analyzer(conf);
         Map<Integer, Scan> scans = conf.getScans();
@@ -31,7 +31,7 @@ public class Analyzer {
             Scan scan = scans.get(scanId);
 
             //analyzer.printEdges(scan);
-            analyzer.showPasses(scan);
+            analyzer.showPaths(scan);
         }
     }
 
@@ -63,7 +63,7 @@ public class Analyzer {
         }
     }
 
-    public void showPasses(Scan scan) throws IOException {
+    public void showPaths(Scan scan) throws IOException {
         double precursorMassShift = PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
         List<Peak> peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
         int n = peaks.size();
