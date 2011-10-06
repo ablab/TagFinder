@@ -60,7 +60,7 @@ public class IntencityStatistics {
         double[] good = new double[100];
         generateTags(peaks, bad, good, sequence, reverseSequence);
         System.out.print(scan.getId() + " " + proteinId);
-        for (int i = 0; i < good.length; i++) {
+        for (int i = 1; i < good.length; i++) {
             if (bad[i] + good[i] == 0) {
                 break;
             }
