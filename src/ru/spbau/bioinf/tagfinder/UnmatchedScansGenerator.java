@@ -78,7 +78,7 @@ public class UnmatchedScansGenerator {
                 bestShift = shift;
             }
         }
-        double[] mod = new double[]{0, -1, +1, Consts.WATER, -Consts.WATER, Consts.AMMONIA};
+        double[] mod = new double[]{0, -Consts.WATER, -Consts.AMMONIA, - Consts.WATER - Consts.AMMONIA};
         for (Peak peak : peaks) {
             for (double dv : mod) {
                 double modMass = peak.getMass() + dv;
