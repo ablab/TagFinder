@@ -14,6 +14,7 @@ import java.util.Set;
 
 public class TagProteinGenerator {
 
+    public static final int DEPTH = 5;
     private Configuration conf;
 
     private PrintWriter out;
@@ -69,7 +70,7 @@ public class TagProteinGenerator {
     }
 
     public void generateFiveAcidsTags(Peak peak, String prefix, List<String> sequences, int matchedProteinid, int scanId) {
-        if (prefix.length() == 5) {
+        if (prefix.length() == DEPTH) {
             if (used.contains(prefix)) {
                 return;
             }
