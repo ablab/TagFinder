@@ -71,7 +71,7 @@ public class IntencityStatistics {
             if (good[i] > bad[i]) {
                 v = 2;
             }
-            System.out.print(" " + v);
+            System.out.print(" " + ((good[i] + 0.0d)/(good[i] + bad[i])));
 
         }
         System.out.println();
