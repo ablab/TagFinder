@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class TagProteinGenerator {
 
-    public static final int DEPTH = 5;
+    public static final int DEPTH = 6;
     private Configuration conf;
 
     private PrintWriter out;
@@ -26,7 +26,7 @@ public class TagProteinGenerator {
     }
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration(args);
+        Configuration conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
         TagProteinGenerator generator = new TagProteinGenerator(conf);
         generator.generateTags();
     }
@@ -77,7 +77,7 @@ public class TagProteinGenerator {
             for (int i = 0; i < sequences.size(); i++) {
                 String s = sequences.get(i);
                 if (s.contains(prefix)) {
-                    out.println(scanId + " " + matchedProteinid + " " + i + " " + prefix + " " + s.indexOf(prefix));
+                    out.println(scanId + " " + matchedProteinid + " " + i + " " + prefix + " " + s.indexOf(prefix) + " " + peak.getMass() + " " + peak.getValue());
                 }
             }
             used.add(prefix);
