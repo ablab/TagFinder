@@ -1,5 +1,6 @@
 package ru.spbau.bioinf.tagfinder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GraphUtil {
@@ -55,5 +56,40 @@ public class GraphUtil {
         peak.setMaxPrefix(len);
 
         return best;
+    }
+
+    public static void generateGapEdges(Configuration conf, List<Peak> peaks, int allow) {
+        int n = peaks.size();
+        List<Double> masses = new ArrayList<Double>();
+        Acid[] values = Acid.values();
+        for (Acid acid : values) {
+            masses.add(acid.getMass());
+        }
+        for (int i = 0; i < values.length; i++) {
+            Acid a1 = values[i];
+            for (int j = i + 1; j < values.length; j++) {
+                Acid a2 = values[j];
+                masses.add(a1.getMass() + a2.getMass());
+                if (allow > 2) {
+                    for (int k = j + 1; k < values.length; k++) {
+                        Acid a3 = values[k];
+                        masses.add(a1.getMass() + a2.getMass() + a3.getMass());
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            Peak peak = peaks.get(i);
+            for (int j = i+1; j < n; j++) {
+                Peak next =  peaks.get(j);
+                double[] limits = conf.getEdgeLimits(peak, next);
+                for (double mass : masses) {
+                    if (limits[0] < mass && limits[1] > mass) {
+                        peak.addNext(next);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
