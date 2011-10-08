@@ -48,7 +48,7 @@ public class VirtualSpectrumWrongTags {
         }
 
         if (!check(prefix.toCharArray(), 0, "", sequences)) {
-             System.out.println(scanId + " " + proteinId + " " + prefix);
+             System.out.println(scanId + " " + proteinId + " " + prefix + " " + peak.getValue());
         }
 
         used.add(prefix);
