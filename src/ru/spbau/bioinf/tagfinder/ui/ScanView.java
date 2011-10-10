@@ -2,6 +2,8 @@ package ru.spbau.bioinf.tagfinder.ui;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +18,13 @@ import ru.spbau.bioinf.tagfinder.Scan;
 public class ScanView extends JComponent {
 
     private static NumberFormat df = NumberFormat.getInstance();
+    public static final int LINE_HEIGHT = 20;
+
     static {
         df.setMaximumFractionDigits(2);
     }
+
+    List<TooltipCandidate> tooltips = new ArrayList<TooltipCandidate>();
 
     private Configuration conf;
 
@@ -28,6 +34,19 @@ public class ScanView extends JComponent {
 
     public ScanView(Configuration conf) {
         this.conf = conf;
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int x = e.getX();
+                int y = e.getY();
+                for (TooltipCandidate tooltipCandidate : tooltips) {
+                    if (tooltipCandidate.isValid(x, y)) {
+                        setToolTipText(tooltipCandidate.getText());
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     public void setScan(Scan scan) {
@@ -42,7 +61,7 @@ public class ScanView extends JComponent {
             this.components.add(tags);
         }
 
-        dimension = new Dimension((int)scan.getPrecursorMass() + 200, components.size() * 20 + totalTags * 15);
+        dimension = new Dimension((int)scan.getPrecursorMass() + 200, (components.size() + totalTags) * LINE_HEIGHT + 50);
         invalidate();
     }
 
@@ -63,6 +82,7 @@ public class ScanView extends JComponent {
 
     @Override
     public void paint(Graphics g) {
+        tooltips.clear();
         if (scan != null) {
             List<Peak> peaks = scan.getPeaks();
             for (Peak peak : peaks) {
@@ -75,7 +95,7 @@ public class ScanView extends JComponent {
             g.drawString(df.format(precursorMass), total + 3, 15);
         }
 
-        int start = 20;
+        int start = LINE_HEIGHT;
         for (int i = 0; i < components.size(); i++) {
             List<Peak[]> component =  components.get(i);
             double min = scan.getPrecursorMass();
@@ -85,19 +105,20 @@ public class ScanView extends JComponent {
                     min = v;
                 }
             }
-            g.drawString("Component " + (i + 1), 3, start + 20);
-            start += 20;
+            g.drawString("Component " + (i + 1), 3, start + LINE_HEIGHT);
+            start += LINE_HEIGHT;
             for (Peak[] tag : component) {
                 for (int j = 0; j < tag.length; j++) {
                     Peak peak = tag[j];
                     int value = (int)(peak.getValue() - min);
-                    g.drawLine(value, start, value, start + 10);
+                    g.drawLine(value, start + 3, value, start + LINE_HEIGHT);
+                    tooltips.add(new TooltipCandidate(value - 5, value + 5, start, start + LINE_HEIGHT, df.format(peak.getValue())));
                     if (j + 1 < tag.length) {
                         double delta = tag[j + 1].getValue() - peak.getValue();
-                        g.drawString(Acid.getAcid(delta).name(), (int)(value + delta/2 - 3), start + 10);
+                        g.drawString(Acid.getAcid(delta).name(), (int)(value + delta/2 - 3), start + LINE_HEIGHT - 4);
                     }
                 }
-                start += 20;
+                start += LINE_HEIGHT;
             }
         }
     }
