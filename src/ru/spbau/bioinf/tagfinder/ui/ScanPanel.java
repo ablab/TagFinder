@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
 
@@ -43,9 +45,10 @@ public class ScanPanel extends JPanel {
     private final JLabel scanIdInputLabel = new JLabel("Enter new scan ID: ");
     private final JTextField scanIdInput = new JTextField();
 
-    private ScanView scanView = new ScanView();
+    private ScanView scanView;
 
-    public ScanPanel(Map<Integer, Scan> scans) {
+    public ScanPanel(Configuration conf, Map<Integer, Scan> scans) {
+        scanView = new ScanView(conf);
         this.scans = scans;
         scanIdInput.addKeyListener(new KeyAdapter() {
             @Override
