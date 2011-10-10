@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComponent;
+import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Analyzer;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Peak;
@@ -87,9 +88,14 @@ public class ScanView extends JComponent {
             g.drawString("Component " + (i + 1), 3, start + 20);
             start += 20;
             for (Peak[] tag : component) {
-                for (Peak peak : tag) {
+                for (int j = 0; j < tag.length; j++) {
+                    Peak peak = tag[j];
                     int value = (int)(peak.getValue() - min);
                     g.drawLine(value, start, value, start + 10);
+                    if (j + 1 < tag.length) {
+                        double delta = tag[j + 1].getValue() - peak.getValue();
+                        g.drawString(Acid.getAcid(delta).name(), (int)(value + delta/2 - 3), start + 10);
+                    }
                 }
                 start += 20;
             }
