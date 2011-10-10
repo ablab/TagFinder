@@ -21,6 +21,8 @@ public class TagFinder extends JFrame {
         JTabbedPane tabs = new JTabbedPane();
         JPanel proteinPanel = new ProteinPanel(proteins);
         tabs.addTab("Protein", proteinPanel);
+        JPanel scanPanel = new ScanPanel(conf.getScans());
+        tabs.addTab("Scan", scanPanel);
         this.getContentPane().add(tabs);
     }
 
