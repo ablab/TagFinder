@@ -150,7 +150,6 @@ public class Peak implements Comparable<Peak>{
         return value - prev.getValue();
     }
 
-    @Override
     public int compareTo(Peak other) {
         if (other.getValue() < value) {
             return 1;
