@@ -64,13 +64,24 @@ public class Analyzer {
     }
 
     public void showPaths(Scan scan) throws IOException {
+        List<List<Peak>> components = getComponents(scan);
+
+        Document doc = new Document();
+        Element root = new Element("scan");
+        doc.setRootElement(root);
+        XmlUtil.addElement(root, "precursor-mass", scan.getPrecursorMass());
+
+        for (List<Peak> component : components) {
+            Table table = getComponentView(component);
+            root.addContent(table.toXML());
+        }
+
+        XmlUtil.saveXml(doc, conf.getScanXmlFile(scan));
+    }
+
+    public List<List<Peak>> getComponents(Scan scan) {
         double precursorMassShift = PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
         List<Peak> peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
-        int n = peaks.size();
-
-        for (int i = 0; i < n; i++) {
-            peaks.get(i).setComponentId(i);
-        }
 
         GraphUtil.generateEdges(conf, peaks);
 
@@ -97,6 +108,9 @@ public class Analyzer {
             }
         }
 
+        for (i = 0; i < peaks.size(); i++) {
+            peaks.get(i).setComponentId(i);
+        }
         boolean done;
 
         do {
@@ -108,12 +122,9 @@ public class Analyzer {
             }
         } while (!done);
 
-        Document doc = new Document();
-        Element root = new Element("scan");
-        doc.setRootElement(root);
-        XmlUtil.addElement(root, "precursor-mass", scan.getPrecursorMass());
+        boolean[] componentDone = new boolean[peaks.size()];
 
-        boolean[] componentDone = new boolean[n];
+        List<List<Peak>> components = new ArrayList<List<Peak>>();
 
         for (Peak p : peaks) {
             int componentId = p.getComponentId();
@@ -124,57 +135,61 @@ public class Analyzer {
                         component.add(peak);
                     }
                 }
+
                 if (component.size() > 1) {
-                    Table table = getComponentView(component);
-                    root.addContent(table.toXML());
+                    components.add(component);
                     componentDone[componentId] = true;
                 }
             }
         }
 
-        XmlUtil.saveXml(doc, conf.getScanXmlFile(scan));
+        return components;
     }
 
     private Table getComponentView(List<Peak> peaks) {
+        List<Peak[]> tags = getTags(peaks);
+
         Table table = new Table();
+        Peak[] firstTag = tags.get(0);
+        for (int row = 0; row < tags.size(); row++) {
+            Peak[] tag =  tags.get(row);
+            int bestCol = 0;
+            if (row > 0) {
+                double score = 10E+30;
+                for (int col = -tag.length + 1; col < firstTag.length - 1; col++) {
+                    int match = 0;
+                    double total = 0;
+                    for (int i = 0; i < tag.length; i++) {
+                        int pos = col + i;
+                        if (pos >= 0 && pos < firstTag.length) {
+                            match++;
+                            total += Math.abs(firstTag[pos].getValue() - tag[i].getValue());
+                        }
+                    }
+                    double newScore = total / match;
+                    if (newScore < score) {
+                        score = newScore;
+                        bestCol = col;
+                    }
+                }
+            }
+            table.addTag(row, bestCol * 2, tag);
+        }
 
-        int row = 0;
+        return table;
+    }
 
-        Peak[] firstTag = null;
+    public List<Peak[]> getTags(List<Peak> peaks) {
+        List<Peak[]> tags = new ArrayList<Peak[]>();
         Peak[] bestTag;
         do {
             bestTag = GraphUtil.findBestTag(peaks);
-
             if (bestTag.length > 1) {
-                int bestCol = 0;
-                if (firstTag == null) {
-                    firstTag = bestTag;
-                } else {
-
-                    double score = 10E+30;
-                    for (int col = -bestTag.length + 1; col < firstTag.length - 1; col++) {
-                        int match = 0;
-                        double total = 0;
-                        for (int i = 0; i < bestTag.length; i++) {
-                            int pos = col + i;
-                            if (pos >= 0 && pos < firstTag.length) {
-                                match++;
-                                total += Math.abs(firstTag[pos].getValue() - bestTag[i].getValue());
-                            }
-                        }
-                        double newScore = total / match;
-                        if (newScore < score) {
-                            score = newScore;
-                            bestCol = col;
-                        }
-                    }
-                }
-                table.addTag(row, bestCol * 2, bestTag);
+                tags.add(bestTag);
                 clearPath(bestTag);
-                row++;
             }
         } while (bestTag.length > 1);
-        return table;
+        return tags;
     }
 
     private void clearPath(Peak[] bestTag) {
