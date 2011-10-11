@@ -7,11 +7,11 @@ public class TooltipCandidate {
     private int y2;
     private String text;
 
-    public TooltipCandidate(int x1, int x2, int y1, int y2, String text) {
-        this.x1 = x1;
-        this.x2 = x2;
-        this.y1 = y1;
-        this.y2 = y2;
+    public TooltipCandidate(double x1, double x2, double y1, double y2, String text) {
+        this.x1 = (int)x1;
+        this.x2 = (int)x2;
+        this.y1 = (int)y1;
+        this.y2 = (int)y2;
         this.text = text;
     }
 
