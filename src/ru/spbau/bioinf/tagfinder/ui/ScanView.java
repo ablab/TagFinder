@@ -1,5 +1,6 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
@@ -13,7 +14,10 @@ import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Analyzer;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Peak;
+import ru.spbau.bioinf.tagfinder.PrecursorMassShiftFinder;
+import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
+import ru.spbau.bioinf.tagfinder.ShiftEngine;
 
 public class ScanView extends JComponent {
 
@@ -29,11 +33,18 @@ public class ScanView extends JComponent {
     private Configuration conf;
 
     private Scan scan;
+    int proteinId = -1;
+    private Protein protein = null;
+
     private Dimension dimension = new Dimension(1000, 10);
     private List<List<Peak[]>> components = new ArrayList<List<Peak[]>>();
 
-    public ScanView(Configuration conf) {
+    private List<Protein> proteins;
+    private double[] proteinSpectrum;
+
+    public ScanView(Configuration conf, List<Protein> proteins) {
         this.conf = conf;
+        this.proteins = proteins;
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -49,20 +60,39 @@ public class ScanView extends JComponent {
         });
     }
 
-    public void setScan(Scan scan) {
-        this.scan = scan;
-        Analyzer analyzer = new Analyzer(conf);
-        List<List<Peak>> components = analyzer.getComponents(scan);
-        this.components.clear();
-        int totalTags = 0;
-        for (List<Peak> component : components) {
-            List<Peak[]> tags = analyzer.getTags(component);
-            totalTags += tags.size();
-            this.components.add(tags);
+    public boolean setProteinId(int newProteinId) {
+        if (newProteinId != proteinId) {
+            if (newProteinId >= 0 && proteins.size() > newProteinId) {
+                this.proteinId = newProteinId;
+                protein = proteins.get(proteinId);
+                proteinSpectrum = ShiftEngine.getSpectrum(protein.getSimplifiedAcids());
+                return true;
+            }
         }
+        return false;
+    }
 
-        dimension = new Dimension((int)scan.getPrecursorMass() + 200, (components.size() + totalTags) * LINE_HEIGHT + 50);
-        invalidate();
+    public Protein getProtein() {
+        return protein;
+    }
+
+    public boolean setScan(Scan scan) {
+        if (scan != this.scan) {
+            this.scan = scan;
+            Analyzer analyzer = new Analyzer(conf);
+            List<List<Peak>> components = analyzer.getComponents(scan);
+            this.components.clear();
+            int totalTags = 0;
+            for (List<Peak> component : components) {
+                List<Peak[]> tags = analyzer.getTags(component);
+                totalTags += tags.size();
+                this.components.add(tags);
+            }
+
+            dimension = new Dimension((int)scan.getPrecursorMass() + 200, (components.size() + totalTags + 6) * LINE_HEIGHT);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -83,8 +113,9 @@ public class ScanView extends JComponent {
     @Override
     public void paint(Graphics g) {
         tooltips.clear();
+        List<Peak> peaks = null;
         if (scan != null) {
-            List<Peak> peaks = scan.getPeaks();
+            peaks = scan.getPeaks();
             for (Peak peak : peaks) {
                 int value = (int)peak.getValue();
                 g.drawLine(value, 5, value, 15);
@@ -96,6 +127,34 @@ public class ScanView extends JComponent {
         }
 
         int start = LINE_HEIGHT;
+
+        double bestShift = 0;
+
+        if (protein != null) {
+            String sequence = protein.getSimplifiedAcids();
+            double pos = 0;
+            for (int cur = 0; cur < sequence.length(); cur++) {
+                pos += drawLetter(g, start, pos, Acid.getAcid(sequence.charAt(cur)));
+                drawLine(g, start, pos);
+            }
+            start+= LINE_HEIGHT;
+
+            if (scan != null) {
+                double precursorMass =  scan.getPrecursorMass() + PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
+                List<Double> shifts = ShiftEngine.getShifts(peaks, precursorMass, proteinSpectrum);
+
+                double bestScore = 0;
+                double[] spectrum = ShiftEngine.getSpectrum(peaks, precursorMass);
+                for (Double shift : shifts) {
+                    double nextScore = ShiftEngine.getScore(spectrum, proteinSpectrum, shift);
+                    if (nextScore > bestScore) {
+                        bestScore = nextScore;
+                        bestShift = shift;
+                    }
+                }
+            }
+        }
+
         for (int i = 0; i < components.size(); i++) {
             List<Peak[]> component =  components.get(i);
             double min = scan.getPrecursorMass();
@@ -110,16 +169,31 @@ public class ScanView extends JComponent {
             for (Peak[] tag : component) {
                 for (int j = 0; j < tag.length; j++) {
                     Peak peak = tag[j];
-                    int value = (int)(peak.getValue() - min);
-                    g.drawLine(value, start + 3, value, start + LINE_HEIGHT);
-                    tooltips.add(new TooltipCandidate(value - 5, value + 5, start, start + LINE_HEIGHT, df.format(peak.getValue())));
+                    double peakValue = peak.getValue();
+                    double value = (peakValue - min);
+                    if (proteinSpectrum != null) {
+                        g.setColor(ShiftEngine.contains(proteinSpectrum, peakValue + bestShift) ? Color.GREEN : Color.BLACK);
+                    }
+                    drawLine(g, start, value);
+                    g.setColor(Color.BLACK);
+                    tooltips.add(new TooltipCandidate(value - 5, value + 5, start, start + LINE_HEIGHT, df.format(peakValue)));
                     if (j + 1 < tag.length) {
-                        double delta = tag[j + 1].getValue() - peak.getValue();
-                        g.drawString(Acid.getAcid(delta).name(), (int)(value + delta/2 - 3), start + LINE_HEIGHT - 4);
+                        double delta = tag[j + 1].getValue() - peakValue;
+                        drawLetter(g, start, value, Acid.getAcid(delta));
                     }
                 }
                 start += LINE_HEIGHT;
             }
         }
+    }
+
+    private void drawLine(Graphics g, int start, double value) {
+        g.drawLine((int)value, start + 3, (int)value, start + LINE_HEIGHT);
+    }
+
+    private double drawLetter(Graphics g, int start, double pos, Acid acid) {
+        double delta = acid.getMass();
+        g.drawString(acid.name(), (int) (pos + delta / 2 - 3), start + LINE_HEIGHT - 4);
+        return delta;
     }
 }

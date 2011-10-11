@@ -1,5 +1,6 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -18,10 +19,11 @@ public class TagFinder extends JFrame {
         super("TagFinder");
         conf = new Configuration(args);
         proteins = conf.getProteins();
+        Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
         JTabbedPane tabs = new JTabbedPane();
         JPanel proteinPanel = new ProteinPanel(proteins);
         tabs.addTab("Protein", proteinPanel);
-        JPanel scanPanel = new ScanPanel(conf, conf.getScans());
+        JPanel scanPanel = new ScanPanel(conf, conf.getScans(), proteins, msAlignResults);
         tabs.addTab("Scan", scanPanel);
         this.getContentPane().add(tabs);
     }
