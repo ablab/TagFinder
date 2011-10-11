@@ -100,6 +100,18 @@ public class Scan {
         return peaks;
     }
 
+    public List<Peak> createStandardSpectrumWithOnes() {
+        List<Peak> peaks = new ArrayList<Peak>();
+        peaks.addAll(this.peaks);
+        for (Peak peak : this.peaks) {
+            peaks.add(new Peak(peak.getValue() - 1, 0, 0));
+            peaks.add(new Peak(peak.getValue() + 1, 0, 0));
+        }
+        peaks.add(new Peak(0, 0, 0));
+        peaks.add(new Peak(getPrecursorMass(), 0, 0));
+        Collections.sort(peaks);
+        return peaks;
+    }
 
     public List<Peak> createSpectrumWithYPeaks(double precursorMassShift) {
         List<Peak> peaks = new ArrayList<Peak>();
