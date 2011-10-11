@@ -181,6 +181,48 @@ public class Configuration {
         return ans;
     }
 
+    public Map<Integer, Map<Double, String>> getMSAlignData() throws IOException {
+        BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "nodigestion_result_list.txt"));
+        Map<Integer, Map<Double, String>> ans = new HashMap<Integer, Map<Double, String>>();
+        String s;
+        while ((s = input.readLine()) != null) {
+            String[] data = ReaderUtil.getDataArray(s);
+            int scanId = Integer.parseInt(data[7]);
+            spectrums.put(Integer.parseInt(data[2]), scanId);
+            String match = data[data.length - 5];
+            Map<Double, String> value = new HashMap<Double, String>();
+            int brackets = 0;
+            match = match.substring(match.indexOf(".") + 1, match.lastIndexOf("."));
+            match = match.replaceAll("L", "I");
+            double mass = 0;
+            int cur = 0;
+            while (cur < match.length()) {
+                if (brackets ==0) {
+                    value.put(mass, match.substring(cur));
+                }
+                char ch = match.charAt(cur);
+                switch (ch) {
+                    case '[':
+                        int nextCur = match.indexOf(']', cur);
+                        mass += Double.parseDouble(match.substring(cur + 1, nextCur));
+                        cur = nextCur;
+                        break;
+                    case '(':
+                        brackets++;
+                        break;
+                    case ')':
+                        brackets--;
+                        break;
+                    default:
+                        mass += Acid.getAcid(ch).getMass();
+                }
+                cur++;
+            }
+            ans.put(scanId, value);
+        }
+        return ans;
+    }
+
     public File getScanXmlFile(Scan scan) {
         return new File(xmlScansDir, "scan" + scan.getId() + ".xml");
     }
@@ -227,6 +269,5 @@ public class Configuration {
         }
         return scans;
     }
-
 }
 
