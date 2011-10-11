@@ -1,7 +1,9 @@
 package ru.spbau.bioinf.tagfinder;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GraphUtil {
     public static void generateEdges(Configuration conf, List<Peak> peaks) {
@@ -88,6 +90,25 @@ public class GraphUtil {
                         peak.addNext(next);
                         break;
                     }
+                }
+            }
+        }
+    }
+
+    public static Set<String> generateTags(Configuration conf, List<Peak> peaks) {
+         Set<String> tags = new HashSet<String>();
+         for (Peak peak : peaks) {
+             generateTags(conf, tags, "", peak);
+         }
+         return tags;
+     }
+
+    public static void generateTags(Configuration conf, Set<String> tags, String prefix, Peak peak) {
+        tags.add(prefix);
+        for (Peak next : peak.getNext()) {
+            for (Acid acid : Acid.values()) {
+                if (acid.match(conf.getEdgeLimits(peak, next))){
+                    generateTags(conf, tags, prefix + acid.name(), next);
                 }
             }
         }
