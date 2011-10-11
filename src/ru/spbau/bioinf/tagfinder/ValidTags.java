@@ -57,22 +57,35 @@ public class ValidTags {
                 List<Peak> peaks =
                              //msAlignPeaks.get(scanId)
                             //scan.createStandardSpectrum()
-                            scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
+                            //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
+                            scan.createStandardSpectrumWithOnes()
                     ;
 
 
                 //filterMonotags(peaks);
+                /*
+                GraphUtil.generateEdges(conf, peaks);
+                printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, reverseSequence);
+                */
 
-                //GraphUtil.generateEdges(conf, peaks);
-                //printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, reverseSequence);
 
-
-                validTags.gap = 3;
+                validTags.gap = 2;
                 GraphUtil.generateGapEdges(conf, peaks, validTags.gap);
                 validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, reverseSequence);
 
             }
         }
+    }
+
+    private List<Peak> addOnes(List<Peak> peaks) {
+        List<Peak> ans = new ArrayList<Peak>();
+        for (Peak peak : peaks) {
+            ans.add(new Peak(peak.getValue() - 1, 0 ,0));
+            ans.add(new Peak(peak.getValue(), 0 ,0));
+            ans.add(new Peak(peak.getValue() + 1, 0 ,0));
+        }
+        Collections.sort(ans);
+        return ans;
     }
 
     private static void filterMonotags(List<Peak> peaks) {
@@ -87,9 +100,8 @@ public class ValidTags {
     }
 
     private static void printUsualTagInfo(List<Peak> peaks, Configuration conf, int scanId, Integer proteinId, String sequence, String reverseSequence) {
-        Set<String> tags = new HashSet<String>();
-        ValidTags validTags = new ValidTags(conf);
-        validTags.generateTags(tags, peaks);
+
+        Set<String> tags = GraphUtil.generateTags(conf, peaks);
 
         Set<String> filteredTags = new HashSet<String>();
         for (String tag : tags) {
@@ -226,24 +238,4 @@ public class ValidTags {
     public static String getReverse(String tag) {
         return new StringBuilder(tag).reverse().toString();
     }
-
-
-    public void generateTags(Set<String> tags, List<Peak> peaks) {
-         for (Peak peak : peaks) {
-             generateTags(tags, "", peak);
-         }
-     }
-
-    public void generateTags(Set<String> tags, String prefix, Peak peak) {
-        tags.add(prefix);
-        for (Peak next : peak.getNext()) {
-            for (Acid acid : Acid.values()) {
-                if (acid.match(conf.getEdgeLimits(peak, next))){
-                    generateTags(tags, prefix + acid.name(), next);
-                }
-            }
-        }
-    }
-
-
 }
