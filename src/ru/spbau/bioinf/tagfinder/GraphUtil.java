@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 public class GraphUtil {
+
+    public static final double EPSILON = 0.1;
+
     public static void generateEdges(Configuration conf, List<Peak> peaks) {
         int n = peaks.size();
         for (int i = 0; i < n; i++) {
@@ -112,5 +115,23 @@ public class GraphUtil {
                 }
             }
         }
+    }
+
+    public static boolean tagStartsAtPos(double pos, String tag, List<Peak> peaks) {
+        int i;
+        for (i = 0; i < tag.length(); i++) {
+            pos += Acid.getAcid(tag.charAt(i)).getMass();
+            boolean found = false;
+            for (Peak p2 : peaks) {
+                if (Math.abs(p2.getValue() - pos) < EPSILON) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                break;
+            }
+        }
+        return i == tag.length();
     }
 }
