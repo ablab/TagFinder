@@ -83,6 +83,10 @@ public class Analyzer {
         double precursorMassShift = PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
         List<Peak> peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
 
+        return getComponents(peaks);
+    }
+
+    public List<List<Peak>> getComponents(List<Peak> peaks) {
         GraphUtil.generateEdges(conf, peaks);
 
         for (Peak peak : peaks) {
