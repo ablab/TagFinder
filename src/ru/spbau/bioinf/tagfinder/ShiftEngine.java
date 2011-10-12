@@ -102,4 +102,13 @@ public class ShiftEngine {
         }
         return false;
     }
+
+    public static double[] getPositions(List<Peak> peaks) {
+        double[] positions = new double[peaks.size()];
+        for (int i = 0; i < positions.length; i++) {
+            positions[i] = peaks.get(i).getValue();
+        }
+        positions = merge(positions);
+        return positions;
+    }
 }
