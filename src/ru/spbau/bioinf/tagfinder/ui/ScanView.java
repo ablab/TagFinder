@@ -3,6 +3,9 @@ package ru.spbau.bioinf.tagfinder.ui;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.text.NumberFormat;
@@ -37,6 +40,7 @@ public class ScanView extends JComponent {
     private Scan scan;
     int proteinId = -1;
     private Protein protein = null;
+    private double scale = 1;
 
     private Dimension dimension = new Dimension(1000, 10);
     private List<List<Peak[]>> components = new ArrayList<List<Peak[]>>();
@@ -59,6 +63,27 @@ public class ScanView extends JComponent {
                         break;
                     }
                 }
+            }
+        });
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                requestFocus();
+            }
+        });
+        this.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char keyChar = e.getKeyChar();
+                if (keyChar == '+') {
+                    scale *= 1.1;
+                    updateDimension();
+                }
+                if (keyChar == '-') {
+                    scale *= 0.9;
+                    updateDimension();
+                }
+
             }
         });
     }
@@ -84,13 +109,15 @@ public class ScanView extends JComponent {
         return protein;
     }
 
+    private int totalTags;
+
     public boolean setScan(Scan scan) {
         if (scan != this.scan) {
             this.scan = scan;
             Analyzer analyzer = new Analyzer(conf);
             List<List<Peak>> components = analyzer.getComponents(scan);
             this.components.clear();
-            int totalTags = 0;
+            totalTags = 0;
             for (List<Peak> component : components) {
                 List<Peak[]> tags = analyzer.getTags(component);
                 totalTags += tags.size();
@@ -101,10 +128,15 @@ public class ScanView extends JComponent {
                 initBestShift();
             }
 
-            dimension = new Dimension((int)scan.getPrecursorMass() + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
+            updateDimension();
             return true;
         }
         return false;
+    }
+
+    private void updateDimension() {
+        dimension = new Dimension((int)scan.getPrecursorMass() + 400, (int)((components.size() + totalTags + 6) * LINE_HEIGHT * scale));
+        repaint();
     }
 
     @Override
@@ -139,7 +171,7 @@ public class ScanView extends JComponent {
             double end = precursorMass + bestShift;
             drawPeak(g, y, bestShift);
             drawPeak(g, y, end);
-            g.drawString(df.format(precursorMass) +  " + " + df.format(bestShift), (int)end + 3, 15);
+            g.drawString(df.format(precursorMass) +  " + " + df.format(bestShift), (int)(end*scale) + 3, 15);
         }
 
         y += LINE_HEIGHT;
@@ -220,11 +252,13 @@ public class ScanView extends JComponent {
     }
 
     private void drawPeak(Graphics g, int y, double value, double peakValue) {
+        value *= scale;
         g.drawLine((int)value, y + 3, (int)value, y + LINE_HEIGHT);
         tooltips.add(new TooltipCandidate(value - 5, value + 5, y, y + LINE_HEIGHT, df.format(peakValue)));
     }
 
     private void drawIon(Graphics g, int y, double value, PeakType peakType) {
+        value *= scale;
         int v = (int) value;
         int x1 = peakType == PeakType.B ? v - 3 : v + 3;
         g.drawLine(x1, y + LINE_HEIGHT, v, y + LINE_HEIGHT);
@@ -233,7 +267,9 @@ public class ScanView extends JComponent {
 
     private double drawLetter(Graphics g, int start, double pos, Acid acid) {
         double delta = acid.getMass();
-        g.drawString(acid.name(), (int) (pos + delta / 2 - 3), start + LINE_HEIGHT - 4);
+        double x = pos + delta / 2 - 3;
+        x *= scale;
+        g.drawString(acid.name(), (int) (x), start + LINE_HEIGHT - 4);
         return delta;
     }
 }
