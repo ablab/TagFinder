@@ -98,7 +98,7 @@ public class ScanView extends JComponent {
 
     private TooltipCandidate getTooltip(int x, int y) {
         for (TooltipCandidate tooltipCandidate : tooltips) {
-            if (tooltipCandidate.isValid(x, y / LINE_HEIGHT + 1)) {
+            if (tooltipCandidate.isValid(x, y / LINE_HEIGHT + 1, scale)) {
                 return tooltipCandidate;
             }
         }
@@ -273,12 +273,12 @@ public class ScanView extends JComponent {
         int y = line * LINE_HEIGHT;
         g.drawLine(v, y, v, y - LINE_HEIGHT + 3);
         double tooltipValue = peak != null ? peak.getValue() : value;
-        tooltips.add(new TooltipCandidate(v - 5, v + 5, line, df.format(tooltipValue), peak));
+        tooltips.add(new TooltipCandidate(value, line, df.format(tooltipValue), peak));
         if (peak != null) {
             drawIon(g, line, v, peak.getPeakType());
             if (peak == selectedPeak) {
                 g.setColor(Color.BLUE);
-                g.drawRect((int)value - 5, y - LINE_HEIGHT, 10, LINE_HEIGHT + 3);
+                g.drawRect(v - 5, y - LINE_HEIGHT, 10, LINE_HEIGHT + 3);
             }
         }
     }
