@@ -27,6 +27,8 @@ public class ValidTags {
         df.setMaximumFractionDigits(2);
     }
 
+    private static boolean needReverseTag = false;
+
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         List<Protein> proteins = conf.getProteins();
@@ -38,6 +40,9 @@ public class ValidTags {
         ValidTags validTags = new ValidTags(conf);
         Set<Integer> usedProteins = new HashSet<Integer>();
         Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
+        needReverseTag = true;
+        System.out.println("needReverseTag = " + needReverseTag);
+
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -53,25 +58,25 @@ public class ValidTags {
 
 
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
-                String reverseSequence = getReverse(sequence);
                 List<Peak> peaks =
-                             //msAlignPeaks.get(scanId)
-                            //scan.createStandardSpectrum()
+                            msAlignPeaks.get(scanId)
+                            //scan.createStandardSpectrum();
                             //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
-                            scan.createStandardSpectrumWithOnes()
+                            //scan.createStandardSpectrumWithOnes()
                     ;
 
-
                 //filterMonotags(peaks);
-                /*
+
                 GraphUtil.generateEdges(conf, peaks);
-                printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, reverseSequence);
-                */
+                double[] positions = ShiftEngine.getPositions(peaks);
+                printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, positions);
 
 
+               /*
                 validTags.gap = 2;
                 GraphUtil.generateGapEdges(conf, peaks, validTags.gap);
-                validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, reverseSequence);
+                validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, getReverse(sequence));
+                */
 
             }
         }
@@ -99,27 +104,37 @@ public class ValidTags {
         }
     }
 
-    private static void printUsualTagInfo(List<Peak> peaks, Configuration conf, int scanId, Integer proteinId, String sequence, String reverseSequence) {
+    private static void printUsualTagInfo(List<Peak> peaks, Configuration conf, int scanId, Integer proteinId, String sequence, double[] positions) {
 
         Set<String> tags = GraphUtil.generateTags(conf, peaks);
 
-        Set<String> filteredTags = new HashSet<String>();
-        for (String tag : tags) {
-            String reverseTag = getReverse(tag);
-            if (!filteredTags.contains(reverseTag) || reverseTag.equals(tag)) {
-                filteredTags.add(tag);
-            }
-        }
         long[][] stat = new long[1000][2];
-        for (String tag : filteredTags) {
-            int len = tag.length();
-            if (sequence.contains(tag) || reverseSequence.contains(tag)) {
-                stat[len][0]++;
-            } else {
-                stat[len][1]++;
-            }
+        for (String tag : tags) {
+            updateStat(stat, tag, sequence, peaks, positions);
         }
         printStat(stat, proteinId, scanId);
+    }
+
+    private static void updateStat(long[][] stat, String tag, String sequence, List<Peak> peaks, double[] positions) {
+        String reverseTag = getReverse(tag);
+        boolean updateForReverse = !reverseTag.equals(tag);
+        for (double pos : positions) {
+            if (GraphUtil.tagStartsAtPos(pos, tag, peaks)) {
+                updateStat(stat, tag, sequence);
+                if (updateForReverse) {
+                    updateStat(stat, reverseTag, sequence);
+                }
+            }
+        }
+    }
+
+    private static void updateStat(long[][] stat, String tag, String sequence) {
+        int len = tag.length();
+        if (sequence.contains(tag)) {
+            stat[len][0]++;
+        } else {
+            stat[len][1]++;
+        }
     }
 
     private void printGappedTagInfo(List<Peak> peaks, int scanId, Integer proteinId, String sequence, String reverseSequence) {
