@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class ValidTags {
 
-    private static final int MAX_GAPPED_TAG = 10;
+    private static final int MAX_GAPPED_TAG = 9;
 
     private Configuration conf;
 
@@ -59,24 +59,23 @@ public class ValidTags {
 
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
                 List<Peak> peaks =
-                            msAlignPeaks.get(scanId)
-                            //scan.createStandardSpectrum();
+                            //msAlignPeaks.get(scanId)
+                            scan.createStandardSpectrum();
                             //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
                             //scan.createStandardSpectrumWithOnes()
                     ;
 
                 //filterMonotags(peaks);
-
+                /*
                 GraphUtil.generateEdges(conf, peaks);
                 double[] positions = ShiftEngine.getPositions(peaks);
                 printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, positions);
+                */
 
 
-               /*
-                validTags.gap = 2;
+                validTags.gap = 3;
                 GraphUtil.generateGapEdges(conf, peaks, validTags.gap);
                 validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, getReverse(sequence));
-                */
 
             }
         }
@@ -144,7 +143,9 @@ public class ValidTags {
             Set<Integer> reverseStarts = new HashSet<Integer>();
             for (int i = 0; i < sequence.length(); i++) {
                 starts.add(i);
-                reverseStarts.add(i);
+                if (needReverseTag) {
+                    reverseStarts.add(i);
+                }
             }
             processGappedTags(stat, peak, 0, sequence, reverseSequence, starts, reverseStarts);
         }
@@ -162,8 +163,8 @@ public class ValidTags {
         List<Peak> nextPeaks = peak.getNext();
         for (Peak next : nextPeaks) {
             double[] limits = conf.getEdgeLimits(peak, next);
-            Set<Integer> nextStarts = getNextStarts(sequence, starts, limits);
-            Set<Integer> nextReverseStarts = getNextStarts(reverseSequence, reverseStarts, limits);
+            Set<Integer> nextStarts = getNextStarts(sequence, starts, limits, gap);
+            Set<Integer> nextReverseStarts = getNextStarts(reverseSequence, reverseStarts, limits, gap);
             if (nextStarts.size() + nextReverseStarts.size() == 0) {
                 processWrongGappedTags(stat, next, prefix + 1);
             } else {
@@ -172,17 +173,7 @@ public class ValidTags {
         }
     }
 
-    private Map<Peak, long[]>  wrong = new HashMap<Peak, long[]>();
-
     private void processWrongGappedTags(long[][] stat, Peak peak, int prefix) {
-        /*
-        if (wrong.containsKey(peak)) {
-            long[] delta = wrong.get(peak);
-            for (int i = 0; i < delta.length - prefix; i++) {
-                stat[i + prefix][1] += delta[i];
-            }
-            return;
-        } */
         List<Peak> nextPeaks = peak.getNext();
         stat[prefix][1]++;
         long[] statOrig = new long[stat.length];
@@ -196,16 +187,9 @@ public class ValidTags {
         for (Peak next : nextPeaks) {
             processWrongGappedTags(stat, next, prefix + 1);
         }
-        /*
-        long[] delta = new long[stat.length];
-        for (int i = prefix; i < stat.length; i ++) {
-            delta[i-prefix] = stat[i][1] - statOrig[i];
-        }
-        wrong.put(peak, delta);
-        */
     }
 
-    private Set<Integer> getNextStarts(String sequence, Set<Integer> starts, double[] limits) {
+    public static Set<Integer> getNextStarts(String sequence, Set<Integer> starts, double[] limits, int gap) {
         Set<Integer> nextStarts = new HashSet<Integer>();
         for (int pos : starts) {
             if (pos >= sequence.length()) {
@@ -228,7 +212,6 @@ public class ValidTags {
                     if (limits[0] < m && m < limits[1]) {
                         nextStarts.add(pos + 3);
                     }
-
                 }
             }
 
