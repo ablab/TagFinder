@@ -1,25 +1,31 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
+import ru.spbau.bioinf.tagfinder.Peak;
+
 public class TooltipCandidate {
     private int x1;
     private int x2;
-    private int y1;
-    private int y2;
+    private int line;
     private String text;
+    private Peak peak;
 
-    public TooltipCandidate(double x1, double x2, double y1, double y2, String text) {
-        this.x1 = (int)x1;
-        this.x2 = (int)x2;
-        this.y1 = (int)y1;
-        this.y2 = (int)y2;
+    public TooltipCandidate(int x1, int x2, int line, String text, Peak peak) {
+        this.x1 = x1;
+        this.x2 = x2;
+        this.line = line;
         this.text = text;
+        this.peak = peak;
     }
 
-    public boolean isValid(int x, int y) {
-        return x1 <= x && x <=x2 && y1 <= y && y <= y2;
+    public boolean isValid(int x, int line) {
+        return x1 <= x && x <=x2 && line == this.line;
     }
 
     public String getText() {
         return text;
+    }
+
+    public Peak getPeak() {
+        return peak;
     }
 }

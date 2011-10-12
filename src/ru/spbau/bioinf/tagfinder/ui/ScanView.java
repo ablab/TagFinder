@@ -7,7 +7,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +37,12 @@ public class ScanView extends JComponent {
     private Configuration conf;
 
     private Scan scan;
+    List<Peak> peaks = null;
+
     int proteinId = -1;
     private Protein protein = null;
     private double scale = 1;
+    private Peak selectedPeak = null;
 
     private Dimension dimension = new Dimension(1000, 10);
     private List<List<Peak[]>> components = new ArrayList<List<Peak[]>>();
@@ -52,23 +54,29 @@ public class ScanView extends JComponent {
     public ScanView(Configuration conf, List<Protein> proteins) {
         this.conf = conf;
         this.proteins = proteins;
-        addMouseMotionListener(new MouseMotionAdapter() {
+        addMouseListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
                 int x = e.getX();
                 int y = e.getY();
-                for (TooltipCandidate tooltipCandidate : tooltips) {
-                    if (tooltipCandidate.isValid(x, y)) {
-                        setToolTipText(tooltipCandidate.getText());
-                        break;
-                    }
+                TooltipCandidate tooltip = getTooltip(x, y);
+                if (tooltip != null) {
+                    setToolTipText(tooltip.getText());
                 }
             }
-        });
-        addMouseListener(new MouseAdapter() {
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 requestFocus();
+                int x = e.getX();
+                int y = e.getY();
+                TooltipCandidate tooltip = getTooltip(x, y);
+                if (tooltip != null) {
+                    if (selectedPeak != tooltip.getPeak()) {
+                        selectedPeak = tooltip.getPeak();
+                        repaint();
+                    }
+                }
             }
         });
         this.addKeyListener(new KeyAdapter() {
@@ -86,6 +94,15 @@ public class ScanView extends JComponent {
 
             }
         });
+    }
+
+    private TooltipCandidate getTooltip(int x, int y) {
+        for (TooltipCandidate tooltipCandidate : tooltips) {
+            if (tooltipCandidate.isValid(x, y / LINE_HEIGHT + 1)) {
+                return tooltipCandidate;
+            }
+        }
+        return null;
     }
 
     public boolean setProteinId(int newProteinId) {
@@ -115,7 +132,9 @@ public class ScanView extends JComponent {
         if (scan != this.scan) {
             this.scan = scan;
             Analyzer analyzer = new Analyzer(conf);
-            List<List<Peak>> components = analyzer.getComponents(scan);
+            double precursorMassShift = PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
+            peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
+            List<List<Peak>> components = analyzer.getComponents(peaks);
             this.components.clear();
             totalTags = 0;
             for (List<Peak> component : components) {
@@ -160,21 +179,20 @@ public class ScanView extends JComponent {
         g.fillRect(0, 0, getWidth(), getHeight());
         g.setColor(Color.BLACK);
         tooltips.clear();
-        int y = 0;
-        List<Peak> peaks = null;
+        int line = 1;
+
         if (scan != null) {
-            peaks = scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
             for (Peak peak : peaks) {
-                drawPeak(g, peak, y, -bestShift);
+                drawPeak(g, peak, line, -bestShift);
             }
             double precursorMass = scan.getPrecursorMass();
             double end = precursorMass + bestShift;
-            drawPeak(g, y, bestShift);
-            drawPeak(g, y, end);
+            drawPeak(g, line, bestShift);
+            drawPeak(g, line, end);
             g.drawString(df.format(precursorMass) +  " + " + df.format(bestShift), (int)(end*scale) + 3, 15);
         }
 
-        y += LINE_HEIGHT;
+        line++;
 
 
 
@@ -182,10 +200,10 @@ public class ScanView extends JComponent {
             String sequence = protein.getSimplifiedAcids();
             double pos = 0;
             for (int cur = 0; cur < sequence.length(); cur++) {
-                pos += drawLetter(g, y, pos, Acid.getAcid(sequence.charAt(cur)));
-                drawPeak(g, y, pos);
+                pos += drawLetter(g, line, pos, Acid.getAcid(sequence.charAt(cur)));
+                drawPeak(g, line, pos);
             }
-            y+= LINE_HEIGHT;
+            line++;
         }
 
         for (int i = 0; i < components.size(); i++) {
@@ -197,18 +215,18 @@ public class ScanView extends JComponent {
                     min = v;
                 }
             }
-            g.drawString("Component " + (i + 1), 3, y + LINE_HEIGHT);
-            y += LINE_HEIGHT;
+            g.drawString("Component " + (i + 1), 3, line * LINE_HEIGHT);
+            line ++;
             for (Peak[] tag : component) {
                 for (int j = 0; j < tag.length; j++) {
                     Peak peak = tag[j];
-                    double peakValue = drawPeak(g, peak, y, min);
+                    double peakValue = drawPeak(g, peak, line, min);
                     if (j + 1 < tag.length) {
                         double delta = tag[j + 1].getValue() - peakValue;
-                        drawLetter(g, y, peakValue - min, Acid.getAcid(delta));
+                        drawLetter(g, line, peakValue - min, Acid.getAcid(delta));
                     }
                 }
-                y += LINE_HEIGHT;
+                line ++;
             }
         }
     }
@@ -226,8 +244,7 @@ public class ScanView extends JComponent {
             }
             g.setColor(color);
         }
-        drawPeak(g, y, value, peakValue);
-        drawIon(g, y, value, peak.getPeakType());
+        drawPeak(g, y, value, peak);
         g.setColor(Color.BLACK);
         return peakValue;
     }
@@ -248,28 +265,36 @@ public class ScanView extends JComponent {
     }
 
     private void drawPeak(Graphics g, int y, double value) {
-        drawPeak(g, y, value, value);
+        drawPeak(g, y, value, null);
     }
 
-    private void drawPeak(Graphics g, int y, double value, double peakValue) {
-        value *= scale;
-        g.drawLine((int)value, y + 3, (int)value, y + LINE_HEIGHT);
-        tooltips.add(new TooltipCandidate(value - 5, value + 5, y, y + LINE_HEIGHT, df.format(peakValue)));
+    private void drawPeak(Graphics g, int line, double value, Peak peak) {
+        int v = (int)(value * scale);
+        int y = line * LINE_HEIGHT;
+        g.drawLine(v, y, v, y - LINE_HEIGHT + 3);
+        double tooltipValue = peak != null ? peak.getValue() : value;
+        tooltips.add(new TooltipCandidate(v - 5, v + 5, line, df.format(tooltipValue), peak));
+        if (peak != null) {
+            drawIon(g, line, v, peak.getPeakType());
+            if (peak == selectedPeak) {
+                g.setColor(Color.BLUE);
+                g.drawRect((int)value - 5, y - LINE_HEIGHT, 10, LINE_HEIGHT + 3);
+            }
+        }
     }
 
-    private void drawIon(Graphics g, int y, double value, PeakType peakType) {
-        value *= scale;
-        int v = (int) value;
+    private void drawIon(Graphics g, int line, int  v, PeakType peakType) {
         int x1 = peakType == PeakType.B ? v - 3 : v + 3;
-        g.drawLine(x1, y + LINE_HEIGHT, v, y + LINE_HEIGHT);
-        g.drawLine(x1, y + 3, v, y + 3);
+        int y = line * LINE_HEIGHT;
+        g.drawLine(x1, y - LINE_HEIGHT + 3, v, y - LINE_HEIGHT + 3);
+        g.drawLine(x1, y, v, y);
     }
 
-    private double drawLetter(Graphics g, int start, double pos, Acid acid) {
+    private double drawLetter(Graphics g, int line, double pos, Acid acid) {
         double delta = acid.getMass();
         double x = pos + delta / 2 - 3;
         x *= scale;
-        g.drawString(acid.name(), (int) (x), start + LINE_HEIGHT - 4);
+        g.drawString(acid.name(), (int) (x), line * LINE_HEIGHT - 4);
         return delta;
     }
 }
