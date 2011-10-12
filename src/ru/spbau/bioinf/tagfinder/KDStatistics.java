@@ -12,6 +12,8 @@ public class KDStatistics {
 
     private Configuration conf;
 
+    private int gap = 3;
+
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         List<Protein> proteins = conf.getProteins();
@@ -32,6 +34,9 @@ public class KDStatistics {
                     continue;
                 }
                 usedProteins.add(proteinId);
+                if (scanId == 1946) {
+                    continue;
+                }
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
                 KD kd =
                         kdStat.
@@ -60,9 +65,7 @@ public class KDStatistics {
     }
 
     public KD findKd(Scan scan, String sequence) {
-        List<Peak> peaks = scan.getPeaks();
-        peaks.add(new Peak(0, 0, 0));
-        peaks.add(new Peak(scan.getPrecursorMass(), 0, 0));
+        List<Peak> peaks = scan.createStandardSpectrum();
         return findKd(peaks, sequence);
     }
 
@@ -122,7 +125,11 @@ public class KDStatistics {
             peaks.get(i).setComponentId(i);
         }
 
-        GraphUtil.generateEdges(conf, peaks);
+        if (gap == 1) {
+            GraphUtil.generateEdges(conf, peaks);
+        } else {
+            GraphUtil.generateGapEdges(conf, peaks, gap);
+        }
 
         boolean done;
 
@@ -209,27 +216,14 @@ public class KDStatistics {
     }
 
 
-    private int maxD;
 
     private int getD(Peak peak, String sequence) {
         int ans = 0;
         Peak[] prefix = new Peak[500];
-        maxD = 0;
-        for (Peak next : peak.getNext()) {
-            double[] limits = conf.getEdgeLimits(peak, next);
-            for (Acid acid : Acid.values()) {
-                if (acid.match(limits)) {
-                    String pst = acid.name();
-                    int cur = sequence.indexOf(pst);
-                    while (cur >=0) {
-                        prefix[0] = peak;
-                        int nextAns = getD(next, sequence.substring(cur+1), 1, prefix);
-                        if (nextAns > ans) {
-                            ans = nextAns;
-                        }
-                        cur = sequence.indexOf(pst, cur + 1);
-                    }
-                }
+        for (int i =0; i < sequence.length() - 1; i++) {
+            int nextAns = getD(peak, sequence.substring(i), 0, prefix);
+            if (nextAns > ans) {
+                ans = nextAns;
             }
         }
         return ans;
@@ -237,24 +231,34 @@ public class KDStatistics {
 
     private int getD(Peak peak, String sequence, int matched, Peak[] prefix) {
         prefix[matched] = peak;
-        if (matched > maxD) {
-            //printPrefix(prefix, matched);
-        }
         if (sequence.length() == 0) {
             return matched;
         }
         int ans = matched;
         for (Peak next : peak.getNext()) {
             double[] limits = conf.getEdgeLimits(peak, next);
-            Acid acid = Acid.getAcid(sequence.charAt(0));
-            if (acid.match(limits)) {
-                int nextAns = getD(next, sequence.substring(1), matched + 1, prefix);
-                if (nextAns > ans) {
-                    ans = nextAns;
-                }
+            for (int i = 1; i <= gap; i++) {
+                ans = checkNext(sequence, i, matched, prefix, ans, next, limits);
             }
         }
 
+        return ans;
+    }
+
+    private int checkNext(String sequence, int gap, int matched, Peak[] prefix, int ans, Peak next, double[] limits) {
+        if (gap > sequence.length()) {
+            return ans;
+        }
+        double mass = 0;
+        for (int i = 0; i < gap; i++) {
+            mass += Acid.getAcid(sequence.charAt(i)).getMass();
+        }
+        if (limits[0] < mass && limits[1] > mass) {
+            int nextAns = getD(next, sequence.substring(gap), matched + 1, prefix);
+            if (nextAns > ans) {
+                ans = nextAns;
+            }
+        }
         return ans;
     }
 }
