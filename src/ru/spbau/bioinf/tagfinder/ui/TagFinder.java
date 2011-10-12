@@ -21,10 +21,10 @@ public class TagFinder extends JFrame {
         proteins = conf.getProteins();
         Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
         JTabbedPane tabs = new JTabbedPane();
-        JPanel proteinPanel = new ProteinPanel(proteins);
-        tabs.addTab("Protein", proteinPanel);
         JPanel scanPanel = new ScanPanel(conf, conf.getScans(), proteins, msAlignResults);
         tabs.addTab("Scan", scanPanel);
+        JPanel proteinPanel = new ProteinPanel(proteins);
+        tabs.addTab("Protein", proteinPanel);
         this.getContentPane().add(tabs);
     }
 
