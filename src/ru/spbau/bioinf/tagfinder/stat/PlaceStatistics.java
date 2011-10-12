@@ -136,7 +136,12 @@ public class PlaceStatistics {
                 for (int i = 1; i <= Math.min(match.length(), gap); i++) {
                     double mass = 0;
                     for (int j = 0; j < i; j++) {
-                        mass += Acid.getAcid(sequence.charAt(j)).getMass();
+                        Acid acid = Acid.getAcid(match.charAt(j));
+                        if (acid == null) {
+                            mass = -1;
+                            break;
+                        }
+                        mass += acid.getMass();
                     }
                     if (limits[0] < mass && limits[1] > mass) {
                         nextMatch = match.substring(i);
