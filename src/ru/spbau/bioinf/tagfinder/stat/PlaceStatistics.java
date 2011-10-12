@@ -13,6 +13,8 @@ import ru.spbau.bioinf.tagfinder.GraphUtil;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
+import ru.spbau.bioinf.tagfinder.ShiftEngine;
+import ru.spbau.bioinf.tagfinder.ValidTags;
 
 public class PlaceStatistics {
 
@@ -60,43 +62,8 @@ public class PlaceStatistics {
                 GraphUtil.generateEdges(conf, peaks);
                 Map<Double, String> msAlignData = msAlignDatas.get(scanId);
                 int[][] stat = new int[100][3];
-                Set<String> tags = GraphUtil.generateTags(conf, peaks);
-                for (String tag : tags) {
-                    int len = tag.length();
-                    double prev = -1;
-                    for (Peak peak : peaks) {
-                        if (peak.getValue() - prev < 0.02) {
-                            continue;
-                        }
-                        double pos = peak.getValue();
-                        int i;
-                        for (i = 0; i < tag.length(); i++) {
-                            pos += Acid.getAcid(tag.charAt(i)).getMass();
-                            boolean found = false;
-                            for (Peak p2 : peaks) {
-                                if (Math.abs(p2.getValue() - pos) < EPSILON) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found) {
-                                break;
-                            }
-                        }
-                        if (i == tag.length()) {
-                            stat[len][0]++;
-                            if (sequence.contains(tag)) {
-                                stat[len][1]++;
-                                for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
-                                    if (entry.getValue().startsWith(tag) && Math.abs(peak.getValue() - entry.getKey()) < EPSILON) {
-                                        stat[len][2]++;
-                                        prev = peak.getValue();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                //updateStatWithoutGaps(stat, conf, msAlignData, sequence, peaks);
+                updateStatWithGaps(stat, conf, msAlignData, sequence, peaks, 3);
 
                 System.out.print(scanId + " " +  proteinId);
                 for (int i = 1; i < stat.length; i++) {
@@ -114,22 +81,70 @@ public class PlaceStatistics {
         }
     }
 
-
-    public void generateTags(Set<String> tags, List<Peak> peaks) {
-        for (Peak peak : peaks) {
-            generateTags(tags, "", peak);
-        }
-    }
-
-    public void generateTags(Set<String> tags, String prefix, Peak peak) {
-        tags.add(prefix);
-        for (Peak next : peak.getNext()) {
-            for (Acid acid : Acid.values()) {
-                if (acid.match(conf.getEdgeLimits(peak, next))) {
-                    generateTags(tags, prefix + acid.name(), next);
+    private static void updateStatWithoutGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks) {
+        Set<String> tags = GraphUtil.generateTags(conf, peaks);
+        double[] positions = ShiftEngine.getPositions(peaks);
+        for (String tag : tags) {
+            int len = tag.length();
+            for (double pos : positions) {
+                if (GraphUtil.tagStartsAtPos(pos, tag, peaks)) {
+                    stat[len][0]++;
+                    if (sequence.contains(tag)) {
+                        stat[len][1]++;
+                        for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
+                            if (entry.getValue().startsWith(tag) && Math.abs(pos - entry.getKey()) < EPSILON) {
+                                stat[len][2]++;
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
+    private static void updateStatWithGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks, int gap) {
+        GraphUtil.generateGapEdges(conf, peaks, gap);
+        for (Peak peak : peaks) {
+            String match = null;
+            for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
+                if (Math.abs(peak.getValue() - entry.getKey()) < EPSILON) {
+                    match = entry.getValue();
+                    break;
+                }
+            }
+            HashSet<Integer> starts = new HashSet<Integer>();
+            for (int i = 0; i < sequence.length() - 1; i++) {
+                starts.add(i);
+            }
+            processGappedTags(stat, conf, match, sequence, peak, gap, 0, starts);
+        }
+    }
+
+    private static void processGappedTags(int[][] stat, Configuration conf, String match, String sequence, Peak peak, int gap, int len, Set<Integer> starts) {
+        stat[len][0]++;
+        if (starts.size() > 0) {
+            stat[len][1]++;
+        }
+        if (match != null) {
+            stat[len][2]++;
+        }
+        for (Peak next : peak.getNext()) {
+            double[] limits = conf.getEdgeLimits(peak, next);
+            Set<Integer> nextStarts = ValidTags.getNextStarts(sequence, starts, limits, gap);
+            String nextMatch = null;
+            if (match != null) {
+                for (int i = 1; i <= Math.min(match.length(), gap); i++) {
+                    double mass = 0;
+                    for (int j = 0; j < i; j++) {
+                        mass += Acid.getAcid(sequence.charAt(j)).getMass();
+                    }
+                    if (limits[0] < mass && limits[1] > mass) {
+                        nextMatch = match.substring(i);
+                        break;
+                    }
+                }
+            }
+            processGappedTags(stat, conf, nextMatch, sequence, next, gap, len + 1, nextStarts);
+        }
+    }
 }
