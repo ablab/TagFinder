@@ -63,39 +63,35 @@ public class PlaceStatistics {
                 Set<String> tags = GraphUtil.generateTags(conf, peaks);
                 for (String tag : tags) {
                     int len = tag.length();
-                    stat[len][0]++;
-                    if (sequence.contains(tag)) {
-                        stat[len][1]++;
-                        boolean done = false;
-                        for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
-                            if (entry.getValue().startsWith(tag)) {
-                                double pos = entry.getKey();
-                                for (Peak peak : peaks) {
-                                    if (Math.abs(peak.getValue() - pos) < EPSILON) {
-                                        int i;
-                                        for (i = 0; i < tag.length(); i++) {
-                                            pos += Acid.getAcid(tag.charAt(i)).getMass();
-                                            boolean found = false;
-                                            for (Peak p2 : peaks) {
-                                                if (Math.abs(p2.getValue() - pos) < EPSILON) {
-                                                    found = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (!found) {
-                                                break;
-                                            }
-                                        }
-                                        if (i == tag.length()) {
-                                            done = true;
-                                            stat[len][2]++;
-                                            break;
-                                        }
-                                    }
-
-                                }
-                                if (done) {
+                    double prev = -1;
+                    for (Peak peak : peaks) {
+                        if (peak.getValue() - prev < 0.02) {
+                            continue;
+                        }
+                        double pos = peak.getValue();
+                        int i;
+                        for (i = 0; i < tag.length(); i++) {
+                            pos += Acid.getAcid(tag.charAt(i)).getMass();
+                            boolean found = false;
+                            for (Peak p2 : peaks) {
+                                if (Math.abs(p2.getValue() - pos) < EPSILON) {
+                                    found = true;
                                     break;
+                                }
+                            }
+                            if (!found) {
+                                break;
+                            }
+                        }
+                        if (i == tag.length()) {
+                            stat[len][0]++;
+                            if (sequence.contains(tag)) {
+                                stat[len][1]++;
+                                for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
+                                    if (entry.getValue().startsWith(tag) && Math.abs(peak.getValue() - entry.getKey()) < EPSILON) {
+                                        stat[len][2]++;
+                                        prev = peak.getValue();
+                                    }
                                 }
                             }
                         }
