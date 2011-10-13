@@ -35,8 +35,20 @@ public class Peak implements Comparable<Peak>{
         peakType = PeakType.Y;
     }
 
+    private Peak yPeak = null;
+
     public Peak getYPeak(double precursorMass){
-        return new Peak(precursorMass - value, value, intensity, charge);
+        if (peakType != PeakType.B) {
+            return null;
+        }
+        if (yPeak == null) {
+            yPeak = new Peak(precursorMass - value, value, intensity, charge);
+        }
+        return yPeak;
+    }
+
+    public Peak getYPeak() {
+        return yPeak;
     }
 
     public PeakType getPeakType() {
