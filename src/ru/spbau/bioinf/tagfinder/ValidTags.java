@@ -16,7 +16,7 @@ public class ValidTags {
 
     public static final String VIRTUAL = "virtual";
     public static final String STANDARD = "standard";
-    public static final String REFLEX = "reverse";
+    public static final String REFLEX = "reflex";
 
     private Configuration conf;
 
@@ -52,9 +52,10 @@ public class ValidTags {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
-        String type = STANDARD;
-        //validTags.process(type, 1);
-        //validTags.process(type, 2);
+        String type = REFLEX;
+        //validTags.setMonoTagsOnly(true);
+        validTags.process(type, 1);
+        validTags.process(type, 2, 10);
         validTags.process(type, 3, 10);
     }
 
@@ -150,7 +151,7 @@ public class ValidTags {
         } else if (STANDARD.equals(type)) {
             peaks = scan.createStandardSpectrum();
         } else if (REFLEX.equals(type)) {
-            scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
+            peaks = scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
         } else {
             throw new RuntimeException("Wrong spectrum type " +  type);
         }
@@ -286,6 +287,7 @@ public class ValidTags {
             }
         }
         output.println();
+        output.flush();
     }
 
     public static String getReverse(String tag) {
