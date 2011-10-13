@@ -16,7 +16,7 @@ public class TooltipCandidate {
     }
 
     public boolean isValid(double x, int line, double scale) {
-        return Math.abs(x - value) <= 5 / scale && line == this.line;
+        return Math.abs(x/scale - value) <= 5 / scale && line == this.line;
     }
 
     public String getText() {
