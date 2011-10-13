@@ -42,9 +42,9 @@ public class ScanPanel extends JPanel {
     private ScanView scanView;
     private Map<Integer,Integer> msAlignResults;
 
-    public ScanPanel(Configuration conf, Map<Integer, Scan> scans, List<Protein> proteins, Map<Integer,Integer> msAlignResults) {
+    public ScanPanel(Configuration conf, Map<Integer, Scan> scans, List<Protein> proteins, Map<Integer,Integer> msAlignResults, TagFinder tagFinder) {
         this.msAlignResults = msAlignResults;
-        scanView = new ScanView(conf, proteins);
+        scanView = new ScanView(conf, proteins, tagFinder);
         this.scans = scans;
         scanIdInput.addKeyListener(new KeyAdapter() {
             @Override
@@ -137,6 +137,11 @@ public class ScanPanel extends JPanel {
         add(scrollScanView, gbc);
         needUpdate.set(true);
         update();
+    }
+
+    public void setScan(Scan scan) {
+        scanIdInput.setEnabled(false);
+        scanView.setScan(scan);
     }
 
     private void checkNewScanId() {

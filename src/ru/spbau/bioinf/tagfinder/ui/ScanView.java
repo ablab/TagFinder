@@ -41,7 +41,7 @@ public class ScanView extends JComponent {
 
     int proteinId = -1;
     private Protein protein = null;
-    private double scale = 1;
+    private double scale = 0.5;
     private Peak selectedPeak = null;
 
     private Dimension dimension = new Dimension(1000, 10);
@@ -51,26 +51,28 @@ public class ScanView extends JComponent {
     private double[] proteinSpectrum;
     double bestShift = 0;
 
-    public ScanView(Configuration conf, List<Protein> proteins) {
+    private TagFinder tagFinder;
+
+    public ScanView(Configuration conf, List<Protein> proteins, final TagFinder tagFinder) {
         this.conf = conf;
         this.proteins = proteins;
-        addMouseListener(new MouseAdapter() {
+        this.tagFinder = tagFinder;
+
+        addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                int x = e.getX();
-                int y = e.getY();
-                TooltipCandidate tooltip = getTooltip(x, y);
+                TooltipCandidate tooltip = getTooltip(e);
                 if (tooltip != null) {
                     setToolTipText(tooltip.getText());
                 }
             }
+        });
 
+        addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 requestFocus();
-                int x = e.getX();
-                int y = e.getY();
-                TooltipCandidate tooltip = getTooltip(x, y);
+                TooltipCandidate tooltip = getTooltip(e);
                 if (tooltip != null) {
                     if (selectedPeak != tooltip.getPeak()) {
                         selectedPeak = tooltip.getPeak();
@@ -81,8 +83,8 @@ public class ScanView extends JComponent {
         });
         this.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(KeyEvent e) {
-                char keyChar = e.getKeyChar();
+            public void keyReleased(KeyEvent e) {
+                char keyChar = Character.toLowerCase(e.getKeyChar());
                 if (keyChar == '+') {
                     scale *= 1.1;
                     updateDimension();
@@ -92,11 +94,26 @@ public class ScanView extends JComponent {
                     updateDimension();
                 }
 
+                if (KeyEvent.getKeyText(e.getKeyCode()).equals("R") && e.isControlDown()) {
+                    if (protein != null && scan != null) {
+                        List<Peak> reducedPeaks = new ArrayList<Peak>();
+                        for (Peak peak : scan.getPeaks()) {
+                            if (getPeakColor(peak.getValue()) == Color.BLACK &&
+                                    getPeakColor(peak.getYPeak().getValue()) == Color.BLACK) {
+                                reducedPeaks.add(peak);
+                            }
+                        }
+                        Scan reducedScan = new Scan(scan, reducedPeaks, proteinId);
+                        tagFinder.addScanTab(reducedScan);
+                    }
+                }
             }
         });
     }
 
-    private TooltipCandidate getTooltip(int x, int y) {
+    private TooltipCandidate getTooltip(MouseEvent e) {
+        int x = e.getX();
+        int y = e.getY();
         for (TooltipCandidate tooltipCandidate : tooltips) {
             if (tooltipCandidate.isValid(x, y / LINE_HEIGHT + 1, scale)) {
                 return tooltipCandidate;
@@ -154,7 +171,7 @@ public class ScanView extends JComponent {
     }
 
     private void updateDimension() {
-        dimension = new Dimension((int)scan.getPrecursorMass() + 400, (int)((components.size() + totalTags + 6) * LINE_HEIGHT * scale));
+        dimension = new Dimension((int)(scan.getPrecursorMass() * scale) + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
         repaint();
     }
 
@@ -235,18 +252,23 @@ public class ScanView extends JComponent {
         double peakValue = peak.getValue();
         double value = (peakValue - min);
         if (proteinSpectrum != null) {
-            Color color = Color.BLACK;
-            double v = peakValue + bestShift;
-            if (ShiftEngine.contains(proteinSpectrum, v)) {
-                color = Color.GREEN;
-            } else if (ShiftEngine.contains(proteinSpectrum, v, v - 1, v + 1, v + Consts.WATER, v - Consts.WATER, v - Consts.AMMONIA, v + Consts.AMMONIA)) {
-                color = Color.ORANGE;
-            }
+            Color color = getPeakColor(peakValue);
             g.setColor(color);
         }
         drawPeak(g, y, value, peak);
         g.setColor(Color.BLACK);
         return peakValue;
+    }
+
+    private Color getPeakColor(double peakValue) {
+        Color color = Color.BLACK;
+        double v = peakValue + bestShift;
+        if (ShiftEngine.contains(proteinSpectrum, v)) {
+            color = Color.GREEN;
+        } else if (ShiftEngine.contains(proteinSpectrum, v, v - 1, v + 1, v + Consts.WATER, v - Consts.WATER, v - Consts.AMMONIA, v + Consts.AMMONIA)) {
+            color = Color.ORANGE;
+        }
+        return color;
     }
 
     private void initBestShift() {

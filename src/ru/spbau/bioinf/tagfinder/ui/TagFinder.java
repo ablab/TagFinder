@@ -8,24 +8,35 @@ import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Protein;
 
 import java.util.List;
+import ru.spbau.bioinf.tagfinder.Scan;
 
 public class TagFinder extends JFrame {
 
     private Configuration conf;
     private List<Protein> proteins;
+    private Map<Integer,Integer> msAlignResults;
+    private Map<Integer,Scan> scans;
+    private JTabbedPane tabs;
 
 
     public TagFinder(String[] args) throws Exception {
         super("TagFinder");
         conf = new Configuration(args);
         proteins = conf.getProteins();
-        Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
-        JTabbedPane tabs = new JTabbedPane();
-        JPanel scanPanel = new ScanPanel(conf, conf.getScans(), proteins, msAlignResults);
+        msAlignResults = conf.getMSAlignResults();
+        tabs = new JTabbedPane();
+        scans = conf.getScans();
+        JPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults, this);
         tabs.addTab("Scan", scanPanel);
         JPanel proteinPanel = new ProteinPanel(proteins);
         tabs.addTab("Protein", proteinPanel);
         this.getContentPane().add(tabs);
+    }
+
+    public void addScanTab(Scan scan) {
+        ScanPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults, this);
+        scanPanel.setScan(scan);
+        tabs.addTab(scan.getName(), scanPanel);
     }
 
     public static void main(String[] args) throws Exception {
