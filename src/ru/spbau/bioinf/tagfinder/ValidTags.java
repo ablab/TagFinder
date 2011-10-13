@@ -1,18 +1,22 @@
 package ru.spbau.bioinf.tagfinder;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class ValidTags {
 
-    private static final int MAX_GAPPED_TAG = 90;
+    public static final String VIRTUAL = "virtual";
+    public static final String STANDARD = "standard";
+    public static final String REFLEX = "reverse";
 
     private Configuration conf;
 
@@ -28,19 +32,69 @@ public class ValidTags {
         df.setMaximumFractionDigits(2);
     }
 
-    private static boolean needReverseTag = false;
+    private boolean needReverseTag = false;
+    private boolean monoTagsOnly = false;
+    private boolean addOnes = false;
+    private int maxTagLength = 90;
+
+    public void setMonoTagsOnly(boolean monoTagsOnly) {
+        this.monoTagsOnly = monoTagsOnly;
+    }
+
+    public void setAddOnes(boolean addOnes) {
+        this.addOnes = addOnes;
+    }
+
+    public void setNeedReverseTag(boolean needReverseTag) {
+        this.needReverseTag = needReverseTag;
+    }
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
+        ValidTags validTags = new ValidTags(conf);
+        String type = STANDARD;
+        //validTags.process(type, 1);
+        //validTags.process(type, 2);
+        validTags.process(type, 3, 10);
+    }
+
+    private PrintWriter output;
+
+    private void process(String type, int gap) throws Exception {
+        process(type, gap, 100);
+    }
+
+    private void process(String type, int gap, int maxTagLength) throws Exception {
+        this.gap = gap;
+        this.maxTagLength = maxTagLength;
         List<Protein> proteins = conf.getProteins();
         Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
         Collections.sort(keys);
-        ValidTags validTags = new ValidTags(conf);
         Set<Integer> usedProteins = new HashSet<Integer>();
         msAlignPeaks = conf.getMSAlignPeaks();
+
+        double[] global = new double[100];
+        int[] count = new int[100];
+
+
+        setNeedReverseTag(STANDARD.equals(type));
+        System.out.println("type = " + type);
+        System.out.println("gap = " + this.gap);
+        System.out.println("monoTagsOnly = " + monoTagsOnly);
+        System.out.println("addOnes = " + addOnes);
+        System.out.println("needReverseTag = " + needReverseTag);
+
+        String fileName = type + "_" + gap;
+        if (monoTagsOnly) {
+            fileName += "_mono";
+        }
+        if (addOnes) {
+            fileName += "_add";
+        }
+        output = ReaderUtil.createOutputFile(new File("vt", fileName + ".txt"));
 
         for (int key : keys) {
             Scan scan = scans.get(key);
@@ -57,38 +111,61 @@ public class ValidTags {
 
 
                 Protein protein = proteins.get(proteinId);
-                validTags.process(scan, protein, 3);
+                long[][] stat = process(scan, protein, type, gap);
+                for (int i = 1; i < stat.length; i++) {
+                    long good = stat[i][0];
+                    long total = good + stat[i][1];
+                    if (total > 0) {
+                        global[i] += (100d * good)/total;
+                        count[i]++;
+                    } else {
+                        break;
+                    }
+                }
+
+                printStat(stat, proteinId, scanId);
+
+                //break;
             }
         }
+        output.close();
+        for (int i = 1; i < count.length; i++) {
+            int n = count[i];
+            if (n > 0) {
+                System.out.print( df.format(global[i]/n) + " ");
+            } else {
+                break;
+            }
+        }
+        System.out.println();
     }
 
-    public void process(Scan scan, Protein protein, int gap) {
+    public long[][] process(Scan scan, Protein protein, String type, int gap) {
         this.gap = gap;
         String sequence = protein.getSimplifiedAcids();
-        List<Peak> peaks =
-                    //msAlignPeaks.get(scanId)
-                    scan.createStandardSpectrum()
-                    //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
-                    //scan.createStandardSpectrumWithOnes()
-            ;
+        List<Peak> peaks = null;
 
-        needReverseTag = false;
-        System.out.println("needReverseTag = " + needReverseTag);
-
-        peaks = addOnes(peaks);
-
-        //filterMonotags(peaks);
-        int scanId = scan.getId();
-        int proteinId = protein.getProteinId();
-
-        if (gap == 1) {
-            GraphUtil.generateEdges(conf, peaks);
-            double[] positions = ShiftEngine.getPositions(peaks);
-            printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, positions);
+        if (VIRTUAL.equals(type)) {
+            peaks = msAlignPeaks.get(scan.getId());
+        } else if (STANDARD.equals(type)) {
+            peaks = scan.createStandardSpectrum();
+        } else if (REFLEX.equals(type)) {
+            scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
         } else {
-            GraphUtil.generateGapEdges(conf, peaks, gap);
-            printGappedTagInfo(peaks, scanId, proteinId, sequence, getReverse(sequence));
+            throw new RuntimeException("Wrong spectrum type " +  type);
         }
+
+        if (addOnes) {
+            peaks = addOnes(peaks);
+        }
+
+        GraphUtil.generateGapEdges(conf, peaks, gap);
+        if (monoTagsOnly) {
+                filterMonotags(peaks);
+        }
+
+        return printGappedTagInfo(peaks, sequence, getReverse(sequence));
+
     }
 
     private List<Peak> addOnes(List<Peak> peaks) {
@@ -113,40 +190,7 @@ public class ValidTags {
         }
     }
 
-    private static void printUsualTagInfo(List<Peak> peaks, Configuration conf, int scanId, Integer proteinId, String sequence, double[] positions) {
-
-        Set<String> tags = GraphUtil.generateTags(conf, peaks);
-
-        long[][] stat = new long[1000][2];
-        for (String tag : tags) {
-            updateStat(stat, tag, sequence, peaks, positions);
-        }
-        printStat(stat, proteinId, scanId);
-    }
-
-    private static void updateStat(long[][] stat, String tag, String sequence, List<Peak> peaks, double[] positions) {
-        String reverseTag = getReverse(tag);
-        boolean updateForReverse = !reverseTag.equals(tag);
-        for (double pos : positions) {
-            if (GraphUtil.tagStartsAtPos(pos, tag, peaks)) {
-                updateStat(stat, tag, sequence);
-                if (updateForReverse) {
-                    updateStat(stat, reverseTag, sequence);
-                }
-            }
-        }
-    }
-
-    private static void updateStat(long[][] stat, String tag, String sequence) {
-        int len = tag.length();
-        if (sequence.contains(tag)) {
-            stat[len][0]++;
-        } else {
-            stat[len][1]++;
-        }
-    }
-
-    private void printGappedTagInfo(List<Peak> peaks, int scanId, Integer proteinId, String sequence, String reverseSequence) {
+    private long[][] printGappedTagInfo(List<Peak> peaks, String sequence, String reverseSequence) {
         long[][] stat = new long[1000][2];
         for (Peak peak : peaks) {
             Set<Integer> starts = new HashSet<Integer>();
@@ -159,14 +203,14 @@ public class ValidTags {
             }
             processGappedTags(stat, peak, 0, sequence, reverseSequence, starts, reverseStarts);
         }
-        printStat(stat, proteinId, scanId);
+        return stat;
     }
 
     private void processGappedTags(long[][] stat, Peak peak, int prefix, String sequence, String reverseSequence, Set<Integer> starts, Set<Integer>reverseStarts) {
         if (prefix > 0) {
             stat[prefix][0]++;
         }
-        if (prefix > MAX_GAPPED_TAG) {
+        if (prefix > maxTagLength) {
             return;
         }
 
@@ -191,7 +235,7 @@ public class ValidTags {
             statOrig[i] = stat[i][1];
         }
 
-        if (prefix > MAX_GAPPED_TAG) {
+        if (prefix > maxTagLength) {
             return;
         }
         for (Peak next : nextPeaks) {
@@ -209,18 +253,19 @@ public class ValidTags {
             if (limits[0] < m && m < limits[1]) {
                 nextStarts.add(pos + 1);
             }
-            if (pos  + 1 < sequence.length()) {
-                m += Acid.getAcid(sequence.charAt(pos + 1)).getMass();
-                if (limits[0] < m && m < limits[1]) {
-                    nextStarts.add(pos + 2);
-                }
-
-            }
-            if (gap > 2) {
-                if (pos  + 2 < sequence.length()) {
-                    m += Acid.getAcid(sequence.charAt(pos + 2)).getMass();
+            if (gap > 1) {
+                if (pos  + 1 < sequence.length()) {
+                    m += Acid.getAcid(sequence.charAt(pos + 1)).getMass();
                     if (limits[0] < m && m < limits[1]) {
-                        nextStarts.add(pos + 3);
+                        nextStarts.add(pos + 2);
+                    }
+                }
+                if (gap > 2) {
+                    if (pos  + 2 < sequence.length()) {
+                        m += Acid.getAcid(sequence.charAt(pos + 2)).getMass();
+                        if (limits[0] < m && m < limits[1]) {
+                            nextStarts.add(pos + 3);
+                        }
                     }
                 }
             }
@@ -229,18 +274,18 @@ public class ValidTags {
         return nextStarts;
     }
 
-    private static void printStat(long[][] stat, Integer proteinId, int scanId) {
-        System.out.print(scanId + " " +  proteinId);
+    private void printStat(long[][] stat, Integer proteinId, int scanId) {
+        output.print(scanId + " " +  proteinId);
         for (int i = 1; i < stat.length; i++) {
             long good = stat[i][0];
             long total = good + stat[i][1];
             if (total > 0) {
-                System.out.print(" " + df.format((100d * good)/total));
+                output.print(" " + df.format((100d * good)/total) + " " + stat[i][0] + " " + stat[i][1] + " ");
             } else {
                 break;
             }
         }
-        System.out.println();
+        output.println();
     }
 
     public static String getReverse(String tag) {
