@@ -19,9 +19,11 @@ public class Scan {
     private int precursorCharge;
     private double precursorMass;
 
+    private String name;
 
     public Scan(Properties prop, BufferedReader input, int scanId) throws IOException {
         id = scanId;
+        name = Integer.toString(id);
         precursorCharge = ReaderUtil.getIntValue(prop, "CHARGE");
         precursorMass = ReaderUtil.getDoubleValue(prop, "MONOISOTOPIC_MASS");
         List<String[]> datas;
@@ -51,6 +53,7 @@ public class Scan {
 
     public Scan(Properties prop, BufferedReader input) throws IOException {
         id = ReaderUtil.getIntValue(prop, "SCANS");
+        name = Integer.toString(id);
         precursorMz = ReaderUtil.getDoubleValue(prop, "PRECURSOR_MZ");
         precursorCharge = ReaderUtil.getIntValue(prop, "PRECURSOR_CHARGE");
         precursorMass = ReaderUtil.getDoubleValue(prop, "PRECURSOR_MASS");
@@ -63,8 +66,9 @@ public class Scan {
         }
     }
 
-    public Scan(Scan original, List<Peak> peaks) {
+    public Scan(Scan original, List<Peak> peaks, int proteinId) {
         id = original.getId();
+        name = original.getName() + "/"  + proteinId;
         precursorMz = original.getPrecursorMz();
         precursorCharge = original.getPrecursorCharge();
         precursorMass = original.getPrecursorMass();
@@ -73,6 +77,10 @@ public class Scan {
 
     public int getId() {
         return id;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public double getPrecursorMass() {

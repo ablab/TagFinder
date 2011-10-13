@@ -57,7 +57,7 @@ public class UnmatchedScansGenerator {
                         }
                     }
                     peaks.removeAll(removed);
-                    Scan filtered = new Scan(scan, peaks);
+                    Scan filtered = new Scan(scan, peaks, proteinId);
                     filtered.save(conf2.getModifiedScansDir());
                 }
             }
