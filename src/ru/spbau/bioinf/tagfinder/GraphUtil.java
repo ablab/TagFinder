@@ -63,7 +63,7 @@ public class GraphUtil {
         return best;
     }
 
-    public static void generateGapEdges(Configuration conf, List<Peak> peaks, int allow) {
+    public static void generateGapEdges(Configuration conf, List<Peak> peaks, int gap) {
         int n = peaks.size();
         List<Double> masses = new ArrayList<Double>();
         Acid[] values = Acid.values();
@@ -72,13 +72,15 @@ public class GraphUtil {
         }
         for (int i = 0; i < values.length; i++) {
             Acid a1 = values[i];
-            for (int j = i + 1; j < values.length; j++) {
-                Acid a2 = values[j];
-                masses.add(a1.getMass() + a2.getMass());
-                if (allow > 2) {
-                    for (int k = j + 1; k < values.length; k++) {
-                        Acid a3 = values[k];
-                        masses.add(a1.getMass() + a2.getMass() + a3.getMass());
+            if (gap > 1) {
+                for (int j = i + 1; j < values.length; j++) {
+                    Acid a2 = values[j];
+                    masses.add(a1.getMass() + a2.getMass());
+                    if (gap > 2) {
+                        for (int k = j + 1; k < values.length; k++) {
+                            Acid a3 = values[k];
+                            masses.add(a1.getMass() + a2.getMass() + a3.getMass());
+                        }
                     }
                 }
             }
