@@ -12,11 +12,12 @@ import java.util.Set;
 
 public class ValidTags {
 
-    private static final int MAX_GAPPED_TAG = 9;
+    private static final int MAX_GAPPED_TAG = 90;
 
     private Configuration conf;
 
     private int gap;
+    private static Map<Integer,List<Peak>> msAlignPeaks;
 
     public ValidTags(Configuration conf) {
         this.conf = conf;
@@ -39,9 +40,7 @@ public class ValidTags {
         Collections.sort(keys);
         ValidTags validTags = new ValidTags(conf);
         Set<Integer> usedProteins = new HashSet<Integer>();
-        Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
-        needReverseTag = true;
-        System.out.println("needReverseTag = " + needReverseTag);
+        msAlignPeaks = conf.getMSAlignPeaks();
 
         for (int key : keys) {
             Scan scan = scans.get(key);
@@ -57,27 +56,38 @@ public class ValidTags {
                 }
 
 
-                String sequence = proteins.get(proteinId).getSimplifiedAcids();
-                List<Peak> peaks =
-                            //msAlignPeaks.get(scanId)
-                            scan.createStandardSpectrum();
-                            //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
-                            //scan.createStandardSpectrumWithOnes()
-                    ;
-
-                //filterMonotags(peaks);
-                /*
-                GraphUtil.generateEdges(conf, peaks);
-                double[] positions = ShiftEngine.getPositions(peaks);
-                printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, positions);
-                */
-
-
-                validTags.gap = 3;
-                GraphUtil.generateGapEdges(conf, peaks, validTags.gap);
-                validTags.printGappedTagInfo(peaks, scanId, proteinId, sequence, getReverse(sequence));
-
+                Protein protein = proteins.get(proteinId);
+                validTags.process(scan, protein, 3);
             }
+        }
+    }
+
+    public void process(Scan scan, Protein protein, int gap) {
+        this.gap = gap;
+        String sequence = protein.getSimplifiedAcids();
+        List<Peak> peaks =
+                    //msAlignPeaks.get(scanId)
+                    scan.createStandardSpectrum()
+                    //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan))
+                    //scan.createStandardSpectrumWithOnes()
+            ;
+
+        needReverseTag = false;
+        System.out.println("needReverseTag = " + needReverseTag);
+
+        peaks = addOnes(peaks);
+
+        //filterMonotags(peaks);
+        int scanId = scan.getId();
+        int proteinId = protein.getProteinId();
+
+        if (gap == 1) {
+            GraphUtil.generateEdges(conf, peaks);
+            double[] positions = ShiftEngine.getPositions(peaks);
+            printUsualTagInfo(peaks, conf, scanId, proteinId, sequence, positions);
+        } else {
+            GraphUtil.generateGapEdges(conf, peaks, gap);
+            printGappedTagInfo(peaks, scanId, proteinId, sequence, getReverse(sequence));
         }
     }
 
