@@ -56,10 +56,8 @@ public class PlaceStatistics {
                     continue;
                 }
 
-
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
                 List<Peak> peaks = msAlignPeaks.get(scanId);
-                GraphUtil.generateEdges(conf, peaks);
                 Map<Double, String> msAlignData = msAlignDatas.get(scanId);
                 int[][] stat = new int[100][3];
                 //updateStatWithoutGaps(stat, conf, msAlignData, sequence, peaks);
@@ -82,6 +80,7 @@ public class PlaceStatistics {
     }
 
     private static void updateStatWithoutGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks) {
+        GraphUtil.generateEdges(conf, peaks);
         Set<String> tags = GraphUtil.generateTags(conf, peaks);
         double[] positions = ShiftEngine.getPositions(peaks);
         for (String tag : tags) {
