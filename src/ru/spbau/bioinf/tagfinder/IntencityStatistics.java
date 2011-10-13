@@ -11,6 +11,10 @@ import java.util.Set;
 
 public class IntencityStatistics {
     private Configuration conf;
+    private int[] badCount;
+    private double[] good;
+    private int[] goodCount;
+    private double[] bad;
 
 
     public IntencityStatistics(Configuration conf) {
@@ -18,6 +22,7 @@ public class IntencityStatistics {
     }
 
     private static NumberFormat df = NumberFormat.getInstance();
+
     static {
         df.setMaximumFractionDigits(2);
     }
@@ -25,7 +30,7 @@ public class IntencityStatistics {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         List<Protein> proteins = conf.getProteins();
-        Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
+        Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
@@ -52,13 +57,15 @@ public class IntencityStatistics {
         }
     }
 
-    public  void analyzeScan(Scan scan, String sequence, int proteinId) {
+    public void analyzeScan(Scan scan, String sequence, int proteinId) {
         String reverseSequence = ValidTags.getReverse(sequence);
         List<Peak> peaks = scan.getPeaks();
         GraphUtil.generateEdges(conf, peaks);
-        double[] bad = new double[100];
-        double[] good = new double[100];
-        generateTags(peaks, bad, good, sequence, reverseSequence);
+        bad = new double[100];
+        good = new double[100];
+        badCount = new int[100];
+        goodCount = new int[100];
+        generateTags(peaks, sequence, reverseSequence);
         System.out.print(scan.getId() + " " + proteinId);
         for (int i = 1; i < good.length; i++) {
             if (bad[i] + good[i] == 0) {
@@ -71,32 +78,44 @@ public class IntencityStatistics {
             if (good[i] > bad[i]) {
                 v = 2;
             }
-            System.out.print(" " + ((good[i] + 0.0d)/(good[i] + bad[i])));
+            System.out.print(" " + ((goodCount[i] + 0.0d) / (goodCount[i] + badCount[i])));
+            if (goodCount[i] == 0) {
+                //System.out.println(" bb" + i + " ");
+            }
 
         }
         System.out.println();
     }
 
-    public void generateTags(List<Peak> peaks, double[] bad, double[] good, String sequence, String reverseSequence) {
-         for (Peak peak : peaks) {
-             generateTags("", peak, bad, good, sequence, reverseSequence, peak.getIntensity());
-         }
-     }
+    public void generateTags(List<Peak> peaks, String sequence, String reverseSequence) {
+        for (Peak peak : peaks) {
+            generateTags("", peak, sequence, reverseSequence, peak.getIntensity());
+        }
+    }
 
-    public void generateTags(String prefix, Peak peak, double[] bad, double[] good, String sequence, String reverseSequence, double intencity) {
+    public void generateTags(String prefix, Peak peak, String sequence, String reverseSequence, double intencity) {
         int d = prefix.length();
-        if (bad[d] < intencity || good[d] < intencity) {
-            boolean isGood = sequence.contains(prefix) || reverseSequence.contains(prefix);
-            if (isGood) {
-                good[d] = Math.max(good[d], intencity);
-            } else {
-                bad[d] = Math.max(bad[d], intencity);
+        boolean isGood = sequence.contains(prefix) || reverseSequence.contains(prefix);
+        if (isGood) {
+            if (good[d] == intencity) {
+                goodCount[d]++;
+            } else if (good[d] < intencity) {
+                goodCount[d] = 1;
+                good[d] = intencity;
+            }
+        } else {
+            if (bad[d] == intencity) {
+                badCount[d]++;
+            } else if (bad[d] < intencity) {
+                badCount[d] = 1;
+                bad[d] = intencity;
             }
         }
+
         for (Peak next : peak.getNext()) {
             for (Acid acid : Acid.values()) {
-                if (acid.match(conf.getEdgeLimits(peak, next))){
-                    generateTags(prefix + acid.name(), next, bad, good, sequence, reverseSequence, Math.min(intencity, next.getIntensity()));
+                if (acid.match(conf.getEdgeLimits(peak, next))) {
+                    generateTags(prefix + acid.name(), next, sequence, reverseSequence, Math.min(intencity, next.getIntensity()));
                 }
             }
         }
