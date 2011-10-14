@@ -1,5 +1,7 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
+import edu.ucsd.msalign.align.PropertyUtil;
+import edu.ucsd.msalign.align.idevalue.IdEValue;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -7,10 +9,13 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Properties;
 import javax.swing.JComponent;
 import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Analyzer;
@@ -34,7 +39,7 @@ public class ScanView extends JComponent {
 
     List<TooltipCandidate> tooltips = new ArrayList<TooltipCandidate>();
 
-    private Configuration conf;
+    private final Configuration conf;
 
     private Scan scan;
     List<Peak> peaks = null;
@@ -51,12 +56,9 @@ public class ScanView extends JComponent {
     private double[] proteinSpectrum;
     double bestShift = 0;
 
-    private TagFinder tagFinder;
-
-    public ScanView(Configuration conf, List<Protein> proteins, final TagFinder tagFinder) {
+    public ScanView(final Configuration conf, List<Protein> proteins, final TagFinder tagFinder) {
         this.conf = conf;
         this.proteins = proteins;
-        this.tagFinder = tagFinder;
 
         addMouseMotionListener(new MouseAdapter() {
             @Override
@@ -94,17 +96,45 @@ public class ScanView extends JComponent {
                     updateDimension();
                 }
 
-                if (KeyEvent.getKeyText(e.getKeyCode()).equals("R") && e.isControlDown()) {
-                    if (protein != null && scan != null) {
-                        List<Peak> reducedPeaks = new ArrayList<Peak>();
-                        for (Peak peak : scan.getPeaks()) {
-                            if (getPeakColor(peak.getValue()) == Color.BLACK &&
-                                    getPeakColor(peak.getYPeak().getValue()) == Color.BLACK) {
-                                reducedPeaks.add(peak);
+                String keyText = KeyEvent.getKeyText(e.getKeyCode());
+                if (e.isControlDown()) {
+                    if (keyText.equals("R")) {
+                        if (protein != null && scan != null) {
+                            List<Peak> reducedPeaks = new ArrayList<Peak>();
+                            for (Peak peak : scan.getPeaks()) {
+                                if (getPeakColor(peak.getValue()) == Color.BLACK &&
+                                        getPeakColor(peak.getYPeak().getValue()) == Color.BLACK) {
+                                    reducedPeaks.add(peak);
+                                }
+                            }
+                            Scan reducedScan = new Scan(scan, reducedPeaks, proteinId);
+                            tagFinder.addScanTab(reducedScan);
+                        }
+                    }
+                    if (!scan.getName().equals(Integer.toString(scan.getId()))) {
+                        if (keyText.equals("S")) {
+                            try {
+                                System.out.println("Start computing E-value...");
+                                String filePrefix = "reduced";
+                                File reduced = new File(filePrefix);
+                                String scanName = scan.saveTxt(reduced);
+                                try {
+                                    String[] args = {conf.getProteinDatabaseFile().getCanonicalPath(),
+                                            filePrefix + "/" + scanName,
+                                            "CID", "C57", "2", "15", filePrefix + "/" //+ pairsName
+                                    };
+                                    Properties properties = PropertyUtil.genePropertiesForId(args);
+                                    IdEValue comp = new IdEValue(properties);
+                                    System.out.println("Processing scan " + scan.getName() + " protein " + proteinId);
+                                    comp.process(scan.getId(), Integer.toString(proteinId));
+                                    System.out.println("Done");
+                                } catch (Exception e1) {
+                                    e1.printStackTrace();
+                                }
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
                             }
                         }
-                        Scan reducedScan = new Scan(scan, reducedPeaks, proteinId);
-                        tagFinder.addScanTab(reducedScan);
                     }
                 }
             }
