@@ -303,7 +303,12 @@ public class ScanView extends JComponent {
 
     private void initBestShift() {
         double precursorMass =  scan.getPrecursorMass() + PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
-        List<Double> shifts = ShiftEngine.getShifts(scan.getPeaks(), precursorMass, proteinSpectrum);
+        List<Double> shiftsList = ShiftEngine.getShifts(scan.getPeaks(), precursorMass, proteinSpectrum);
+        double[] shifts = new double[shiftsList.size()];
+        for (int i = 0; i < shifts.length; i++) {
+            shifts[i] = shiftsList.get(i);
+        }
+        shifts = ShiftEngine.merge(shifts);
 
         double bestScore = 0;
         double[] spectrum = ShiftEngine.getSpectrum(scan.getPeaks(), precursorMass);
