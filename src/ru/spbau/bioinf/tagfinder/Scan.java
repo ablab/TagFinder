@@ -135,7 +135,7 @@ public class Scan {
     }
 
     public void save(File dir) throws IOException {
-        File file = new File(dir, "scan_" + id + ".env");
+        File file = new File(dir, "scan_" + name.replaceAll("/", "_") + ".env");
         PrintWriter out = ReaderUtil.createOutputFile(file);
         out.println("BEGIN SPECTRUM");
         out.println("ID -1");
@@ -162,5 +162,24 @@ public class Scan {
         out.println("END SPECTRUM");
         out.close();
 
+    }
+
+    public String saveTxt(File dir) throws IOException {
+        String scanName = "scan_" + name.replaceAll("/", "_") + ".txt";
+        File file = new File(dir, scanName);
+        PrintWriter out = ReaderUtil.createOutputFile(file);
+        out.println("BEGIN IONS");
+        out.println("ID=0");
+        out.println("SCANS=" + id);
+        out.println("PRECURSOR_MZ=" + precursorMz);
+        out.println("PRECURSOR_CHARGE=" + precursorCharge);
+        out.println("PRECURSOR_MASS=" + precursorMass);
+        for (Peak peak : peaks) {
+            out.println(peak.getMass() + "\t" + peak.getIntensity() + "\t" + peak.getCharge());
+        }
+
+        out.println("END IONS");
+        out.close();
+        return scanName;
     }
 }
