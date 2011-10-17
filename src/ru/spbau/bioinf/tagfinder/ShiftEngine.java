@@ -93,9 +93,13 @@ public class ShiftEngine {
     }
 
     public static boolean contains(double[] spectrum, double... values) {
+        return  contains(0.1, spectrum, values);
+    }
+
+    public static boolean contains(double epsilon, double[] spectrum, double... values) {
         for (double p : spectrum) {
             for (double v : values) {
-                if (Math.abs(p - v) < 0.1) {
+                if (Math.abs(p - v) < epsilon) {
                     return true;
                 }
             }
@@ -110,5 +114,27 @@ public class ShiftEngine {
         }
         positions = merge(positions);
         return positions;
+    }
+
+    public static double getBestShift(Configuration conf, Scan scan, double[] proteinSpectrum) {
+        double precursorMass =  scan.getPrecursorMass() + PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
+        List<Double> shiftsList = getShifts(scan.getPeaks(), precursorMass, proteinSpectrum);
+        double[] shifts = new double[shiftsList.size()];
+        for (int i = 0; i < shifts.length; i++) {
+            shifts[i] = shiftsList.get(i);
+        }
+        shifts = merge(shifts);
+
+        double bestShift = 0;
+        double bestScore = 0;
+        double[] spectrum = getSpectrum(scan.getPeaks(), precursorMass);
+        for (Double shift : shifts) {
+            double nextScore = getScore(spectrum, proteinSpectrum, shift);
+            if (nextScore > bestScore) {
+                bestScore = nextScore;
+                bestShift = shift;
+            }
+        }
+        return bestShift;
     }
 }
