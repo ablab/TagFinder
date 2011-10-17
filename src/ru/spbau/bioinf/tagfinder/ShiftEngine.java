@@ -29,6 +29,15 @@ public class ShiftEngine {
         return merge(ans);
     }
 
+    public static double[] getSpectrum(List<Peak> peaks) {
+        double[] ans = new double[peaks.size() + 1];
+        ans[0] = 0;
+        for (int i = 0; i < peaks.size(); i++) {
+            Peak peak = peaks.get(i);
+            ans[i + 1] = peak.getValue();
+        }
+        return merge(ans);
+    }
 
     public static double[] merge(double[] peaks) {
         if (peaks.length <= 1) {
@@ -68,6 +77,16 @@ public class ShiftEngine {
             for (double v : spectrum) {
                 ans.add(v - peak.getMass());
                 ans.add(v + peak.getMass() - precursorMass);
+            }
+        }
+        return ans;
+    }
+
+    public static List<Double> getShifts(List<Peak> peaks, double[] spectrum) {
+        List<Double> ans = new ArrayList<Double>();
+        for (Peak peak : peaks) {
+            for (double v : spectrum) {
+                ans.add(v - peak.getValue());
             }
         }
         return ans;
@@ -128,6 +147,27 @@ public class ShiftEngine {
         double bestShift = 0;
         double bestScore = 0;
         double[] spectrum = getSpectrum(scan.getPeaks(), precursorMass);
+        for (Double shift : shifts) {
+            double nextScore = getScore(spectrum, proteinSpectrum, shift);
+            if (nextScore > bestScore) {
+                bestScore = nextScore;
+                bestShift = shift;
+            }
+        }
+        return bestShift;
+    }
+
+    public static double getBestShift(List<Peak> peaks, double[] proteinSpectrum) {
+        List<Double> shiftsList = getShifts(peaks, proteinSpectrum);
+        double[] shifts = new double[shiftsList.size()];
+        for (int i = 0; i < shifts.length; i++) {
+            shifts[i] = shiftsList.get(i);
+        }
+        shifts = merge(shifts);
+
+        double bestShift = 0;
+        double bestScore = 0;
+        double[] spectrum = getSpectrum(peaks);
         for (Double shift : shifts) {
             double nextScore = getScore(spectrum, proteinSpectrum, shift);
             if (nextScore > bestScore) {
