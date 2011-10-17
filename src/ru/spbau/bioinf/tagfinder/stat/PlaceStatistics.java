@@ -61,6 +61,7 @@ public class PlaceStatistics {
                     if (total > 0) {
                         System.out.print(" " + df.format((100d * stat[i][1])/total));
                         System.out.print(" " + df.format((100d * stat[i][2])/total));
+                        System.out.print(" " + df.format((100d * stat[i][2])/stat[i][1]));
                     } else {
                         break;
                     }
