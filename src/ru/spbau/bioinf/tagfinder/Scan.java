@@ -91,6 +91,14 @@ public class Scan {
         return peaks;
     }
 
+    public List<Peak> getYPeaks() {
+        List<Peak> yPeaks = new ArrayList<Peak>();
+        for (Peak peak : peaks) {
+            yPeaks.add(peak.getYPeak(precursorMass));
+        }
+        return yPeaks;
+    }
+
     public int getPrecursorCharge() {
         return precursorCharge;
     }
@@ -102,19 +110,6 @@ public class Scan {
     public List<Peak> createStandardSpectrum() {
         List<Peak> peaks = new ArrayList<Peak>();
         peaks.addAll(this.peaks);
-        peaks.add(new Peak(0, 0, 0));
-        peaks.add(new Peak(getPrecursorMass(), 0, 0));
-        Collections.sort(peaks);
-        return peaks;
-    }
-
-    public List<Peak> createStandardSpectrumWithOnes() {
-        List<Peak> peaks = new ArrayList<Peak>();
-        peaks.addAll(this.peaks);
-        for (Peak peak : this.peaks) {
-            peaks.add(new Peak(peak.getValue() - 1, 0, 0));
-            peaks.add(new Peak(peak.getValue() + 1, 0, 0));
-        }
         peaks.add(new Peak(0, 0, 0));
         peaks.add(new Peak(getPrecursorMass(), 0, 0));
         Collections.sort(peaks);
