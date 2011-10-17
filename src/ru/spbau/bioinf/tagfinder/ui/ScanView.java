@@ -54,7 +54,8 @@ public class ScanView extends JComponent {
 
     private List<Protein> proteins;
     private double[] proteinSpectrum;
-    double bestShift = 0;
+    double bestShiftB = 0;
+    double bestShiftY = 0;
 
     public ScanView(final Configuration conf, List<Protein> proteins, final TagFinder tagFinder) {
         this.conf = conf;
@@ -102,8 +103,8 @@ public class ScanView extends JComponent {
                         if (protein != null && scan != null) {
                             List<Peak> reducedPeaks = new ArrayList<Peak>();
                             for (Peak peak : scan.getPeaks()) {
-                                if (getPeakColor(peak.getValue()) == Color.BLACK &&
-                                        getPeakColor(peak.getYPeak().getValue()) == Color.BLACK) {
+                                if (getPeakColor(peak) == Color.BLACK &&
+                                        getPeakColor(peak.getYPeak()) == Color.BLACK) {
                                     reducedPeaks.add(peak);
                                 }
                             }
@@ -161,7 +162,8 @@ public class ScanView extends JComponent {
                 if (scan != null) {
                     initBestShift();
                 } else {
-                    bestShift = 0;
+                    bestShiftB = 0;
+                    bestShiftY = 0;
                 }
                 return true;
             }
@@ -230,13 +232,14 @@ public class ScanView extends JComponent {
 
         if (scan != null) {
             for (Peak peak : peaks) {
-                drawPeak(g, peak, line, -bestShift);
+                double shift = peak.getPeakType() == PeakType.B ? bestShiftB : bestShiftY;
+                drawPeak(g, peak, line, -shift);
             }
             double precursorMass = scan.getPrecursorMass();
-            double end = precursorMass + bestShift;
-            drawPeak(g, line, bestShift);
+            double end = precursorMass + bestShiftB;
+            drawPeak(g, line, bestShiftB);
             drawPeak(g, line, end);
-            g.drawString(df.format(precursorMass) +  " + " + df.format(bestShift), (int)(end*scale) + 3, 15);
+            g.drawString(df.format(precursorMass) +  " + " + df.format(bestShiftB) + " " + df.format(bestShiftY), (int)(end*scale) + 3, 15);
         }
 
         line++;
@@ -282,7 +285,7 @@ public class ScanView extends JComponent {
         double peakValue = peak.getValue();
         double value = (peakValue - min);
         if (proteinSpectrum != null) {
-            Color color = getPeakColor(peakValue);
+            Color color = getPeakColor(peak);
             g.setColor(color);
         }
         drawPeak(g, y, value, peak);
@@ -290,35 +293,30 @@ public class ScanView extends JComponent {
         return peakValue;
     }
 
-    private Color getPeakColor(double peakValue) {
+    private Color getPeakColor(Peak peak) {
         Color color = Color.BLACK;
-        double v = peakValue + bestShift;
+        double peakValue = peak.getValue();
+        double shift = peak.getPeakType() == PeakType.B ? bestShiftB : bestShiftY;
+        double v = peakValue + shift;
         if (ShiftEngine.contains(proteinSpectrum, v)) {
             color = Color.GREEN;
-        } else if (ShiftEngine.contains(proteinSpectrum, v, v - 1, v + 1, v + Consts.WATER, v - Consts.WATER, v - Consts.AMMONIA, v + Consts.AMMONIA)) {
+        } else if (ShiftEngine.contains(proteinSpectrum, v,
+                v - 1, v + 1,
+                v + Consts.WATER, v - Consts.WATER, v - Consts.AMMONIA, v + Consts.AMMONIA)) {
             color = Color.ORANGE;
         }
         return color;
     }
 
     private void initBestShift() {
-        double precursorMass =  scan.getPrecursorMass() + PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
-        List<Double> shiftsList = ShiftEngine.getShifts(scan.getPeaks(), precursorMass, proteinSpectrum);
-        double[] shifts = new double[shiftsList.size()];
-        for (int i = 0; i < shifts.length; i++) {
-            shifts[i] = shiftsList.get(i);
-        }
-        shifts = ShiftEngine.merge(shifts);
+        System.out.println("+ PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan); = " + +PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
 
-        double bestScore = 0;
-        double[] spectrum = ShiftEngine.getSpectrum(scan.getPeaks(), precursorMass);
-        for (Double shift : shifts) {
-            double nextScore = ShiftEngine.getScore(spectrum, proteinSpectrum, shift);
-            if (nextScore > bestScore) {
-                bestScore = nextScore;
-                bestShift = shift;
-            }
-        }
+        System.out.print("Calculate best shift for B-ions...");
+        bestShiftB = ShiftEngine.getBestShift(scan.getPeaks(), proteinSpectrum);
+        System.out.println(Double.toString(bestShiftB));
+        System.out.print("Calculate best shift for Y-ions...");
+        bestShiftY = ShiftEngine.getBestShift(scan.getYPeaks() , proteinSpectrum);
+        System.out.println(Double.toString(bestShiftY));
     }
 
     private void drawPeak(Graphics g, int y, double value) {
