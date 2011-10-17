@@ -44,7 +44,7 @@ public class UnmatchedScansGenerator {
                 if (TAGS_MODE.equals(mod)) {
                     removed = getRemovedPeaksByTags(peaks, sequence);
                 } if (SHARED_MODE.equals(mod)) {
-                    removed = getRemovedPeaksByShared(peaks, sequence, scan.getPrecursorMass());
+                    removed = getRemovedPeaksByShared(scan, sequence, scan.getPrecursorMass());
                 }
 
 
@@ -64,27 +64,17 @@ public class UnmatchedScansGenerator {
         }
     }
 
-    private Set<Peak> getRemovedPeaksByShared(List<Peak> peaks, String sequence, double precursorMass) {
+    private Set<Peak> getRemovedPeaksByShared(Scan scan, String sequence, double precursorMass) {
         Set<Peak> removed = new HashSet<Peak>();
         double[] protein = ShiftEngine.getSpectrum(sequence);
-        List<Double> shifts = ShiftEngine.getShifts(peaks, precursorMass, protein);
-        double bestShift = 0;
-        double bestScore = 0;
-        double[] spectrum = ShiftEngine.getSpectrum(peaks, precursorMass);
-        for (Double shift : shifts) {
-            double nextScore = ShiftEngine.getScore(spectrum, protein, shift);
-            if (nextScore > bestScore) {
-                bestScore = nextScore;
-                bestShift = shift;
-            }
-        }
-        double[] mod = new double[]{0, -Consts.WATER, -Consts.AMMONIA, - Consts.WATER - Consts.AMMONIA};
-        for (Peak peak : peaks) {
+        double bestShift = ShiftEngine.getBestShift(conf, scan, protein);
+        double[] mod = new double[]{0, -Consts.WATER, -Consts.AMMONIA, Consts.WATER, Consts.AMMONIA};
+        for (Peak peak : scan.getPeaks()) {
             for (double dv : mod) {
                 double modMass = peak.getMass() + dv;
                 double v1 = modMass + bestShift;
                 double v2 = precursorMass - modMass + bestShift;
-                if (ShiftEngine.contains(protein, v1, v2)) {
+                if (ShiftEngine.contains(precursorMass * 0.01/1000, protein, v1, v2)) {
                     removed.add(peak);
                     break;
                 }
