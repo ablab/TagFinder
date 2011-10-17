@@ -263,7 +263,12 @@ public class Configuration {
 
             Properties properties = ReaderUtil.readPropertiesUntil(input, "BEGIN ENVELOPE");
             String fileName = file.getName();
-            int id = Integer.parseInt(fileName.substring(fileName.lastIndexOf("_") + 1, fileName.lastIndexOf(".")));
+            String idStart = fileName.substring(fileName.indexOf("_") + 1);
+            int idFinish = idStart.indexOf("_");
+            if (idFinish < 0) {
+                idFinish = idStart.indexOf(".");
+            }
+            int id = Integer.parseInt(idStart.substring(0, idFinish));
             Scan scan = new Scan(properties, input, id);
             scans.put(scan.getId(), scan);
         }
