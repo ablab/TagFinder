@@ -13,17 +13,11 @@ import ru.spbau.bioinf.tagfinder.GraphUtil;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
-import ru.spbau.bioinf.tagfinder.ShiftEngine;
 import ru.spbau.bioinf.tagfinder.ValidTags;
 
 public class PlaceStatistics {
 
-    public static final double EPSILON = 0.1;
-    private Configuration conf;
-
-    public PlaceStatistics(Configuration conf) {
-        this.conf = conf;
-    }
+    public static final double TEN_PPM = 0.00001d;
 
     private static NumberFormat df = NumberFormat.getInstance();
 
@@ -39,7 +33,6 @@ public class PlaceStatistics {
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
         Collections.sort(keys);
-        PlaceStatistics placeStatistics = new PlaceStatistics(conf);
         Set<Integer> usedProteins = new HashSet<Integer>();
         Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
         Map<Integer, Map<Double, String>> msAlignDatas = conf.getMSAlignData();
@@ -60,8 +53,7 @@ public class PlaceStatistics {
                 List<Peak> peaks = msAlignPeaks.get(scanId);
                 Map<Double, String> msAlignData = msAlignDatas.get(scanId);
                 int[][] stat = new int[100][3];
-                //updateStatWithoutGaps(stat, conf, msAlignData, sequence, peaks);
-                updateStatWithGaps(stat, conf, msAlignData, sequence, peaks, 3);
+                updateStatWithGaps(stat, conf, msAlignData, sequence, peaks, 3, scan.getPrecursorMass());
 
                 System.out.print(scanId + " " +  proteinId);
                 for (int i = 1; i < stat.length; i++) {
@@ -74,39 +66,16 @@ public class PlaceStatistics {
                     }
                 }
                 System.out.println();
-
             }
         }
     }
 
-    private static void updateStatWithoutGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks) {
-        GraphUtil.generateEdges(conf, peaks);
-        Set<String> tags = GraphUtil.generateTags(conf, peaks);
-        double[] positions = ShiftEngine.getPositions(peaks);
-        for (String tag : tags) {
-            int len = tag.length();
-            for (double pos : positions) {
-                if (GraphUtil.tagStartsAtPos(pos, tag, peaks)) {
-                    stat[len][0]++;
-                    if (sequence.contains(tag)) {
-                        stat[len][1]++;
-                        for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
-                            if (entry.getValue().startsWith(tag) && Math.abs(pos - entry.getKey()) < EPSILON) {
-                                stat[len][2]++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private static void updateStatWithGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks, int gap) {
+    private static void updateStatWithGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks, int gap, double precursorMass) {
         GraphUtil.generateGapEdges(conf, peaks, gap);
         for (Peak peak : peaks) {
             String match = null;
             for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
-                if (Math.abs(peak.getValue() - entry.getKey()) < EPSILON) {
+                if (Math.abs(peak.getValue() - entry.getKey()) < TEN_PPM * precursorMass) {
                     match = entry.getValue();
                     break;
                 }
