@@ -1,7 +1,5 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
-import edu.ucsd.msalign.align.PropertyUtil;
-import edu.ucsd.msalign.align.idevalue.IdEValue;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -9,18 +7,16 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Properties;
 import javax.swing.JComponent;
 import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Analyzer;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Consts;
+import ru.spbau.bioinf.tagfinder.EValueAdapter;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.PeakType;
 import ru.spbau.bioinf.tagfinder.PrecursorMassShiftFinder;
@@ -112,29 +108,13 @@ public class ScanView extends JComponent {
                             tagFinder.addScanTab(reducedScan);
                         }
                     }
-                    if (!scan.getName().equals(Integer.toString(scan.getId()))) {
-                        if (keyText.equals("S")) {
-                            try {
-                                System.out.println("Start computing E-value...");
-                                String filePrefix = "reduced";
-                                File reduced = new File(filePrefix);
-                                String scanName = scan.saveTxt(reduced);
-                                try {
-                                    String[] args = {conf.getProteinDatabaseFile().getCanonicalPath(),
-                                            filePrefix + "/" + scanName,
-                                            "CID", "C57", "2", "15", filePrefix + "/" //+ pairsName
-                                    };
-                                    Properties properties = PropertyUtil.genePropertiesForId(args);
-                                    IdEValue comp = new IdEValue(properties);
-                                    System.out.println("Processing scan " + scan.getName() + " protein " + proteinId);
-                                    comp.process(scan.getId(), Integer.toString(proteinId));
-                                    System.out.println("Done");
-                                } catch (Exception e1) {
-                                    e1.printStackTrace();
-                                }
-                            } catch (IOException ioe) {
-                                ioe.printStackTrace();
-                            }
+
+                    if (keyText.equals("S")) {
+                        System.out.println("Start computing E-value...");
+                        try {
+                            EValueAdapter.calculateEValue(scan, proteinId);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
                         }
                     }
                 }
@@ -203,7 +183,7 @@ public class ScanView extends JComponent {
     }
 
     private void updateDimension() {
-        dimension = new Dimension((int)(scan.getPrecursorMass() * scale) + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
+        dimension = new Dimension((int) (scan.getPrecursorMass() * scale) + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
         repaint();
     }
 
@@ -239,11 +219,10 @@ public class ScanView extends JComponent {
             double end = precursorMass + bestShiftB;
             drawPeak(g, line, bestShiftB);
             drawPeak(g, line, end);
-            g.drawString(df.format(precursorMass) +  " + " + df.format(bestShiftB) + " " + df.format(bestShiftY), (int)(end*scale) + 3, 15);
+            g.drawString(df.format(precursorMass) + " + " + df.format(bestShiftB) + " " + df.format(bestShiftY), (int) (end * scale) + 3, 15);
         }
 
         line++;
-
 
 
         if (protein != null) {
@@ -257,7 +236,7 @@ public class ScanView extends JComponent {
         }
 
         for (int i = 0; i < components.size(); i++) {
-            List<Peak[]> component =  components.get(i);
+            List<Peak[]> component = components.get(i);
             double min = scan.getPrecursorMass();
             for (Peak[] tag : component) {
                 double v = tag[0].getValue();
@@ -266,7 +245,7 @@ public class ScanView extends JComponent {
                 }
             }
             g.drawString("Component " + (i + 1), 3, line * LINE_HEIGHT);
-            line ++;
+            line++;
             for (Peak[] tag : component) {
                 for (int j = 0; j < tag.length; j++) {
                     Peak peak = tag[j];
@@ -276,7 +255,7 @@ public class ScanView extends JComponent {
                         drawLetter(g, line, peakValue - min, Acid.getAcid(delta));
                     }
                 }
-                line ++;
+                line++;
             }
         }
     }
@@ -315,7 +294,7 @@ public class ScanView extends JComponent {
         bestShiftB = ShiftEngine.getBestShift(scan.getPeaks(), proteinSpectrum);
         System.out.println(Double.toString(bestShiftB));
         System.out.print("Calculate best shift for Y-ions...");
-        bestShiftY = ShiftEngine.getBestShift(scan.getYPeaks() , proteinSpectrum);
+        bestShiftY = ShiftEngine.getBestShift(scan.getYPeaks(), proteinSpectrum);
         System.out.println(Double.toString(bestShiftY));
     }
 
@@ -324,7 +303,7 @@ public class ScanView extends JComponent {
     }
 
     private void drawPeak(Graphics g, int line, double value, Peak peak) {
-        int v = (int)(value * scale);
+        int v = (int) (value * scale);
         int y = line * LINE_HEIGHT;
         g.drawLine(v, y, v, y - LINE_HEIGHT + 3);
         double tooltipValue = peak != null ? peak.getValue() : value;
@@ -338,7 +317,7 @@ public class ScanView extends JComponent {
         }
     }
 
-    private void drawIon(Graphics g, int line, int  v, PeakType peakType) {
+    private void drawIon(Graphics g, int line, int v, PeakType peakType) {
         int x1 = peakType == PeakType.B ? v - 3 : v + 3;
         int y = line * LINE_HEIGHT;
         g.drawLine(x1, y - LINE_HEIGHT + 3, v, y - LINE_HEIGHT + 3);

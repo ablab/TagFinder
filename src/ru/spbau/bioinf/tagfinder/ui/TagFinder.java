@@ -5,6 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import ru.spbau.bioinf.tagfinder.Configuration;
+import ru.spbau.bioinf.tagfinder.EValueAdapter;
 import ru.spbau.bioinf.tagfinder.Protein;
 
 import java.util.List;
@@ -18,7 +19,6 @@ public class TagFinder extends JFrame {
     private Map<Integer,Scan> scans;
     private JTabbedPane tabs;
 
-
     public TagFinder(String[] args) throws Exception {
         super("TagFinder");
         conf = new Configuration(args);
@@ -31,6 +31,8 @@ public class TagFinder extends JFrame {
         JPanel proteinPanel = new ProteinPanel(proteins);
         tabs.addTab("Protein", proteinPanel);
         this.getContentPane().add(tabs);
+
+        EValueAdapter.init(conf);
     }
 
     public void addScanTab(Scan scan) {
