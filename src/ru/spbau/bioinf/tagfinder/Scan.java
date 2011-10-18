@@ -1,5 +1,9 @@
 package ru.spbau.bioinf.tagfinder;
 
+import edu.ucsd.msalign.res.MassConstant;
+import edu.ucsd.msalign.spec.peak.DeconvPeak;
+import edu.ucsd.msalign.spec.sp.Ms;
+import edu.ucsd.msalign.spec.sp.MsHeader;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 import java.io.BufferedReader;
@@ -176,5 +180,23 @@ public class Scan {
         out.println("END IONS");
         out.close();
         return scanName;
+    }
+
+    public Ms<DeconvPeak> getMsDeconvPeaks() throws Exception {
+        DeconvPeak deconvPeaks[] = new DeconvPeak[peaks.size()];
+
+        for (int i = 0; i < peaks.size(); i++) {
+            Peak peak = peaks.get(i);
+            deconvPeaks[i] = new DeconvPeak(i, peak.getMass(), peak.getIntensity(), peak.getCharge());
+        }
+
+        MsHeader header = new MsHeader(precursorCharge);
+        header.setTitle("sp_" + id);
+        header.setPrecMonoMz(precursorMass / precursorCharge + MassConstant.getProtonMass());
+        header.setScans(Integer.toString(id));
+        header.setId(id);
+        Ms<DeconvPeak> deconvMs = new Ms<DeconvPeak>(deconvPeaks, header);
+        deconvMs.sortOnPos();
+        return deconvMs;
     }
 }
