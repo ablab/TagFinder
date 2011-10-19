@@ -141,17 +141,29 @@ public class Configuration {
     public Map<Integer, Integer> getMSAlignResults() throws IOException {
         BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "nodigestion_result_list.txt"));
         Map<Integer, Integer> ans = new HashMap<Integer, Integer>();
+        badMSAlignResults.clear();
         String s;
         while ((s = input.readLine()) != null) {
             String[] data = ReaderUtil.getDataArray(s);
             int scanId = Integer.parseInt(data[7]);
             spectrums.put(Integer.parseInt(data[2]), scanId);
+            int proteinId = Integer.parseInt(data[3]);
             if (Double.parseDouble(data[data.length - 1]) < 0.0015) {
-                ans.put(scanId, Integer.parseInt(data[3]));
+                ans.put(scanId, proteinId);
+            } else {
+                badMSAlignResults.put(scanId, proteinId);
             }
         }
         return ans;
     }
+
+    public Map<Integer, Integer> getBadMSAlignResults() throws IOException {
+        getMSAlignResults();
+        return badMSAlignResults;
+    }
+
+    private Map<Integer, Integer> badMSAlignResults = new HashMap<Integer, Integer>();
+
 
     public Map<Integer, List<Peak>> getMSAlignPeaks() throws IOException {
         getMSAlignResults();
