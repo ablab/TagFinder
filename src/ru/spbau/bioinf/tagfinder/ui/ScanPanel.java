@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import ru.spbau.bioinf.tagfinder.Configuration;
+import ru.spbau.bioinf.tagfinder.EValueAdapter;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
 
@@ -24,6 +25,7 @@ public class ScanPanel extends JPanel {
     private Map<Integer, Scan> scans;
 
     int scanId = 0;
+    int proteinId = -1;
 
     private final AtomicBoolean needUpdate = new AtomicBoolean(false);
 
@@ -41,11 +43,13 @@ public class ScanPanel extends JPanel {
 
     private ScanView scanView;
     private Map<Integer,Integer> msAlignResults;
+    private List<Protein> proteins;
 
-    public ScanPanel(Configuration conf, Map<Integer, Scan> scans, List<Protein> proteins, Map<Integer,Integer> msAlignResults, TagFinder tagFinder) {
+    public ScanPanel(Configuration conf, Map<Integer, Scan> scans, final List<Protein> proteins, Map<Integer,Integer> msAlignResults) {
         this.msAlignResults = msAlignResults;
-        scanView = new ScanView(conf, proteins, tagFinder);
+        scanView = new ScanView(conf);
         this.scans = scans;
+        this.proteins = proteins;
         scanIdInput.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent keyEvent) {
@@ -97,8 +101,14 @@ public class ScanPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 try {
                     int newProteinId = Integer.parseInt(proteinIdInput.getText());
-                    needUpdate.compareAndSet(false, scanView.setProteinId(newProteinId));
-                    update();
+                    if (newProteinId != proteinId) {
+                        if (newProteinId >= 0 && proteins.size() > newProteinId) {
+                            proteinId = newProteinId;
+                            needUpdate.set(true);
+                            scanView.setProtein(proteins.get(proteinId));
+                            update();
+                        }
+                    }
                 } catch (NumberFormatException e1) {
                     //just wrong input
                 }
@@ -144,6 +154,25 @@ public class ScanPanel extends JPanel {
         scanView.setScan(scan);
     }
 
+    public void calculateEValue() {
+        if (proteinId < 0) {
+            return;
+        }
+        System.out.println("Start computing E-value...");
+        try {
+            EValueAdapter.calculateEValue(scanView.getScan(), proteinId);
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    public Scan createReducedScan() {
+        if (scanView != null) {
+            return scanView.createReducedScan();
+        }
+        return null;
+    }
+
     private void checkNewScanId() {
         try {
             int newScanId = Integer.parseInt(scanIdInput.getText());
@@ -162,8 +191,8 @@ public class ScanPanel extends JPanel {
 
     public void update() {
         if (needUpdate.getAndSet(false)) {
-            Protein protein = scanView.getProtein();
-            if (protein != null) {
+            if (proteinId >=0 && proteinId <= proteins.size()) {
+                Protein protein = proteins.get(proteinId);
                 proteinName.setText("Protein " + protein.getProteinId() + " " + protein.getName());
             }
 
