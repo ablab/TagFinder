@@ -160,7 +160,7 @@ public class ScanPanel extends JPanel {
         }
         System.out.println("Start computing E-value...");
         try {
-            EValueAdapter.calculateEValue(scans.get(scanId), proteinId);
+            EValueAdapter.calculateEValue(scanView.getScan(), proteinId);
         } catch (Exception e1) {
             e1.printStackTrace();
         }
