@@ -12,7 +12,7 @@ public class KDStatistics {
 
     private Configuration conf;
 
-    private int gap = 3;
+    private static int gap = 3;
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
@@ -25,26 +25,28 @@ public class KDStatistics {
         keys.addAll(scans.keySet());
         Set<Integer> usedProteins = new HashSet<Integer>();
         Collections.sort(keys);
+        System.out.println("gap = " + gap);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
             if (msAlignResults.containsKey(scanId)) {
                 Integer proteinId = msAlignResults.get(scanId);
                 if (usedProteins.contains(proteinId)) {
-                    continue;
+                    //continue;
                 }
                 usedProteins.add(proteinId);
-                if (scanId == 1946) {
-                    continue;
+                if (scanId != 1946) {
+                    //continue;
                 }
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
+                System.out.print(scanId + " ");
                 KD kd =
                         kdStat.
                                 findKd
                                 //findKdBetweenBYAll
                                 //findKdBetweenBY
                         (scan, sequence);
-                System.out.println(scanId + " " + kd.toString() + " " + proteinId);
+                System.out.println(kd.toString() + " " + proteinId);
                 if (stat.containsKey(kd)) {
                     stat.put(kd, 1 + stat.get(kd));
                 } else {
@@ -159,6 +161,9 @@ public class KDStatistics {
             }
         }
 
+        //System.out.println("k = " + k);
+        kGlobal = k;
+        dGlobal = 0;
         int d = 0;
 
         String sequenceReversed = new StringBuffer(sequence).reverse().toString();
@@ -230,6 +235,9 @@ public class KDStatistics {
     }
 
     private int getD(Peak peak, String sequence, int matched, Peak[] prefix) {
+        if (dGlobal == kGlobal) {
+            return dGlobal;
+        }
         prefix[matched] = peak;
         if (sequence.length() == 0) {
             return matched;
@@ -239,11 +247,17 @@ public class KDStatistics {
             double[] limits = conf.getEdgeLimits(peak, next);
             for (int i = 1; i <= gap; i++) {
                 ans = checkNext(sequence, i, matched, prefix, ans, next, limits);
+                if (ans > dGlobal) {
+                    dGlobal = ans;
+                }
             }
         }
 
         return ans;
     }
+
+    private int dGlobal = 0;
+    private int kGlobal = 0;
 
     private int checkNext(String sequence, int gap, int matched, Peak[] prefix, int ans, Peak next, double[] limits) {
         if (gap > sequence.length()) {
