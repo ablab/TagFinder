@@ -7,13 +7,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import ru.spbau.bioinf.tagfinder.Protein;
@@ -21,6 +24,7 @@ import ru.spbau.bioinf.tagfinder.Protein;
 public class ProteinPanel extends JPanel {
 
     private List<Protein> proteins;
+    private ProteinTableModel proteinTable = new ProteinTableModel();
     private int proteinId = 0;
     private String tagText = "";
 
@@ -121,7 +125,7 @@ public class ProteinPanel extends JPanel {
         gbc.anchor = GridBagConstraints.LINE_START;
         add(proteinName, gbc);
 
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridy++;
         gbc.weighty = 1;
         sequence.setLineWrap(true);
@@ -131,6 +135,10 @@ public class ProteinPanel extends JPanel {
         scrollSequence.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         add(scrollSequence, gbc);
+        gbc.gridy++;
+        JTable matchedProteins = new JTable(proteinTable);
+        JScrollPane scrollMatches = new JScrollPane(matchedProteins);
+        add(scrollMatches, gbc);
         needUpdate.set(true);
         update();
     }
@@ -178,6 +186,39 @@ public class ProteinPanel extends JPanel {
                 }
             }
 
+            List<Protein> matched = new ArrayList<Protein>();
+            if (tagText.length() > 2) {
+                for (Protein p : proteins) {
+                    String s = p.getSimplifiedAcids();
+                    if (s.contains(tagText)) {
+                        matched.add(p);
+                    }
+                }
+            }
+            proteinTable.setProteins(matched);
+        }
+    }
+
+    public static class ProteinTableModel extends AbstractTableModel {
+
+        private List<Protein> proteins = new ArrayList<Protein>();
+
+        public void setProteins(List<Protein> proteins) {
+            this.proteins = proteins;
+            fireTableDataChanged();
+        }
+
+        public int getRowCount() {
+            return proteins.size();
+        }
+
+        public int getColumnCount() {
+            return 2;
+        }
+
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Protein protein = proteins.get(rowIndex);
+            return columnIndex == 0 ? protein.getProteinId() : protein.getName();
         }
     }
 }
