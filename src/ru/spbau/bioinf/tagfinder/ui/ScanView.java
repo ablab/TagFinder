@@ -16,7 +16,6 @@ import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Analyzer;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Consts;
-import ru.spbau.bioinf.tagfinder.EValueAdapter;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.PeakType;
 import ru.spbau.bioinf.tagfinder.PrecursorMassShiftFinder;
@@ -131,6 +130,10 @@ public class ScanView extends JComponent {
         return null;
     }
 
+    public Scan getScan() {
+        return scan;
+    }
+
     private int totalTags;
 
     public boolean setScan(Scan scan) {
@@ -186,20 +189,20 @@ public class ScanView extends JComponent {
         tooltips.clear();
         int line = 1;
 
-        if (scan != null) {
-            for (Peak peak : peaks) {
-                double shift = peak.getPeakType() == PeakType.B ? bestShiftB : bestShiftY;
-                drawPeak(g, peak, line, -shift);
-            }
-            double precursorMass = scan.getPrecursorMass();
-            double end = precursorMass + bestShiftB;
-            drawPeak(g, line, bestShiftB);
-            drawPeak(g, line, end);
-            g.drawString(df.format(precursorMass) + " + " + df.format(bestShiftB) + " " + df.format(bestShiftY), (int) (end * scale) + 3, 15);
+        if (scan == null)
+            return;
+
+        for (Peak peak : peaks) {
+            double shift = peak.getPeakType() == PeakType.B ? bestShiftB : bestShiftY;
+            drawPeak(g, peak, line, -shift);
         }
+        double precursorMass = scan.getPrecursorMass();
+        double end = precursorMass + bestShiftB;
+        drawPeak(g, line, bestShiftB);
+        drawPeak(g, line, end);
+        g.drawString(df.format(precursorMass) + " + " + df.format(bestShiftB) + " " + df.format(bestShiftY), (int) (end * scale) + 3, 15);
 
         line++;
-
 
         if (protein != null) {
             String sequence = protein.getSimplifiedAcids();
@@ -208,6 +211,11 @@ public class ScanView extends JComponent {
                 pos += drawLetter(g, line, pos, Acid.getAcid(sequence.charAt(cur)));
                 drawPeak(g, line, pos);
             }
+            line++;
+
+            drawSpectrumAgainstProtein(g, line, precursorMass, bestShiftB);
+            line++;
+            drawSpectrumAgainstProtein(g, line, precursorMass, bestShiftY);
             line++;
         }
 
@@ -236,6 +244,19 @@ public class ScanView extends JComponent {
         }
     }
 
+    private void drawSpectrumAgainstProtein(Graphics g, int line, double precursorMass, double shift) {
+        double end;
+        g.setColor(Color.GREEN);
+        for (Peak peak : peaks) {
+            drawSharedPeak(g, peak, line, shift);
+        }
+        end = precursorMass + shift;
+        drawPeak(g, line, shift);
+        drawPeak(g, line, end);
+        g.setColor(Color.BLACK);
+        g.drawString(df.format(precursorMass) + " + " + df.format(shift), (int) (end * scale) + 3, LINE_HEIGHT * line);
+    }
+
     private double drawPeak(Graphics g, Peak peak, int y, double min) {
         double peakValue = peak.getValue();
         double value = (peakValue - min);
@@ -246,6 +267,14 @@ public class ScanView extends JComponent {
         drawPeak(g, y, value, peak);
         g.setColor(Color.BLACK);
         return peakValue;
+    }
+
+    private double drawSharedPeak(Graphics g, Peak peak, int y, double shift) {
+        double value = peak.getValue() + shift;
+        if (ShiftEngine.contains(proteinSpectrum, value)) {
+            drawPeak(g, y, value, peak);
+        }
+        return value;
     }
 
     private Color getPeakColor(Peak peak) {
@@ -289,6 +318,7 @@ public class ScanView extends JComponent {
             if (peak == selectedPeak) {
                 g.setColor(Color.BLUE);
                 g.drawRect(v - 5, y - LINE_HEIGHT, 10, LINE_HEIGHT + 3);
+                g.setColor(Color.BLACK);
             }
         }
     }
