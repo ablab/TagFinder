@@ -48,14 +48,12 @@ public class ScanView extends JComponent {
     private Dimension dimension = new Dimension(1000, 10);
     private List<List<Peak[]>> components = new ArrayList<List<Peak[]>>();
 
-    private List<Protein> proteins;
     private double[] proteinSpectrum;
-    double bestShiftB = 0;
-    double bestShiftY = 0;
+    private double bestShiftB = 0;
+    private double bestShiftY = 0;
 
-    public ScanView(final Configuration conf, List<Protein> proteins, final TagFinder tagFinder) {
+    public ScanView(final Configuration conf) {
         this.conf = conf;
-        this.proteins = proteins;
 
         addMouseMotionListener(new MouseAdapter() {
             @Override
@@ -92,32 +90,6 @@ public class ScanView extends JComponent {
                     scale *= 0.9;
                     updateDimension();
                 }
-
-                String keyText = KeyEvent.getKeyText(e.getKeyCode());
-                if (e.isControlDown()) {
-                    if (keyText.equals("R")) {
-                        if (protein != null && scan != null) {
-                            List<Peak> reducedPeaks = new ArrayList<Peak>();
-                            for (Peak peak : scan.getPeaks()) {
-                                if (getPeakColor(peak) == Color.BLACK &&
-                                        getPeakColor(peak.getYPeak()) == Color.BLACK) {
-                                    reducedPeaks.add(peak);
-                                }
-                            }
-                            Scan reducedScan = new Scan(scan, reducedPeaks, proteinId);
-                            tagFinder.addScanTab(reducedScan);
-                        }
-                    }
-
-                    if (keyText.equals("S")) {
-                        System.out.println("Start computing E-value...");
-                        try {
-                            EValueAdapter.calculateEValue(scan, proteinId);
-                        } catch (Exception e1) {
-                            e1.printStackTrace();
-                        }
-                    }
-                }
             }
         });
     }
@@ -133,26 +105,30 @@ public class ScanView extends JComponent {
         return null;
     }
 
-    public boolean setProteinId(int newProteinId) {
-        if (newProteinId != proteinId) {
-            if (newProteinId >= 0 && proteins.size() > newProteinId) {
-                this.proteinId = newProteinId;
-                protein = proteins.get(proteinId);
-                proteinSpectrum = ShiftEngine.getSpectrum(protein.getSimplifiedAcids());
-                if (scan != null) {
-                    initBestShift();
-                } else {
-                    bestShiftB = 0;
-                    bestShiftY = 0;
-                }
-                return true;
-            }
+    public void setProtein(Protein protein) {
+        this.proteinId = protein.getProteinId();
+        this.protein = protein;
+        proteinSpectrum = ShiftEngine.getSpectrum(protein.getSimplifiedAcids());
+        if (scan != null) {
+            initBestShift();
+        } else {
+            bestShiftB = 0;
+            bestShiftY = 0;
         }
-        return false;
     }
 
-    public Protein getProtein() {
-        return protein;
+    public Scan createReducedScan() {
+        if (protein != null && scan != null) {
+            List<Peak> reducedPeaks = new ArrayList<Peak>();
+            for (Peak peak : scan.getPeaks()) {
+                if (getPeakColor(peak) == Color.BLACK &&
+                        getPeakColor(peak.getYPeak()) == Color.BLACK) {
+                    reducedPeaks.add(peak);
+                }
+            }
+            return new Scan(scan, reducedPeaks, proteinId);
+        }
+        return null;
     }
 
     private int totalTags;
