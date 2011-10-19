@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class TagProteinGenerator {
 
-    public static final int DEPTH = 6;
+    public static final int DEPTH = 7;
     private Configuration conf;
 
     private PrintWriter out;
@@ -22,18 +22,19 @@ public class TagProteinGenerator {
 
     public TagProteinGenerator(Configuration conf) throws IOException{
         this.conf = conf;
-        out = ReaderUtil.createOutputFile(new File("tags.txt"));
+        out = ReaderUtil.createOutputFile(new File("tags-bad-match-" + DEPTH +  ".txt"));
     }
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
+        Configuration conf = new Configuration(args//, UnmatchedScansGenerator.SHARED_MODE
+         );
         TagProteinGenerator generator = new TagProteinGenerator(conf);
         generator.generateTags();
     }
 
     private void generateTags() throws Exception {
         List<Protein> proteins = conf.getProteins();
-        Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
+        Map<Integer,Integer> msAlignResults = conf.getBadMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
@@ -52,8 +53,14 @@ public class TagProteinGenerator {
             if (msAlignResults.containsKey(scanId)) {
                 matchedProteinId = msAlignResults.get(scanId);
             }
+            if (matchedProteinId == -1) {
+                continue;
+            }
 
-            List<Peak> peaks = scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
+            System.out.println("matchedProteinId = " + matchedProteinId);
+
+            List<Peak> peaks = scan.createStandardSpectrum();
+            //scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
             GraphUtil.generateEdges(conf, peaks);
             generateFiveAcidsTags(peaks, sequences, matchedProteinId, scan.getId());
         }
@@ -71,14 +78,25 @@ public class TagProteinGenerator {
 
     public void generateFiveAcidsTags(Peak peak, String prefix, List<String> sequences, int matchedProteinid, int scanId) {
         if (prefix.length() == DEPTH) {
-            if (used.contains(prefix)) {
+            String reverse = new StringBuilder(prefix).reverse().toString();
+            if (used.contains(prefix) || used.contains(reverse)) {
                 return;
             }
             for (int i = 0; i < sequences.size(); i++) {
                 String s = sequences.get(i);
+                int index = - 1 ;
                 if (s.contains(prefix)) {
-                    out.println(scanId + " " + matchedProteinid + " " + i + " " + prefix + " " + s.indexOf(prefix) + " " + peak.getMass() + " " + peak.getValue());
+                    while ((index = s.indexOf(prefix, index + 1)) >= 0) {
+                        out.println(scanId + " " + matchedProteinid + " " + i + " " + prefix + " " + index + " " + peak.getMass() );
+                    }
                 }
+
+                if (s.contains(reverse)) {
+                    while ((index = s.indexOf(reverse, index + 1)) >= 0) {
+                        out.println(scanId + " " + matchedProteinid + "R " + i + " " + prefix + " " + index + " " + peak.getMass());
+                    }
+                }
+
             }
             used.add(prefix);
         } else {
