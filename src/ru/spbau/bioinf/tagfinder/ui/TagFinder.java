@@ -1,17 +1,22 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
+import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Map;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingWorker;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.EValueAdapter;
 import ru.spbau.bioinf.tagfinder.Protein;
@@ -27,13 +32,32 @@ public class TagFinder extends JFrame {
     private Map<Integer,Scan> scans;
     private JTabbedPane tabs;
     private List<JPanel> tabsList = new ArrayList<JPanel>();
+    private JLabel status =  new JLabel();
 
     public TagFinder(String[] args) throws Exception {
         super("TagFinder");
         conf = new Configuration(args);
         proteins = conf.getProteins();
         msAlignResults = conf.getMSAlignResults();
-        EValueAdapter.init(conf);
+        updateStatus("Initializing E-value calculator...");
+        final SwingWorker sw = new SwingWorker() {
+            @Override
+            protected Object doInBackground() throws Exception {
+                EValueAdapter.init(conf);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                updateStatus("E-Value calculator initialized.");
+            }
+        };
+        new Thread(new Runnable() {
+            public void run() {
+                sw.execute();
+            }
+        }).start();
+        System.out.println("sw started");
 
         tabs = new JTabbedPane();
         scans = conf.getScans();
@@ -41,7 +65,16 @@ public class TagFinder extends JFrame {
         addTab("Scan", scanPanel);
         JPanel proteinPanel = new ProteinPanel(proteins);
         addTab("Protein", proteinPanel);
-        this.getContentPane().add(tabs);
+        Container contentPane = this.getContentPane();
+        GridBagLayout layout = new GridBagLayout();
+        contentPane.setLayout(layout);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        contentPane.add(tabs, gbc);
         JMenuBar menubar = new JMenuBar();
         JMenu scanMenu = new JMenu("Scan");
         scanMenu.setMnemonic(KeyEvent.VK_S);
@@ -81,11 +114,22 @@ public class TagFinder extends JFrame {
         menubar.add(scanMenu);
 
         setJMenuBar(menubar);
+
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        contentPane.add(status, gbc);
     }
 
     private void addTab(String name, JPanel scanPanel) {
         tabs.addTab(name, scanPanel);
         tabsList.add(scanPanel);
+    }
+
+    public void updateStatus(final String text) {
+        status.setText(text);
     }
 
     public void addScanTab(Scan scan) {

@@ -31,17 +31,7 @@ public class EValueAdapter {
         properties.setProperty("errorTolerance", "15");
         properties.setProperty("eValueThreshold", "0.01");
         eValueCalculator = new IdEValue();
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    synchronized (eValueCalculator) {
-                        eValueCalculator.init(properties);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        eValueCalculator.init(properties);
     }
 
     public static synchronized PrSM[][][] calculateEValue(Scan scan, int proteinId) throws Exception {
