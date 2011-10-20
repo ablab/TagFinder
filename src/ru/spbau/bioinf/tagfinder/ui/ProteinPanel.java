@@ -24,6 +24,8 @@ import ru.spbau.bioinf.tagfinder.Protein;
 public class ProteinPanel extends JPanel {
 
     private List<Protein> proteins;
+    private TagFinder tagFinder;
+
     private ProteinTableModel proteinTable = new ProteinTableModel();
     private int proteinId = 0;
     private String tagText = "";
@@ -45,8 +47,9 @@ public class ProteinPanel extends JPanel {
     private DefaultHighlighter.DefaultHighlightPainter painter;
 
 
-    public ProteinPanel(List<Protein> proteins) {
+    public ProteinPanel(List<Protein> proteins, TagFinder tagFinder) {
         this.proteins = proteins;
+        this.tagFinder = tagFinder;
         proteinIdInput.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent keyEvent) {
@@ -202,6 +205,9 @@ public class ProteinPanel extends JPanel {
                 }
             }
             proteinTable.setProteins(matched);
+            int size = matched.size();
+            String pluralSuffix = size == 1 ? "" : "s";
+            tagFinder.updateStatus(size + " protein"  + pluralSuffix  + " found");
             this.doLayout();
         }
     }

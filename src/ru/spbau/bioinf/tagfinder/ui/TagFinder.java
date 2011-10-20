@@ -63,7 +63,7 @@ public class TagFinder extends JFrame {
         scans = conf.getScans();
         JPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults, this);
         addTab("Scan", scanPanel);
-        JPanel proteinPanel = new ProteinPanel(proteins);
+        JPanel proteinPanel = new ProteinPanel(proteins, this);
         addTab("Protein", proteinPanel);
         Container contentPane = this.getContentPane();
         GridBagLayout layout = new GridBagLayout();
