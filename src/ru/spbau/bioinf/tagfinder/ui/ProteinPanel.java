@@ -69,27 +69,6 @@ public class ProteinPanel extends JPanel {
             }
         });
 
-        GridBagLayout gbl = new GridBagLayout();
-        this.setLayout(gbl);
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        add(proteinLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.LINE_START;
-        add(proteinIdValueLabel, gbc);
-
-        gbc.gridx++;
-        gbc.anchor = GridBagConstraints.LINE_END;
-        gbc.weightx = 0;
-        add(tagTextLabel, gbc);
-
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.LINE_START;
-
         tagInput.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent keyEvent) {
@@ -107,16 +86,39 @@ public class ProteinPanel extends JPanel {
             }
         });
         tagInput.setColumns(10);
+
+
+        GridBagLayout gbl = new GridBagLayout();
+        this.setLayout(gbl);
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        add(proteinLabel, gbc);
         gbc.gridx++;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        add(proteinIdValueLabel, gbc);
+
+        gbc.weightx = 1;
+        gbc.gridx++;
+        gbc.anchor = GridBagConstraints.LINE_END;
+        add(tagTextLabel, gbc);
+
+        gbc.anchor = GridBagConstraints.LINE_START;
+
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         add(tagInput, gbc);
 
         gbc.gridx++;
         gbc.anchor = GridBagConstraints.LINE_END;
+        gbc.fill = GridBagConstraints.NONE;
         add(proteinIdInputLabel, gbc);
         gbc.gridx++;
-        gbc.fill = GridBagConstraints.VERTICAL;
         proteinIdInput.setColumns(7);
-        gbc.weightx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         add(proteinIdInput, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
@@ -125,18 +127,19 @@ public class ProteinPanel extends JPanel {
         gbc.anchor = GridBagConstraints.LINE_START;
         add(proteinName, gbc);
 
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy++;
-        gbc.weighty = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
         sequence.setLineWrap(true);
         sequence.setHighlighter(highlighter);
-        JScrollPane scrollSequence = new JScrollPane(sequence);
-        scrollSequence.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollSequence.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        add(scrollSequence, gbc);
+        add(sequence, gbc);
         gbc.gridy++;
+        gbc.weighty = 1;
         JTable matchedProteins = new JTable(proteinTable);
+        matchedProteins.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        matchedProteins.getColumnModel().getColumn(0).setMaxWidth(150);
         JScrollPane scrollMatches = new JScrollPane(matchedProteins);
         add(scrollMatches, gbc);
         needUpdate.set(true);
@@ -146,10 +149,13 @@ public class ProteinPanel extends JPanel {
     private void checkNewProteinId() {
         try {
             int newProteinId = Integer.parseInt(proteinIdInput.getText());
-            if (newProteinId != proteinId) {
-                proteinId = newProteinId;
-                needUpdate.set(true);
-                update();
+
+            if (newProteinId >=0 && newProteinId < proteins.size()) {
+                if (newProteinId != proteinId) {
+                    proteinId = newProteinId;
+                    needUpdate.set(true);
+                    update();
+                }
             }
         } catch (NumberFormatException e) {
             //Nothing special - just text in number field;
@@ -196,6 +202,7 @@ public class ProteinPanel extends JPanel {
                 }
             }
             proteinTable.setProteins(matched);
+            this.doLayout();
         }
     }
 
@@ -219,6 +226,15 @@ public class ProteinPanel extends JPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             Protein protein = proteins.get(rowIndex);
             return columnIndex == 0 ? protein.getProteinId() : protein.getName();
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            switch (column) {
+                case 0 : return "Protein ID";
+                case 1 : return "Protein Name";
+            }
+            return null;
         }
     }
 }
