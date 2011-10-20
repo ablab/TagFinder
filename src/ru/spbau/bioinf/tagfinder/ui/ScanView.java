@@ -166,9 +166,15 @@ public class ScanView extends JComponent {
     }
 
     private void updateDimension() {
-        dimension = new Dimension((int) (scan.getPrecursorMass() * scale) + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
-        repaint();
-        invalidate();
+        double x = scan.getPrecursorMass();
+        if (proteinSpectrum != null) {
+            double xp = proteinSpectrum[proteinSpectrum.length - 1];
+            if (xp > x) {
+                x = xp;
+            }
+        }
+        dimension = new Dimension((int) (x * scale) + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
+        revalidate();
     }
 
     @Override
