@@ -61,7 +61,7 @@ public class TagFinder extends JFrame {
 
         tabs = new JTabbedPane();
         scans = conf.getScans();
-        JPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults);
+        JPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults, this);
         addTab("Scan", scanPanel);
         JPanel proteinPanel = new ProteinPanel(proteins);
         addTab("Protein", proteinPanel);
@@ -133,7 +133,7 @@ public class TagFinder extends JFrame {
     }
 
     public void addScanTab(Scan scan) {
-        ScanPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults);
+        ScanPanel scanPanel = new ScanPanel(conf, scans, proteins, msAlignResults, this);
         scanPanel.setScan(scan);
         addTab(scan.getName(), scanPanel);
     }

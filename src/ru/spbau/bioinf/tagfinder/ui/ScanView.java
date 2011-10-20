@@ -30,6 +30,7 @@ public class ScanView extends JComponent {
 
     static {
         df.setMaximumFractionDigits(2);
+        df.setGroupingUsed(false);
     }
 
     List<TooltipCandidate> tooltips = new ArrayList<TooltipCandidate>();
@@ -51,7 +52,7 @@ public class ScanView extends JComponent {
     private double bestShiftB = 0;
     private double bestShiftY = 0;
 
-    public ScanView(final Configuration conf) {
+    public ScanView(Configuration conf, final TagFinder tagFinder) {
         this.conf = conf;
 
         addMouseMotionListener(new MouseAdapter() {
@@ -70,9 +71,12 @@ public class ScanView extends JComponent {
                 requestFocus();
                 TooltipCandidate tooltip = getTooltip(e);
                 if (tooltip != null) {
-                    if (selectedPeak != tooltip.getPeak()) {
-                        selectedPeak = tooltip.getPeak();
-                        repaint();
+                    if (tooltip.getPeak() != null) {
+                        if (selectedPeak != tooltip.getPeak()) {
+                            selectedPeak = tooltip.getPeak();
+                            tagFinder.updateStatus("Mass: " + selectedPeak.getMass() + " value: " + selectedPeak.getValue());
+                            repaint();
+                        }
                     }
                 }
             }
@@ -164,6 +168,7 @@ public class ScanView extends JComponent {
     private void updateDimension() {
         dimension = new Dimension((int) (scan.getPrecursorMass() * scale) + 400, (components.size() + totalTags + 6) * LINE_HEIGHT);
         repaint();
+        invalidate();
     }
 
     @Override
@@ -251,10 +256,16 @@ public class ScanView extends JComponent {
             drawSharedPeak(g, peak, line, shift);
         }
         end = precursorMass + shift;
+        updateColor(g, shift);
         drawPeak(g, line, shift);
+        updateColor(g, end);
         drawPeak(g, line, end);
         g.setColor(Color.BLACK);
-        g.drawString(df.format(precursorMass) + " + " + df.format(shift), (int) (end * scale) + 3, LINE_HEIGHT * line);
+        g.drawString(df.format(shift), 20, LINE_HEIGHT * line);
+    }
+
+    private void updateColor(Graphics g, double value) {
+        g.setColor(ShiftEngine.contains(proteinSpectrum, value) ? Color.GREEN : Color.BLACK);
     }
 
     private double drawPeak(Graphics g, Peak peak, int y, double min) {
@@ -316,9 +327,10 @@ public class ScanView extends JComponent {
         if (peak != null) {
             drawIon(g, line, v, peak.getPeakType());
             if (peak == selectedPeak) {
+                Color prevColor = g.getColor();
                 g.setColor(Color.BLUE);
                 g.drawRect(v - 5, y - LINE_HEIGHT, 10, LINE_HEIGHT + 3);
-                g.setColor(Color.BLACK);
+                g.setColor(prevColor);
             }
         }
     }

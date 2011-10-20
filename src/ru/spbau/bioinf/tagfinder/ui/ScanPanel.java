@@ -45,9 +45,9 @@ public class ScanPanel extends JPanel {
     private Map<Integer,Integer> msAlignResults;
     private List<Protein> proteins;
 
-    public ScanPanel(Configuration conf, Map<Integer, Scan> scans, final List<Protein> proteins, Map<Integer,Integer> msAlignResults) {
+    public ScanPanel(Configuration conf, Map<Integer, Scan> scans, final List<Protein> proteins, Map<Integer,Integer> msAlignResults, TagFinder tagFinder) {
         this.msAlignResults = msAlignResults;
-        scanView = new ScanView(conf);
+        scanView = new ScanView(conf, tagFinder);
         this.scans = scans;
         this.proteins = proteins;
         scanIdInput.addKeyListener(new KeyAdapter() {
@@ -198,7 +198,9 @@ public class ScanPanel extends JPanel {
 
             if (msAlignResults.containsKey(scanId)) {
                 int proteinId = msAlignResults.get(scanId);
-                proteinLabel.setText("Protein ID (" + proteinId + ")");
+                proteinLabel.setText("Protein ID (" + proteinId + "): ");
+            } else {
+                proteinLabel.setText("Protein ID: ");
             }
 
             scanIdValueLabel.setText(Integer.toString(scanId));
