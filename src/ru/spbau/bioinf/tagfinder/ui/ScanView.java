@@ -51,6 +51,7 @@ public class ScanView extends JComponent {
     private double[] proteinSpectrum;
     private double bestShiftB = 0;
     private double bestShiftY = 0;
+    private List<Double> rangeShifts = new ArrayList<Double>();
 
     public ScanView(Configuration conf, final TagFinder tagFinder) {
         this.conf = conf;
@@ -224,10 +225,10 @@ public class ScanView extends JComponent {
             }
             line++;
 
-            drawSpectrumAgainstProtein(g, line, precursorMass, bestShiftB);
-            line++;
-            drawSpectrumAgainstProtein(g, line, precursorMass, bestShiftY);
-            line++;
+            for (Double shift : rangeShifts) {
+                drawSpectrumAgainstProtein(g, line, precursorMass, shift);
+                line++;
+            }
         }
 
         for (int i = 0; i < components.size(); i++) {
@@ -311,13 +312,13 @@ public class ScanView extends JComponent {
 
     private void initBestShift() {
         System.out.println("+ PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan); = " + +PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
-
         System.out.print("Calculate best shift for B-ions...");
         bestShiftB = ShiftEngine.getBestShift(scan.getPeaks(), proteinSpectrum);
         System.out.println(Double.toString(bestShiftB));
         System.out.print("Calculate best shift for Y-ions...");
         bestShiftY = ShiftEngine.getBestShift(scan.getYPeaks(), proteinSpectrum);
         System.out.println(Double.toString(bestShiftY));
+        rangeShifts = ShiftEngine.getBestShifts(scan.getPeaks(), scan.getPrecursorMass(), proteinSpectrum);
     }
 
     private void drawPeak(Graphics g, int y, double value) {
