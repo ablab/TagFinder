@@ -3,6 +3,7 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ShiftEngine {
@@ -70,6 +71,33 @@ public class ShiftEngine {
         }
         return ans;
     }
+
+    public static List<double[]> getRanges(double[] shifts) {
+        Arrays.sort(shifts);
+
+        List<double[]> ans = new ArrayList<double[]>();
+        double prev = shifts[0] - 100;
+        int count = 0;
+        double min = prev;
+        for (double s : shifts) {
+            if (s - prev < 0.1) {
+                count++;
+                prev = s;
+            } else {
+                if (count >= 10) {
+                    ans.add(new double[]{min, prev});
+                }
+                count = 1;
+                prev = s;
+                min = s;
+            }
+        }
+        if (count > 10) {
+            ans.add(new double[]{min, prev});
+        }
+        return ans;
+    }
+
 
     public static List<Double> getShifts(List<Peak> peaks, double precursorMass, double[] spectrum) {
         List<Double> ans = new ArrayList<Double>();
@@ -177,4 +205,49 @@ public class ShiftEngine {
         }
         return bestShift;
     }
+
+    public static List<Double> getBestShifts(List<Peak> peaks, double precursorMass, double[] proteinSpectrum) {
+        List<Peak> allIons = new ArrayList<Peak>();
+        for (Peak peak : peaks) {
+            allIons.add(peak);
+            allIons.add(peak.getYPeak(precursorMass));
+        }
+        Collections.sort(allIons);
+        List<Double> shiftsList = getShifts(allIons, proteinSpectrum);
+        double[] shifts = new double[shiftsList.size()];
+        for (int i = 0; i < shifts.length; i++) {
+            shifts[i] = shiftsList.get(i);
+        }
+        List<double[]> ranges = getRanges(shifts);
+
+        double[] spectrum = getSpectrum(allIons);
+        List<Double> ans = new ArrayList<Double>();
+        for (double[] range : ranges) {
+            int parts = 10;
+            double delta;
+            while ((delta = (range[1] - range[0]) /parts) > 0.01) {
+                parts *= 2;
+            }
+            double bestScore = 0;
+            double bestShift = Double.NaN;
+            for (int i = 0; i <=parts; i++) {
+                double shift = range[0] + delta * i;
+                double nextScore = getScore(spectrum, proteinSpectrum, shift);
+                if (nextScore > bestScore) {
+                    bestScore = nextScore;
+                    bestShift = shift;
+                }
+            }
+            if (!Double.isNaN(bestShift)) {
+                if (bestScore > 10) {
+                    ans.add(bestShift);
+                }
+            } else {
+                System.out.println("No valid shifts in " + range[0] + " " + range[1]);
+            }
+        }
+        Collections.sort(ans);
+        return ans;
+    }
+
 }
