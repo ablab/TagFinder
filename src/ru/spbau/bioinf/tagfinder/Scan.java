@@ -194,6 +194,7 @@ public class Scan {
         header.setTitle("sp_" + id);
         header.setPrecMonoMz(precursorMass / precursorCharge + MassConstant.getProtonMass());
         header.setScans(Integer.toString(id));
+        header.setActivationType("CID");
         header.setId(id);
         Ms<DeconvPeak> deconvMs = new Ms<DeconvPeak>(deconvPeaks, header);
         deconvMs.sortOnPos();
