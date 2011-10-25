@@ -139,19 +139,43 @@ public class Configuration {
     }
 
     public Map<Integer, Integer> getMSAlignResults() throws IOException {
-        BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "nodigestion_result_list.txt"));
+        File nodigestionFile = new File(inputDir, "nodigestion_result_list.txt");
         Map<Integer, Integer> ans = new HashMap<Integer, Integer>();
         badMSAlignResults.clear();
         String s;
-        while ((s = input.readLine()) != null) {
-            String[] data = ReaderUtil.getDataArray(s);
-            int scanId = Integer.parseInt(data[7]);
-            spectrums.put(Integer.parseInt(data[2]), scanId);
-            int proteinId = Integer.parseInt(data[3]);
-            if (Double.parseDouble(data[data.length - 1]) < 0.0015) {
-                ans.put(scanId, proteinId);
-            } else {
-                badMSAlignResults.put(scanId, proteinId);
+
+        if (nodigestionFile.exists()) {
+            BufferedReader input = ReaderUtil.createInputReader(nodigestionFile);
+            while ((s = input.readLine()) != null) {
+                String[] data = ReaderUtil.getDataArray(s);
+                int scanId = Integer.parseInt(data[7]);
+                spectrums.put(Integer.parseInt(data[2]), scanId);
+                int proteinId = Integer.parseInt(data[3]);
+                double EValue = Double.parseDouble(data[data.length - 1]);
+                evalues.put(scanId, EValue);
+                if (EValue < 0.0015) {
+                    ans.put(scanId, proteinId);
+                } else {
+                    badMSAlignResults.put(scanId, proteinId);
+                }
+            }
+        } else {
+            File resultTable = new File(inputDir, "result_table.txt");
+            BufferedReader input = ReaderUtil.createInputReader(resultTable);
+            input.readLine();
+            while ((s = input.readLine()) != null) {
+                String[] data = ReaderUtil.getDataArray(s);
+                int scanId = Integer.parseInt(data[3]);
+                int spectrumId = Integer.parseInt(data[2]);
+                spectrums.put(spectrumId, scanId);
+                int proteinId = Integer.parseInt(data[8]);
+                double EValue = Double.parseDouble(data[data.length - 1]);
+                evalues.put(scanId, EValue);
+                if (EValue < 0.0015) {
+                    ans.put(scanId, proteinId);
+                } else {
+                    badMSAlignResults.put(scanId, proteinId);
+                }
             }
         }
         return ans;
@@ -164,6 +188,11 @@ public class Configuration {
 
     private Map<Integer, Integer> badMSAlignResults = new HashMap<Integer, Integer>();
 
+    private Map<Integer, Double> evalues = new HashMap<Integer, Double>();
+
+    public Map<Integer, Double> getEvalues() {
+        return evalues;
+    }
 
     public Map<Integer, List<Peak>> getMSAlignPeaks() throws IOException {
         getMSAlignResults();
@@ -262,8 +291,12 @@ public class Configuration {
         }
 
         File scanDir = new File(inputDir,
-            mod == null ? "env_multiple_mass" : "env" + mod
+            mod == null ?
+                    "env_multiple_mass"
+                    //"detail_new_theo_patt"
+                    : "env" + mod
         );
+        System.out.println("scanDir = " + scanDir.getCanonicalPath());
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(".env");
