@@ -1,6 +1,7 @@
 package ru.spbau.bioinf.tagfinder.ui;
 
 
+import edu.ucsd.msalign.align.prsm.PrSM;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -152,18 +153,30 @@ public class ScanPanel extends JPanel {
     public void setScan(Scan scan) {
         scanIdInput.setEnabled(false);
         scanView.setScan(scan);
+        scanId = scan.getId();
     }
 
-    public void calculateEValue() {
+    public int getScanId() {
+        return scanId;
+    }
+
+    public int getProteinId() {
+        return proteinId;
+    }
+
+    public PrSM[][][] calculateEValue() {
         if (proteinId < 0) {
-            return;
+            return null;
         }
         System.out.println("Start computing E-value...");
+        PrSM[][][] prsms = null;
         try {
-            EValueAdapter.calculateEValue(scanView.getScan(), proteinId);
+            prsms = EValueAdapter.calculateEValue(scanView.getScan(), proteinId);
+            return  prsms;
         } catch (Exception e1) {
             e1.printStackTrace();
         }
+        return prsms;
     }
 
     public Scan createReducedScan() {
@@ -176,10 +189,10 @@ public class ScanPanel extends JPanel {
     private void checkNewScanId() {
         try {
             int newScanId = Integer.parseInt(scanIdInput.getText());
-            if (newScanId != scanId) {
-                scanId = newScanId;
-                Scan scan = scans.get(scanId);
-                if (scan != null) {
+            Scan scan = scans.get(newScanId);
+            if (scan != null) {
+                if (newScanId != scanId) {
+                    scanId = newScanId;
                     needUpdate.compareAndSet(false, scanView.setScan(scan));
                     update();
                 }
