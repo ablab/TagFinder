@@ -87,7 +87,7 @@ public class Analyzer {
     }
 
     public List<List<Peak>> getComponents(List<Peak> peaks) {
-        GraphUtil.generateEdges(conf, peaks);
+        GraphUtil.generateGapEdges(conf, peaks, 1);
 
         for (Peak peak : peaks) {
             peak.populatePrev();
