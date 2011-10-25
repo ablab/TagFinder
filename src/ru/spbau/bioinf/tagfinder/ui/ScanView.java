@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JComponent;
@@ -16,12 +17,15 @@ import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Analyzer;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Consts;
+import ru.spbau.bioinf.tagfinder.MassAlign;
+import ru.spbau.bioinf.tagfinder.MassMatch;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.PeakType;
 import ru.spbau.bioinf.tagfinder.PrecursorMassShiftFinder;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
 import ru.spbau.bioinf.tagfinder.ShiftEngine;
+import ru.spbau.bioinf.tagfinder.stat.PlaceStatistics;
 
 public class ScanView extends JComponent {
 
@@ -36,6 +40,7 @@ public class ScanView extends JComponent {
     List<TooltipCandidate> tooltips = new ArrayList<TooltipCandidate>();
 
     private final Configuration conf;
+    private final TagFinder tagFinder;
 
     private Scan scan;
     List<Peak> peaks = null;
@@ -52,9 +57,11 @@ public class ScanView extends JComponent {
     private double bestShiftB = 0;
     private double bestShiftY = 0;
     private List<Double> rangeShifts = new ArrayList<Double>();
+    private List<MassMatch> goodMatches;
 
     public ScanView(Configuration conf, final TagFinder tagFinder) {
         this.conf = conf;
+        this.tagFinder = tagFinder;
 
         addMouseMotionListener(new MouseAdapter() {
             @Override
@@ -225,10 +232,22 @@ public class ScanView extends JComponent {
             }
             line++;
 
+            int delta = 0;
+
+            List<MassMatch> goodMatchesCopy = new ArrayList<MassMatch>();
+            goodMatchesCopy.addAll(goodMatches);
+            while (goodMatchesCopy.size() > 0) {
+                delta = drawBestCleavage(g, goodMatchesCopy, line, delta);
+                delta += 2;
+            }
+
+            line += (delta + 2 * LINE_HEIGHT)/LINE_HEIGHT;
+
             for (Double shift : rangeShifts) {
                 drawSpectrumAgainstProtein(g, line, precursorMass, shift);
                 line++;
             }
+
         }
 
         for (int i = 0; i < components.size(); i++) {
@@ -254,6 +273,37 @@ public class ScanView extends JComponent {
                 line++;
             }
         }
+    }
+
+    private int drawBestCleavage(Graphics g, List<MassMatch> goodMatches, int line, int delta) {
+        int[] stat = new int[proteinSpectrum.length];
+        for (MassMatch match : goodMatches) {
+            stat[match.getBegin()]++;
+            stat[match.getEnd()]++;
+        }
+
+        int bestScore = -1;
+        int bestPos = 0;
+        for (int i = 0; i < stat.length; i++) {
+             if (stat[i] > bestScore) {
+                 bestPos = i;
+                 bestScore = stat[i];
+             }
+
+        }
+
+        for (Iterator<MassMatch> it = goodMatches.iterator(); it.hasNext(); ) {
+            MassMatch match =  it.next();
+            if (match.getBegin() == bestPos || match.getEnd() == bestPos) {
+                int y = line * LINE_HEIGHT + delta;
+                int x1 = (int) (proteinSpectrum[match.getBegin()] * scale);
+                int x2 = (int) (proteinSpectrum[match.getEnd()] * scale);
+                g.drawLine(x1, y, x2, y);
+                delta+=2;
+                it.remove();
+            }
+        }
+        return delta;
     }
 
     private void drawSpectrumAgainstProtein(Graphics g, int line, double precursorMass, double shift) {
@@ -319,6 +369,14 @@ public class ScanView extends JComponent {
         bestShiftY = ShiftEngine.getBestShift(scan.getYPeaks(), proteinSpectrum);
         System.out.println(Double.toString(bestShiftY));
         rangeShifts = ShiftEngine.getBestShifts(scan.getPeaks(), scan.getPrecursorMass(), proteinSpectrum);
+        List<MassMatch> matches = MassAlign.getMassAlign(proteinSpectrum, scan.getPeaks());
+        goodMatches = new ArrayList<MassMatch>();
+        for (MassMatch match : matches) {
+            if (match.getRelativeError() < PlaceStatistics.TEN_PPM) {
+                goodMatches.add(match);
+            }
+        }
+        tagFinder.updateStatus(goodMatches.size() + " aligned masses out of " + scan.getPeaks().size() + " peaks." );
     }
 
     private void drawPeak(Graphics g, int y, double value) {
