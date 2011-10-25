@@ -16,7 +16,10 @@ public class EValueAdapter {
         Map<Integer,Scan> scans = conf.getScans();
         conf.getMSAlignResults();
         for (int i = 0; i < input.length; i += 2) {
-            calculateEValue(scans.get(input[i]), input[i + 1]);
+            Scan scan = scans.get(input[i]);
+            int proteinId = input[i + 1];
+            System.out.println("Processing scan " + scan.getName() + " protein " + proteinId);
+            output(calculateEValue(scan, proteinId));
         }
     }
 
@@ -35,15 +38,11 @@ public class EValueAdapter {
     }
 
     public static synchronized PrSM[][][] calculateEValue(Scan scan, int proteinId) throws Exception {
-        System.out.println("Processing scan " + scan.getName() + " protein " + proteinId);
         PrSM[][][] prsms;
         synchronized (eValueCalculator) {
             MsAlignSeq msAlignSeq = eValueCalculator.getSeqs()[proteinId];
-            System.out.println("protein in MS-Align : " + msAlignSeq.getName());
             prsms = eValueCalculator.getPrsms(scan.getMsDeconvPeaks(), msAlignSeq);
-            output(prsms);
         }
-        System.out.println("Done");
         return prsms;
     }
 
