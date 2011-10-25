@@ -73,9 +73,11 @@ public class ShiftEngine {
     }
 
     public static List<double[]> getRanges(double[] shifts) {
-        Arrays.sort(shifts);
-
         List<double[]> ans = new ArrayList<double[]>();
+        if (shifts.length == 0) {
+            return ans;
+        }
+        Arrays.sort(shifts);
         double prev = shifts[0] - 100;
         int count = 0;
         double min = prev;
