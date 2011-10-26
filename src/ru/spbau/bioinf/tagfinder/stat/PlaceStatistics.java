@@ -34,8 +34,11 @@ public class PlaceStatistics {
         keys.addAll(scans.keySet());
         Collections.sort(keys);
         Set<Integer> usedProteins = new HashSet<Integer>();
-        Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
+        //Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
         Map<Integer, Map<Double, String>> msAlignDatas = conf.getMSAlignData();
+        double[] global = new double[100];
+        int[] count = new int[100];
+        //keys.clear(); keys.add(502);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -45,23 +48,32 @@ public class PlaceStatistics {
                     continue;
                 }
                 usedProteins.add(proteinId);
-                if (scanId == 1946) {
-                    continue;
-                }
 
                 String sequence = proteins.get(proteinId).getSimplifiedAcids();
-                List<Peak> peaks = msAlignPeaks.get(scanId);
+                List<Peak> peaks = //msAlignPeaks.get(scanId);
+                                    //scan.createSpectrumWithYPeaks(0);
+                                    scan.createStandardSpectrum();
+
+                List<Peak> yPeaks = new ArrayList<Peak>();
+                Collections.sort(peaks);
+                for (Peak peak : peaks) {
+                    yPeaks.add(peak.getYPeak(scan.getPrecursorMass()));
+                }
+                Collections.sort(yPeaks);
                 Map<Double, String> msAlignData = msAlignDatas.get(scanId);
                 int[][] stat = new int[100][3];
-                updateStatWithGaps(stat, conf, msAlignData, sequence, peaks, 3, scan.getPrecursorMass());
+                updateStatWithGaps(stat, conf, msAlignData, sequence, peaks, 1, scan.getPrecursorMass(), 0);
+                updateStatWithGaps(stat, conf, msAlignData, sequence, yPeaks, 1, scan.getPrecursorMass(), 1);
 
                 System.out.print(scanId + " " +  proteinId);
                 for (int i = 1; i < stat.length; i++) {
                     long total = stat[i][0];
                     if (total > 0) {
-                        System.out.print(" " + df.format((100d * stat[i][1])/total));
-                        System.out.print(" " + df.format((100d * stat[i][2])/total));
-                        System.out.print(" " + df.format((100d * stat[i][2])/stat[i][1]));
+                        System.out.print(" " + stat[i][0]);
+                        System.out.print(" " + stat[i][1]);
+                        System.out.print(" " + stat[i][2]);
+                        count[i]++;
+                        global[i] += stat[i][2] *100d/stat[i][0];
                     } else {
                         break;
                     }
@@ -69,14 +81,24 @@ public class PlaceStatistics {
                 System.out.println();
             }
         }
+        for (int i = 1; i < count.length; i++) {
+            int n = count[i];
+            if (n > 0) {
+                System.out.print( df.format(2 * global[i]/n) + " ");
+            } else {
+                break;
+            }
+        }
+        System.out.println();
     }
 
-    private static void updateStatWithGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks, int gap, double precursorMass) {
+    private static void updateStatWithGaps(int[][] stat, Configuration conf, Map<Double, String> msAlignData, String sequence, List<Peak> peaks, int gap, double precursorMass, int type) {
         GraphUtil.generateGapEdges(conf, peaks, gap);
         for (Peak peak : peaks) {
             String match = null;
             for (Map.Entry<Double, String> entry : msAlignData.entrySet()) {
-                if (Math.abs(peak.getValue() - entry.getKey()) < TEN_PPM * precursorMass) {
+                double limit = type == 0 ? TEN_PPM * peak.getValue() : precursorMass * 1.5 * TEN_PPM;
+                if (Math.abs(peak.getValue() - entry.getKey()) < limit) {
                     match = entry.getValue();
                     break;
                 }
