@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -54,9 +55,10 @@ public class ValidTags {
         ValidTags validTags = new ValidTags(conf);
         String type = REFLEX;
         //validTags.setMonoTagsOnly(true);
+        //validTags.setAddOnes(true);
         validTags.process(type, 1);
-        validTags.process(type, 2, 10);
-        validTags.process(type, 3, 10);
+        validTags.process(type, 2);
+        validTags.process(type, 3);
     }
 
     private PrintWriter output;
@@ -96,7 +98,7 @@ public class ValidTags {
             fileName += "_add";
         }
         output = ReaderUtil.createOutputFile(new File("vt", fileName + ".txt"));
-
+        //keys.clear();keys.add(502);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -106,11 +108,6 @@ public class ValidTags {
                     continue;
                 }
                 usedProteins.add(proteinId);
-                if (scanId == 1946) {
-                    continue;
-                }
-
-
                 Protein protein = proteins.get(proteinId);
                 long[][] stat = process(scan, protein, type, gap);
                 for (int i = 1; i < stat.length; i++) {
@@ -142,6 +139,8 @@ public class ValidTags {
     }
 
     public long[][] process(Scan scan, Protein protein, String type, int gap) {
+        wrongCache.clear();
+        correctCache.clear();
         this.gap = gap;
         String sequence = protein.getSimplifiedAcids();
         List<Peak> peaks = null;
@@ -207,7 +206,33 @@ public class ValidTags {
         return stat;
     }
 
-    private void processGappedTags(long[][] stat, Peak peak, int prefix, String sequence, String reverseSequence, Set<Integer> starts, Set<Integer>reverseStarts) {
+    private Map<Peak, List<CorrectResult>> correctCache = new HashMap<Peak, List<CorrectResult>>();
+
+    private void processGappedTags(long[][] stat, Peak peak, int prefix, String sequence, String reverseSequence, Set<Integer> starts, Set<Integer> reverseStarts) {
+        List<CorrectResult> results = correctCache.get(peak);
+        if (results != null) {
+            for (CorrectResult result : results) {
+                if (result.check(starts, reverseStarts)) {
+                    long[] deltaGood = result.getDeltaGood();
+                    long[] deltaBad = result.getDeltaBad();
+                    for (int i = 0; i < deltaGood.length; i++) {
+                        stat[prefix + i][0] += deltaGood[i];
+                        stat[prefix + i][1] += deltaBad[i];
+                    }
+                    return;
+                }
+            }
+        }
+        long[] oldGood = new long[50];
+        for (int i = 0; i < oldGood.length; i++) {
+            oldGood[i] = stat[i + prefix][0];
+        }
+
+        long[] oldBad = new long[50];
+        for (int i = 0; i < oldBad.length; i++) {
+            oldBad[i] = stat[i + prefix][1];
+        }
+
         if (prefix > 0) {
             stat[prefix][0]++;
         }
@@ -226,15 +251,35 @@ public class ValidTags {
                 processGappedTags(stat, next, prefix + 1, sequence, reverseSequence, nextStarts, nextReverseStarts);
             }
         }
+
+        long[] deltaGood = new long[50];
+        long[] deltaBad = new long[50];
+        for (int i = 0; i < oldGood.length; i++) {
+            deltaGood[i] = stat[i + prefix][0] - oldGood[i];
+            deltaBad[i] = stat[i + prefix][1] - oldBad[i];
+        }
+        if (!correctCache.containsKey(peak)) {
+            correctCache.put(peak, new ArrayList<CorrectResult>());
+        }
+        correctCache.get(peak).add(new CorrectResult(starts, reverseStarts, deltaGood, deltaBad));
     }
 
+    private Map<Peak, long[]> wrongCache = new HashMap<Peak, long[]>();
     private void processWrongGappedTags(long[][] stat, Peak peak, int prefix) {
+        if (wrongCache.containsKey(peak)) {
+            long[] delta = wrongCache.get(peak);
+            for (int i = 0; i < delta.length; i++) {
+                stat[prefix + i][1] += delta[i];
+            }
+            return;
+        }
+
+        long[] old = new long[50];
+        for (int i = 0; i < old.length; i++) {
+            old[i] = stat[i + prefix][1];
+        }
         List<Peak> nextPeaks = peak.getNext();
         stat[prefix][1]++;
-        long[] statOrig = new long[stat.length];
-        for (int i = 0; i < statOrig.length; i++) {
-            statOrig[i] = stat[i][1];
-        }
 
         if (prefix > maxTagLength) {
             return;
@@ -242,6 +287,11 @@ public class ValidTags {
         for (Peak next : nextPeaks) {
             processWrongGappedTags(stat, next, prefix + 1);
         }
+        long[] delta = new long[50];
+        for (int i = 0; i < old.length; i++) {
+            delta[i] = stat[i + prefix][1] - old[i];
+        }
+        wrongCache.put(peak, delta);
     }
 
     public static Set<Integer> getNextStarts(String sequence, Set<Integer> starts, double[] limits, int gap) {
@@ -281,7 +331,8 @@ public class ValidTags {
             long good = stat[i][0];
             long total = good + stat[i][1];
             if (total > 0) {
-                output.print(" " + df.format((100d * good)/total) + " " + stat[i][0] + " " + stat[i][1] + " ");
+                //output.print(" " + df.format((100d * good)/total) + " " + stat[i][0] + " " + stat[i][1] + " ");
+                output.print(" " + stat[i][0] + " "  + stat[i][1]);
             } else {
                 break;
             }
@@ -292,5 +343,31 @@ public class ValidTags {
 
     public static String getReverse(String tag) {
         return new StringBuilder(tag).reverse().toString();
+    }
+
+    public static class CorrectResult {
+        private Set<Integer> starts;
+        private Set<Integer> reverseStarts;
+        private long[] deltaGood;
+        private long[] deltaBad;
+
+        public CorrectResult(Set<Integer> starts, Set<Integer> reverseStarts, long[] deltaGood, long[] deltaBad) {
+            this.starts = starts;
+            this.reverseStarts = reverseStarts;
+            this.deltaGood = deltaGood;
+            this.deltaBad = deltaBad;
+        }
+
+        public boolean check(Set<Integer> startsNew, Set<Integer> reverseStartsNew ) {
+            return starts.equals(startsNew) && reverseStarts.equals(reverseStartsNew);
+        }
+
+        public long[] getDeltaGood() {
+            return deltaGood;
+        }
+
+        public long[] getDeltaBad() {
+            return deltaBad;
+        }
     }
 }
