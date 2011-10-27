@@ -51,7 +51,7 @@ public class Configuration {
     }
 
     private void init(String[] args) {
-        String dataset = "data/salmonella";
+        String dataset = "data/salmonella3";
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -194,9 +194,8 @@ public class Configuration {
         return evalues;
     }
 
-    public Map<Integer, List<Peak>> getMSAlignPeaks() throws IOException {
+    public Map<Integer, List<Peak>> getMSAlignPeaks(Map<Integer, Scan> scans) throws IOException {
         getMSAlignResults();
-        Map<Integer, Scan> scans = getScans();
         BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "no_digestion_result_detail.txt"));
         Map<Integer, List<Peak>> ans = new HashMap<Integer, List<Peak>>();
         String s;
@@ -281,7 +280,9 @@ public class Configuration {
             }
         });
         if (msalignFiles.length == 1) {
-            BufferedReader input = ReaderUtil.getBufferedReader(msalignFiles[0]);
+            File msalignFile = msalignFiles[0];
+            System.out.println("msalign file = " + msalignFile.getCanonicalPath());
+            BufferedReader input = ReaderUtil.getBufferedReader(msalignFile);
             Properties properties;
             while ((properties = ReaderUtil.readPropertiesUntil(input, "PRECURSOR_MASS")).size() > 0) {
                 Scan scan = new Scan(properties, input);
