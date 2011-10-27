@@ -23,6 +23,9 @@ public class ValidTags {
 
     private int gap;
     private static Map<Integer,List<Peak>> msAlignPeaks;
+    private Map<KD,Integer> kdStat;
+    private int k;
+    private int d;
 
     public ValidTags(Configuration conf) {
         this.conf = conf;
@@ -53,7 +56,13 @@ public class ValidTags {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
-        String type = REFLEX;
+        String type = STANDARD;
+        //validTags.setMonoTagsOnly(true);
+        //validTags.setAddOnes(true);
+        validTags.process(type, 1);
+        validTags.process(type, 2);
+        validTags.process(type, 3);
+        type = REFLEX;
         //validTags.setMonoTagsOnly(true);
         //validTags.setAddOnes(true);
         validTags.process(type, 1);
@@ -62,6 +71,7 @@ public class ValidTags {
     }
 
     private PrintWriter output;
+    private PrintWriter outputKD;
 
     private void process(String type, int gap) throws Exception {
         process(type, gap, 100);
@@ -77,7 +87,7 @@ public class ValidTags {
         keys.addAll(scans.keySet());
         Collections.sort(keys);
         Set<Integer> usedProteins = new HashSet<Integer>();
-        msAlignPeaks = conf.getMSAlignPeaks();
+        msAlignPeaks = conf.getMSAlignPeaks(scans);
 
         double[] global = new double[100];
         int[] count = new int[100];
@@ -98,43 +108,57 @@ public class ValidTags {
             fileName += "_add";
         }
         output = ReaderUtil.createOutputFile(new File("vt", fileName + ".txt"));
-        //keys.clear();keys.add(502);
+        outputKD = ReaderUtil.createOutputFile(new File("kd", fileName + ".txt"));
+
+        kdStat = new HashMap<KD, Integer>();
+
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
+
             if (msAlignResults.containsKey(scanId)) {
                 Integer proteinId = msAlignResults.get(scanId);
-                if (usedProteins.contains(proteinId)) {
-                    continue;
-                }
-                usedProteins.add(proteinId);
+
                 Protein protein = proteins.get(proteinId);
                 long[][] stat = process(scan, protein, type, gap);
-                for (int i = 1; i < stat.length; i++) {
-                    long good = stat[i][0];
-                    long total = good + stat[i][1];
-                    if (total > 0) {
-                        global[i] += (100d * good)/total;
-                        count[i]++;
-                    } else {
-                        break;
+
+                if (!usedProteins.contains(proteinId)) {
+                    for (int i = 1; i < stat.length; i++) {
+                        long good = stat[i][0];
+                        long total = good + stat[i][1];
+                        if (total > 0) {
+                            global[i] += (100d * good)/total;
+                            count[i]++;
+                        } else {
+                            break;
+                        }
                     }
+
+                    printStat(stat, proteinId, scanId);
+                    usedProteins.add(proteinId);
                 }
-
-                printStat(stat, proteinId, scanId);
-
-                //break;
             }
         }
-        output.close();
         for (int i = 1; i < count.length; i++) {
             int n = count[i];
             if (n > 0) {
-                System.out.print( df.format(global[i]/n) + " ");
+                String text = df.format(global[i] / n) + " ";
+                System.out.print(text);
+                output.print(text);
             } else {
                 break;
             }
         }
+        List<KD> values  = new ArrayList<KD>();
+        values.addAll(kdStat.keySet());
+        Collections.sort(values);
+        for (KD value : values) {
+            String text = value.toString() + " - " + kdStat.get(value);
+            outputKD.println(text);
+        }
+
+        output.close();
+        outputKD.close();
         System.out.println();
     }
 
@@ -143,7 +167,7 @@ public class ValidTags {
         correctCache.clear();
         this.gap = gap;
         String sequence = protein.getSimplifiedAcids();
-        List<Peak> peaks = null;
+        List<Peak> peaks;
 
         if (VIRTUAL.equals(type)) {
             peaks = msAlignPeaks.get(scan.getId());
@@ -164,7 +188,7 @@ public class ValidTags {
                 filterMonotags(peaks);
         }
 
-        return printGappedTagInfo(peaks, sequence, getReverse(sequence));
+        return printGappedTagInfo(peaks, sequence, getReverse(sequence), scan.getId(), protein.getProteinId() );
 
     }
 
@@ -190,19 +214,38 @@ public class ValidTags {
         }
     }
 
-    private long[][] printGappedTagInfo(List<Peak> peaks, String sequence, String reverseSequence) {
+    private long[][] printGappedTagInfo(List<Peak> peaks, String sequence, String reverseSequence, int scanId, int proteinId) {
         long[][] stat = new long[1000][2];
-        for (Peak peak : peaks) {
-            Set<Integer> starts = new HashSet<Integer>();
-            Set<Integer> reverseStarts = new HashSet<Integer>();
-            for (int i = 0; i < sequence.length(); i++) {
-                starts.add(i);
-                if (needReverseTag) {
-                    reverseStarts.add(i);
+        KD kd = new KD(0, 0);
+        List<List<Peak>> components = GraphUtil.getComponentsFromGraph(peaks);
+        for (List<Peak> component : components) {
+            k = 0;
+            d = 0;
+            for (Peak peak : component) {
+                Set<Integer> starts = new HashSet<Integer>();
+                Set<Integer> reverseStarts = new HashSet<Integer>();
+                for (int i = 0; i < sequence.length(); i++) {
+                    starts.add(i);
+                    if (needReverseTag) {
+                        reverseStarts.add(i);
+                    }
                 }
+                processGappedTags(stat, peak, 0, sequence, reverseSequence, starts, reverseStarts);
             }
-            processGappedTags(stat, peak, 0, sequence, reverseSequence, starts, reverseStarts);
+            KD newKD = new KD(k, d);
+            if (newKD.compareTo(kd) < 0) {
+                kd = newKD;
+            }
         }
+
+
+        if (kdStat.containsKey(kd)) {
+            kdStat.put(kd, 1 + kdStat.get(kd));
+        } else {
+            kdStat.put(kd, 1);
+        }
+        outputKD.println(scanId + " " + kd.toString() + " - " + proteinId);
+
         return stat;
     }
 
@@ -216,8 +259,22 @@ public class ValidTags {
                     long[] deltaGood = result.getDeltaGood();
                     long[] deltaBad = result.getDeltaBad();
                     for (int i = 0; i < deltaGood.length; i++) {
-                        stat[prefix + i][0] += deltaGood[i];
-                        stat[prefix + i][1] += deltaBad[i];
+                        int pos = prefix + i;
+                        stat[pos][0] += deltaGood[i];
+                        stat[pos][1] += deltaBad[i];
+                        if (deltaGood[i] > 0) {
+                            if (pos > k) {
+                                k = pos;
+                            }
+                            if (pos > d) {
+                                d = pos;
+                            }
+                        }
+                        if (deltaBad[i] > 0) {
+                            if (pos > k) {
+                                k = pos;
+                            }
+                        }
                     }
                     return;
                 }
@@ -235,6 +292,12 @@ public class ValidTags {
 
         if (prefix > 0) {
             stat[prefix][0]++;
+            if (prefix > k) {
+                k = prefix;
+            }
+            if (prefix > d) {
+                d = prefix;
+            }
         }
         if (prefix > maxTagLength) {
             return;
@@ -269,7 +332,13 @@ public class ValidTags {
         if (wrongCache.containsKey(peak)) {
             long[] delta = wrongCache.get(peak);
             for (int i = 0; i < delta.length; i++) {
-                stat[prefix + i][1] += delta[i];
+                int pos = prefix + i;
+                stat[pos][1] += delta[i];
+                if (delta[i] > 0) {
+                    if (pos > k) {
+                        k = pos;
+                    }
+                }
             }
             return;
         }
@@ -280,6 +349,9 @@ public class ValidTags {
         }
         List<Peak> nextPeaks = peak.getNext();
         stat[prefix][1]++;
+        if (prefix > k) {
+            k = prefix;
+        }
 
         if (prefix > maxTagLength) {
             return;
