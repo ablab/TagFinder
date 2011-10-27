@@ -112,42 +112,7 @@ public class Analyzer {
             }
         }
 
-        for (i = 0; i < peaks.size(); i++) {
-            peaks.get(i).setComponentId(i);
-        }
-        boolean done;
-
-        do {
-            done = true;
-            for (Peak peak : peaks) {
-                if (peak.updateComponentId()) {
-                    done = false;
-                }
-            }
-        } while (!done);
-
-        boolean[] componentDone = new boolean[peaks.size()];
-
-        List<List<Peak>> components = new ArrayList<List<Peak>>();
-
-        for (Peak p : peaks) {
-            int componentId = p.getComponentId();
-            if (!componentDone[componentId]) {
-                List<Peak> component = new ArrayList<Peak>();
-                for (Peak peak : peaks) {
-                    if (peak.getComponentId() == componentId) {
-                        component.add(peak);
-                    }
-                }
-
-                if (component.size() > 1) {
-                    components.add(component);
-                    componentDone[componentId] = true;
-                }
-            }
-        }
-
-        return components;
+        return GraphUtil.getComponentsFromGraph(peaks);
     }
 
     private Table getComponentView(List<Peak> peaks) {
