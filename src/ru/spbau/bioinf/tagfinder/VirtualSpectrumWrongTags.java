@@ -19,7 +19,7 @@ public class VirtualSpectrumWrongTags {
         keys.addAll(scans.keySet());
         Collections.sort(keys);
         VirtualSpectrumWrongTags vswt = new VirtualSpectrumWrongTags(conf);
-        Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks();
+        Map<Integer, List<Peak>> msAlignPeaks = conf.getMSAlignPeaks(scans);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
