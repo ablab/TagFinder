@@ -13,6 +13,7 @@ import ru.spbau.bioinf.tagfinder.GraphUtil;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
+import ru.spbau.bioinf.tagfinder.ShiftEngine;
 import ru.spbau.bioinf.tagfinder.ValidTags;
 
 public class PlaceStatistics {
@@ -121,7 +122,7 @@ public class PlaceStatistics {
         }
         for (Peak next : peak.getNext()) {
             double[] limits = conf.getEdgeLimits(peak, next);
-            Set<Integer> nextStarts = ValidTags.getNextStarts(sequence, starts, limits, gap);
+            Set<Integer> nextStarts = ValidTags.getNextStarts(ShiftEngine.getSpectrum(sequence), starts, limits, gap);
             String nextMatch = null;
             if (match != null) {
                 for (int i = 1; i <= Math.min(match.length(), gap); i++) {
