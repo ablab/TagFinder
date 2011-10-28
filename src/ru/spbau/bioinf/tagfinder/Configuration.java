@@ -106,7 +106,16 @@ public class Configuration {
     public double[] getEdgeLimits(Peak peak, Peak next) {
         double diff = next.diff(peak);
         double[] limits = new double[2];
-        double error =  (next.getMass() + peak.getMass()) * getPpmCoef() / 2;
+        double firstMass = peak.getMass();
+        double secondMass = next.getMass();
+        if (peak.getIntensity() == 0 && next.getPeakType() == PeakType.Y) {
+            firstMass = 5 * secondMass;
+        }
+        if (next.getIntensity() == 0 && peak.getPeakType() == PeakType.B) {
+            secondMass = 5 * firstMass;
+        }
+
+        double error =  (firstMass + secondMass) * getPpmCoef() / 2;
         limits[0] = diff - error;
         limits[1] = diff + error;
         return limits;
@@ -220,6 +229,55 @@ public class Configuration {
         }
         return ans;
     }
+
+    public Map<Integer, double[]> getAnnotatedSpectrums() throws IOException {
+        BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "result_table.txt"));
+        input.readLine();
+        Map<Integer, double[]> ans = new HashMap<Integer, double[]>();
+        String s;
+        while ((s = input.readLine()) != null) {
+            String[] data = s.split("[\t]");
+            int scanId = Integer.parseInt(data[3]);
+            spectrums.put(Integer.parseInt(data[2]), scanId);
+            String match = data[13];
+            List<Double> values = new ArrayList<Double>();
+            int brackets = 0;
+            match = match.substring(match.indexOf(".") + 1, match.lastIndexOf("."));
+            match = match.replaceAll("L", "I");
+            double mass = 0;
+            int cur = 0;
+            while (cur < match.length()) {
+                if (brackets ==0) {
+                    values.add(mass);
+                }
+                char ch = match.charAt(cur);
+                switch (ch) {
+                    case '[':
+                        int nextCur = match.indexOf(']', cur);
+                        mass += Double.parseDouble(match.substring(cur + 1, nextCur));
+                        cur = nextCur;
+                        break;
+                    case '(':
+                        brackets++;
+                        break;
+                    case ')':
+                        brackets--;
+                        break;
+                    default:
+                        mass += Acid.getAcid(ch).getMass();
+                }
+                cur++;
+            }
+            values.add(mass);
+            double[] spectrum = new double[values.size()];
+            for (int i = 0; i < spectrum.length; i++) {
+                spectrum[i] = values.get(i);
+            }
+            ans.put(scanId, spectrum);
+        }
+        return ans;
+    }
+
 
     public Map<Integer, Map<Double, String>> getMSAlignData() throws IOException {
         BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "nodigestion_result_list.txt"));
