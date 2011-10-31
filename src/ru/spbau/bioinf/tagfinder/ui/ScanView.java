@@ -19,6 +19,7 @@ import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Consts;
 import ru.spbau.bioinf.tagfinder.MassAlign;
 import ru.spbau.bioinf.tagfinder.MassMatch;
+import ru.spbau.bioinf.tagfinder.ModificationDiscoverer;
 import ru.spbau.bioinf.tagfinder.Peak;
 import ru.spbau.bioinf.tagfinder.PeakType;
 import ru.spbau.bioinf.tagfinder.PrecursorMassShiftFinder;
@@ -58,6 +59,8 @@ public class ScanView extends JComponent {
     private double bestShiftY = 0;
     private List<Double> rangeShifts = new ArrayList<Double>();
     private List<MassMatch> goodMatches;
+    private List<MassMatch> badMatches;
+    private double bestDiff;
 
     public ScanView(Configuration conf, final TagFinder tagFinder) {
         this.conf = conf;
@@ -236,9 +239,36 @@ public class ScanView extends JComponent {
 
             List<MassMatch> goodMatchesCopy = new ArrayList<MassMatch>();
             goodMatchesCopy.addAll(goodMatches);
+            int[] stat = new int[proteinSpectrum.length];
+            for (MassMatch match : goodMatches) {
+                stat[match.getBegin()]++;
+                stat[match.getEnd()]++;
+            }
+
+
             while (goodMatchesCopy.size() > 0) {
-                delta = drawBestCleavage(g, goodMatchesCopy, line, delta);
+                delta = drawBestCleavage(g, goodMatchesCopy, stat, line, delta);
                 delta += 2;
+            }
+
+            if (bestDiff != 0) {
+                g.setColor(Color.RED);
+                for (MassMatch badMatch : badMatches) {
+                    double mass = badMatch.getMass();
+                    for (int i = 0; i < proteinSpectrum.length; i++) {
+                        for (int j = i + 1; j < proteinSpectrum.length; j++) {
+                            MassMatch nextMatch = new MassMatch(mass, i, j, bestDiff, proteinSpectrum);
+                            if (nextMatch.getRelativeError() < PlaceStatistics.TEN_PPM) {
+                                int y = line * LINE_HEIGHT + delta;
+                                int x1 = (int) (proteinSpectrum[i] * scale);
+                                int x2 = (int) (proteinSpectrum[j] * scale);
+                                g.drawLine(x1, y, x2, y);
+                                delta +=2;
+                            }
+                        }
+                    }
+                }
+                g.setColor(Color.BLACK);
             }
 
             line += (delta + 2 * LINE_HEIGHT)/LINE_HEIGHT;
@@ -275,13 +305,7 @@ public class ScanView extends JComponent {
         }
     }
 
-    private int drawBestCleavage(Graphics g, List<MassMatch> goodMatches, int line, int delta) {
-        int[] stat = new int[proteinSpectrum.length];
-        for (MassMatch match : goodMatches) {
-            stat[match.getBegin()]++;
-            stat[match.getEnd()]++;
-        }
-
+    private int drawBestCleavage(Graphics g, List<MassMatch> goodMatches, int[] stat, int line, int delta) {
         int bestScore = -1;
         int bestPos = 0;
         for (int i = 0; i < stat.length; i++) {
@@ -295,6 +319,22 @@ public class ScanView extends JComponent {
         for (Iterator<MassMatch> it = goodMatches.iterator(); it.hasNext(); ) {
             MassMatch match =  it.next();
             if (match.getBegin() == bestPos || match.getEnd() == bestPos) {
+                double modAbs = Math.abs(match.getMod());
+                g.setColor(Color.BLACK);
+                if (modAbs == 0) {
+                    g.setColor(Color.GREEN);
+                }
+
+                if (modAbs == 1) {
+                    g.setColor(Color.ORANGE);
+                }
+                if (modAbs == Consts.WATER) {
+                    g.setColor(Color.BLUE);
+                }
+                if (modAbs == Consts.AMMONIA) {
+                    g.setColor(Color.MAGENTA);
+                }
+
                 int y = line * LINE_HEIGHT + delta;
                 int x1 = (int) (proteinSpectrum[match.getBegin()] * scale);
                 int x2 = (int) (proteinSpectrum[match.getEnd()] * scale);
@@ -303,6 +343,7 @@ public class ScanView extends JComponent {
                 it.remove();
             }
         }
+        stat[bestPos] = 0;
         return delta;
     }
 
@@ -371,12 +412,21 @@ public class ScanView extends JComponent {
         rangeShifts = ShiftEngine.getBestShifts(scan.getPeaks(), scan.getPrecursorMass(), proteinSpectrum);
         List<MassMatch> matches = MassAlign.getMassAlign(proteinSpectrum, scan.getPeaks());
         goodMatches = new ArrayList<MassMatch>();
+        badMatches = new ArrayList<MassMatch>();
         for (MassMatch match : matches) {
             if (match.getRelativeError() < PlaceStatistics.TEN_PPM) {
                 goodMatches.add(match);
+            } else {
+                badMatches.add(match);
             }
         }
-        tagFinder.updateStatus(goodMatches.size() + " aligned masses out of " + scan.getPeaks().size() + " peaks." );
+
+        bestDiff = ModificationDiscoverer.getBestDiff(scan.getId(), proteinId, proteinSpectrum, badMatches);
+        String text = goodMatches.size() + " aligned masses out of " + scan.getPeaks().size() + " peaks.";
+        if (bestDiff != 0) {
+             text += " Best modification is " + bestDiff;
+        }
+        tagFinder.updateStatus(text);
     }
 
     private void drawPeak(Graphics g, int y, double value) {
