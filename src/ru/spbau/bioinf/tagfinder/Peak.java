@@ -42,6 +42,9 @@ public class Peak implements Comparable<Peak>{
 
     private Peak yPeak = null;
 
+    public void clearYPeak() {
+        yPeak = null;
+    }
     public Peak getYPeak(double precursorMass){
         if (peakType != PeakType.B) {
             return null;
