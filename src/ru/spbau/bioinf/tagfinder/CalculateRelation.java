@@ -19,6 +19,8 @@ public class CalculateRelation {
     public static void main(String[] args) throws Exception {
         for (int gap = 1; gap <=3; gap++) {
             compare("share_bar_basic_" + gap + "_correct.txt", "share_bar_basic_" + gap +"_proper.txt");
+            correctD("share_bar_basic_" + gap +"_correct.txt");
+            correctD("share_bar_virtual_full_" + gap +"_correct.txt");
         }
     }
 
@@ -90,6 +92,46 @@ public class CalculateRelation {
         printPercentage(goodToGood);
         System.out.println("All to All: ");
         printPercentage(allToAll);
+    }
+
+    public static void correctD(String file) throws Exception {
+        System.out.println(file);
+        BufferedReader in = ReaderUtil.createInputReader(new File("res", file));
+
+        List<long[]> pairs = new ArrayList<long[]>();
+        int n = 0;
+        int[] dShare = new int[MAX_TAG];
+        do {
+            String s1 = in.readLine();
+
+            if (s1.indexOf(",") > 0) {
+                break;
+            }
+            long[] d1 = getData(s1);
+            pairs.add(new long[] {d1[0], d1[1]});
+            int pos = 2;
+            int d = 1;
+
+            int maxD = 0;
+            while (pos < d1.length) {
+                if (d1[pos] > 0) {
+                    maxD = d;
+                }
+                d++;
+                pos += 2;
+            }
+            dShare[maxD]++;
+        } while(true);
+        double total = pairs.size();
+        System.out.println("Distribution of longest tags: ");
+        for (int i = 0; i < dShare.length; i++) {
+            int v = dShare[i];
+            if (v > 0) {
+                System.out.println(i + " " + v + " " + df.format(100 * v / total));
+            }
+
+        }
+
     }
 
     private static void printPercentage(List<Double>[] stat) {
