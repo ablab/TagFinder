@@ -17,7 +17,8 @@ public class ValidTags {
 
     public static final double TEN_PPM = 0.00001d;
 
-    public static final String VIRTUAL = "virtual";
+    public static final String VIRTUAL_FULL = "virtual_full";
+    public static final String VIRTUAL_MONO = "virtual_mono";
     public static final String BASIC = "basic";
     public static final String COMBINED = "combined";
 
@@ -27,6 +28,7 @@ public class ValidTags {
     private Configuration conf;
 
     private int gap;
+    private String type;
     private static Map<Integer,List<Peak>> msAlignPeaks;
     private Map<KD,Integer> kdStat;
     private int k;
@@ -50,23 +52,34 @@ public class ValidTags {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
+        for (int gap = 1; gap < 4; gap++) {
+            //validTags.process(BASIC, FULL, gap, true, false);
+        }
+
+        validTags.process(COMBINED, FULL, 1, false, false);//I
+        if (true) return;
+        //validTags.process(COMBINED, BAR, 1, false, false);//I
+        //validTags.process(COMBINED, FULL, 1, true, false);//I
 
         for (int gap = 1; gap < 4; gap++) {
             validTags.process(BASIC, FULL, gap, false, false);//I
+            validTags.process(BASIC, FULL, gap, true, false);
 
             validTags.process(BASIC, BAR, gap, false, false);//1
 
-            validTags.process(VIRTUAL, BAR, gap, false, false);//2
+            validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//2
+            validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//2
             validTags.process(COMBINED, BAR, gap, false, false);
             validTags.process(BASIC, BAR, gap, false, true);
 
             validTags.process(BASIC, BAR, gap, true, false);//3
-            validTags.process(VIRTUAL, BAR, gap, true, false);
+            validTags.process(VIRTUAL_FULL, BAR, gap, true, false);
         }
     }
 
     private PrintWriter output;
     private PrintWriter outputKD;
+    private PrintWriter outputIntencity;
 
 
     private void process(String type, int datasetType,  int gap, boolean needCorrect, boolean addOnes) throws Exception {
@@ -93,11 +106,12 @@ public class ValidTags {
         }
         output = ReaderUtil.createOutputFile(new File("res", "share_" + fileName + ".txt"));
         outputKD = ReaderUtil.createOutputFile(new File("res", "kd_" + fileName + ".txt"));
+        //outputIntencity = ReaderUtil.createOutputFile(new File("res", "intencity_" + fileName + ".txt"));
 
         System.out.println("fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(679);
+        //keys.clear(); keys.add(1946);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -153,39 +167,106 @@ public class ValidTags {
         wrongCache.clear();
         correctCache.clear();
         this.gap = gap;
+        this.type = type;
+        List<Double> precursorMassShifts = new ArrayList<Double>();
+        SpectrumResult spectrumResult = getSpectrumResult(scan, protein, 0);
+        //spectrumResult = getSpectrumResult(scan, protein, PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
+        //precursorMassShifts.add(-1d);
+        //precursorMassShifts.add(1d);
+
+        //precursorMassShifts.add(PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
+        //precursorMassShifts.addAll(PrecursorMassShiftFinder.getAllPossibleShifts2(conf, scan));
+        //Collections.sort(precursorMassShifts);
+        //int len = precursorMassShifts.size();
+        //if (len > 0) {
+            //System.out.println("scan + " + scan.getId() + " " + precursorMassShifts.get(0) + " " + precursorMassShifts.get(len - 1) + " " + len + " " + scan.getPrecursorMass());
+        //}
+        long score = getScore(spectrumResult);
+        for (Double precursorMassShift : precursorMassShifts) {
+            SpectrumResult anotherResult = getSpectrumResult(scan, protein, precursorMassShift);
+            long nextScore = getScore(anotherResult);
+            if (nextScore> score) {
+                if (nextScore - score > 1) {
+                    //System.out.println("WOW!");
+                }
+                if (nextScore - score > 2) {
+                   // System.out.println("WOW!WOW!");
+                }
+
+                System.out.println("For " + scan.getId() + " precursor mass shift " + +precursorMassShift + " provieds score " + nextScore + " instead of " + score);
+                spectrumResult = anotherResult;
+                score = nextScore;
+            }
+
+            if (score - nextScore > 0) {
+                //System.out.println("bad" +  (score - nextScore));
+            }
+            /*
+            KD newKD = anotherResult.kd;
+            if (newKD.compareTo(spectrumResult.kd) < 0) {
+                System.out.println("For " + scan.getId() + " precursor mass shift " + +precursorMassShift + " provieds kd " + newKD.toString() + " instead of " + spectrumResult.kd);
+                spectrumResult = anotherResult;
+            }
+            */
+        }
+
+        spectrumResult.output(kdStat, outputKD, scan.getId(), protein.getProteinId());
+        return spectrumResult.stat;
+    }
+
+    private long getScore(SpectrumResult spectrumResult) {
+        long score = 0;
+        /*
+        long[][] stat = spectrumResult.stat;
+        for (int i = 0; i < stat.length; i++) {
+            score += stat[i][0] * i * i * i;
+            score += stat[i][1] * i * i * i;
+        } */
+        score = spectrumResult.kd.getK() * 1000 + spectrumResult.kd.getD();
+
+        return score;
+    }
+
+    private SpectrumResult getSpectrumResult(Scan scan, Protein protein, double precursorMassShift) {
         String sequence = protein.getSimplifiedAcids();
         List<Peak> peaks;
 
         int scanId = scan.getId();
-        if (VIRTUAL.equals(type)) {
+        if (VIRTUAL_MONO.equals(type) || VIRTUAL_FULL.equals(type)) {
             peaks = msAlignPeaks.get(scanId);
         } else {
-            PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan);
-            peaks = scan.createSpectrumWithYPeaks(0);
+            peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
         }
         if (addOnes) {
             peaks = addOnes(peaks);
         }
 
         GraphUtil.generateGapEdges(conf, peaks, gap);
-        if (BASIC.equals(type)) {
+        if (BASIC.equals(type) || VIRTUAL_MONO.equals(type)) {
             filterMonotags(peaks);
         }
 
         int proteinId = protein.getProteinId();
         double[] proteinSpectrum = needCorrect ? annotatedSpectrums.get(scanId): ShiftEngine.getSpectrum(sequence);
-        SpectrumResult spectrumResult = printGappedTagInfo(peaks, proteinSpectrum, scan.getPrecursorMass());
-        spectrumResult.output(kdStat, outputKD, scanId, proteinId);
-
-        return spectrumResult.stat;
+        return printGappedTagInfo(peaks, proteinSpectrum, scan.getPrecursorMass());
     }
 
     private List<Peak> addOnes(List<Peak> peaks) {
         List<Peak> ans = new ArrayList<Peak>();
         for (Peak peak : peaks) {
-            ans.add(new Peak(peak.getValue() - 1, 0 ,0));
-            ans.add(new Peak(peak.getValue(), 0 ,0));
-            ans.add(new Peak(peak.getValue() + 1, 0 ,0));
+            Peak p1 = new Peak(peak.getValue() - 1, peak.getIntensity(), 0);
+            Peak p2 = new Peak(peak.getValue(), peak.getIntensity(), 0);
+            Peak p3 = new Peak(peak.getValue() + 1, peak.getIntensity(), 0);
+            if (peak.getPeakType() == PeakType.Y) {
+                double precursorMass = peak.getMass() + peak.getValue();
+                p1.convertToY(precursorMass);
+                p2.convertToY(precursorMass);
+                p3.convertToY(precursorMass);
+            }
+
+            ans.add(p1);
+            ans.add(p2);
+            ans.add(p3);
         }
         Collections.sort(ans);
         return ans;
@@ -359,7 +440,75 @@ public class ValidTags {
         }
         return nextStarts;
     }
+            /*
+public void researchIntencity(List<Peak> peaks, double[] proteinSpectrum) {
+        double[] bad = new double[100];
+        double[] good = new double[100];
+        int[] badCount = new int[100];
+        int[] goodCount = new int[100];
+        generateTags(peaks, proteinSpectrum);
 
+        for (int i = 1; i < good.length; i++) {
+            if (bad[i] + good[i] == 0) {
+                break;
+            }
+            int v = 0;
+            if (good[i] == bad[i]) {
+                v = 1;
+            }
+            if (good[i] > bad[i]) {
+                v = 2;
+            }
+            System.out.print(" " + df.format(100d * (goodCount[i] + 0.0d) / (goodCount[i] + badCount[i])));
+            if (goodCount[i] == 0) {
+                //System.out.println(" bb" + i + " ");
+            }
+
+        }
+        System.out.println();
+    }
+
+    public void generateTags(List<Peak> peaks, double[] proteinSpectrum) {
+        for (Peak peak : peaks) {
+            generateTags("", peak, proteinSpectrum,  getIntencity(peak));
+        }
+    }
+
+    private double getIntencity(Peak peak) {
+        if (peak.getIntensity() > 0) {
+            return peak.getIntensity();
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    public void generateTags(String prefix, Peak peak, double[] proteinSpectrum, int i, double intencity) {
+        int d = prefix.length();
+        boolean isGood = i>=0;
+        if (isGood) {
+            if (good[d] == intencity) {
+                goodCount[d]++;
+            } else if (good[d] < intencity) {
+                goodCount[d] = 1;
+                good[d] = intencity;
+            }
+        } else {
+            if (bad[d] == intencity) {
+                badCount[d]++;
+            } else if (bad[d] < intencity) {
+                badCount[d] = 1;
+                bad[d] = intencity;
+            }
+        }
+
+        for (Peak next : peak.getNext()) {
+            for (Acid acid : Acid.values()) {
+                if (acid.match(conf.getEdgeLimits(peak, next))) {
+                    generateTags(prefix + acid.name(), next, proteinSpectrum, i+1, Math.min(intencity, getIntencity(peak)));
+                }
+            }
+        }
+    }
+              */
     private void printStat(long[][] stat, Integer proteinId, int scanId) {
         output.print(scanId + " " +  proteinId);
         for (int i = 1; i < stat.length; i++) {
