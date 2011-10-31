@@ -17,6 +17,8 @@ import java.util.Properties;
 
 public class Configuration {
 
+    public static final double EVALUE_LIMIT = 0.0024;
+
     private File proteinDatabase;
 
     private File inputDir;
@@ -51,7 +53,7 @@ public class Configuration {
     }
 
     private void init(String[] args) {
-        String dataset = "data/salmonella3";
+        String dataset = "data/salmonella4";
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -162,7 +164,7 @@ public class Configuration {
                 int proteinId = Integer.parseInt(data[3]);
                 double EValue = Double.parseDouble(data[data.length - 1]);
                 evalues.put(scanId, EValue);
-                if (EValue < 0.0015) {
+                if (EValue < EVALUE_LIMIT) {
                     ans.put(scanId, proteinId);
                 } else {
                     badMSAlignResults.put(scanId, proteinId);
@@ -171,16 +173,16 @@ public class Configuration {
         } else {
             File resultTable = new File(inputDir, "result_table.txt");
             BufferedReader input = ReaderUtil.createInputReader(resultTable);
-            input.readLine();
+            //input.readLine();
             while ((s = input.readLine()) != null) {
                 String[] data = ReaderUtil.getDataArray(s);
-                int scanId = Integer.parseInt(data[3]);
+                int scanId = Integer.parseInt(data[5]);
                 int spectrumId = Integer.parseInt(data[2]);
                 spectrums.put(spectrumId, scanId);
-                int proteinId = Integer.parseInt(data[8]);
-                double EValue = Double.parseDouble(data[data.length - 1]);
+                int proteinId = Integer.parseInt(data[3]);
+                double EValue = Double.parseDouble(data[data.length - 3]);
                 evalues.put(scanId, EValue);
-                if (EValue < 0.0015) {
+                if (EValue < EVALUE_LIMIT) {
                     ans.put(scanId, proteinId);
                 } else {
                     badMSAlignResults.put(scanId, proteinId);
@@ -232,14 +234,14 @@ public class Configuration {
 
     public Map<Integer, double[]> getAnnotatedSpectrums() throws IOException {
         BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "result_table.txt"));
-        input.readLine();
+        //input.readLine();
         Map<Integer, double[]> ans = new HashMap<Integer, double[]>();
         String s;
         while ((s = input.readLine()) != null) {
             String[] data = s.split("[\t]");
-            int scanId = Integer.parseInt(data[3]);
+            int scanId = Integer.parseInt(data[5]);
             spectrums.put(Integer.parseInt(data[2]), scanId);
-            String match = data[13];
+            String match = data[data.length - 8];
             List<Double> values = new ArrayList<Double>();
             int brackets = 0;
             match = match.substring(match.indexOf(".") + 1, match.lastIndexOf("."));
