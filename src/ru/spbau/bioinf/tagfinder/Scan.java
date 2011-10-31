@@ -127,6 +127,7 @@ public class Scan {
         double newPrecursorMass = precursorMass + precursorMassShift;
         peaks.add(new Peak(newPrecursorMass, 0, 0));
         for (Peak peak : this.peaks) {
+             peak.clearYPeak();
              peaks.add(peak.getYPeak(newPrecursorMass));
         }
         Collections.sort(peaks);
