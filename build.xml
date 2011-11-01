@@ -27,8 +27,7 @@
                classpathref="classpath"
                includeantruntime="on">
         </javac>
-        <copy file="${src.dir}/log4j.xml" todir="${build.classes}"/>
-        <!-- Exclude unit tests from the final JAR file -->
+        <!--<copy file="${src.dir}/log4j.xml" todir="${build.classes}"/>-->
         <jar jarfile="tagFinder.jar" basedir="${build.dir}/classes"/>
     </target>
 
