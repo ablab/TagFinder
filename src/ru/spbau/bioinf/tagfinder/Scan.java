@@ -123,13 +123,13 @@ public class Scan {
     public List<Peak> createSpectrumWithYPeaks(double precursorMassShift) {
         List<Peak> peaks = new ArrayList<Peak>();
         peaks.addAll(this.peaks);
-        peaks.add(new Peak(0, 0, 0));
         double newPrecursorMass = precursorMass + precursorMassShift;
-        peaks.add(new Peak(newPrecursorMass, 0, 0));
         for (Peak peak : this.peaks) {
              peak.clearYPeak();
              peaks.add(peak.getYPeak(newPrecursorMass));
         }
+        peaks.add(new Peak(0, 0, 0));
+        peaks.add(new Peak(newPrecursorMass, 0, 0, 0));
         Collections.sort(peaks);
         return peaks;
     }
