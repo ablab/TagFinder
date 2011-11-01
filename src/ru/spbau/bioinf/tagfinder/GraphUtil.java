@@ -176,4 +176,61 @@ public class GraphUtil {
 
         return components;
     }
+
+    public static List<Peak> filterDuplicates(Configuration conf, List<Peak> peaks) {
+        for (int i = 0; i < peaks.size(); i++) {
+            Peak p1 = peaks.get(i);
+
+            for (int j = 0; j < peaks.size(); j++) {
+                if (i != j) {
+                    Peak p2 =  peaks.get(j);
+                    if (Math.abs(p1.getValue() - p2.getValue()) < 0.1) {
+                        if (!p1.getNext().containsAll(p2.getNext())) {
+                            continue;
+                        }
+                        boolean isParent = true;
+                        for (Peak p3 : p2.getNext()) {
+                            for (Acid acid : Acid.values()) {
+                                if (acid.match(conf.getEdgeLimits(p2, p3)) && !acid.match(conf.getEdgeLimits(p1, p3))) {
+                                    isParent = false;
+                                    break;
+                                }
+                            }
+                            if (!isParent) {
+                                break;
+                            }
+                        }
+                        if (!isParent) {
+                            continue;
+                        }
+
+                        for (Peak p0 : peaks) {
+                            if (p0.getNext().contains(p2)) {
+                                if (!p0.getNext().contains(p1)) {
+                                    isParent = false;
+                                }
+                                if (!isParent) {
+                                    break;
+                                }
+                                for (Acid acid : Acid.values()) {
+                                    if (acid.match(conf.getEdgeLimits(p0, p2)) && !acid.match(conf.getEdgeLimits(p0, p1))) {
+                                        isParent = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (isParent) {
+                            for (Peak peak : peaks) {
+                                peak.getNext().remove(p2);
+                            }
+                            peaks.remove(p2);
+                            return filterDuplicates(conf, peaks);
+                        }
+                    }
+                }
+            }
+        }
+        return peaks;
+    }
 }
