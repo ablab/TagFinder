@@ -334,21 +334,23 @@ public class Configuration {
 
         Map<Integer, Scan> scans = new HashMap<Integer, Scan>();
 
-        File[] msalignFiles = inputDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".msalign");
+        if (mod == null) {
+            File[] msalignFiles = inputDir.listFiles(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".msalign");
+                }
+            });
+            if (msalignFiles.length == 1) {
+                File msalignFile = msalignFiles[0];
+                System.out.println("msalign file = " + msalignFile.getCanonicalPath());
+                BufferedReader input = ReaderUtil.getBufferedReader(msalignFile);
+                Properties properties;
+                while ((properties = ReaderUtil.readPropertiesUntil(input, "PRECURSOR_MASS")).size() > 0) {
+                    Scan scan = new Scan(properties, input);
+                    scans.put(scan.getId(), scan);
+                }
+                return scans;
             }
-        });
-        if (msalignFiles.length == 1) {
-            File msalignFile = msalignFiles[0];
-            System.out.println("msalign file = " + msalignFile.getCanonicalPath());
-            BufferedReader input = ReaderUtil.getBufferedReader(msalignFile);
-            Properties properties;
-            while ((properties = ReaderUtil.readPropertiesUntil(input, "PRECURSOR_MASS")).size() > 0) {
-                Scan scan = new Scan(properties, input);
-                scans.put(scan.getId(), scan);
-            }
-            return scans;
         }
 
         File scanDir = new File(inputDir,
