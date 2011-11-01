@@ -53,11 +53,12 @@ public class ValidTags {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
         for (int gap = 1; gap < 4; gap++) {
-            //validTags.process(BASIC, FULL, gap, true, false);
+            //validTags.process(COMBINED, BAR, gap, false, false);
+            //validTags.process(COMBINED, FULL, gap, false, false);//I
         }
 
-        validTags.process(COMBINED, FULL, 1, false, false);//I
-        if (true) return;
+
+        //if (true) return;
         //validTags.process(COMBINED, BAR, 1, false, false);//I
         //validTags.process(COMBINED, FULL, 1, true, false);//I
 
@@ -69,7 +70,7 @@ public class ValidTags {
 
             validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//2
             validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//2
-            validTags.process(COMBINED, BAR, gap, false, false);
+            //validTags.process(COMBINED, BAR, gap, false, false);
             validTags.process(BASIC, BAR, gap, false, true);
 
             validTags.process(BASIC, BAR, gap, true, false);//3
@@ -169,8 +170,8 @@ public class ValidTags {
         this.gap = gap;
         this.type = type;
         List<Double> precursorMassShifts = new ArrayList<Double>();
-        SpectrumResult spectrumResult = getSpectrumResult(scan, protein, 0);
-        //spectrumResult = getSpectrumResult(scan, protein, PrecursorMassShiftFinder.getPrecursorMassShift(conf, scan));
+        SpectrumResult spectrumResult = //getSpectrumResult(scan, protein, PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan));
+        getSpectrumResult(scan, protein, 0);
         //precursorMassShifts.add(-1d);
         //precursorMassShifts.add(1d);
 
@@ -242,6 +243,20 @@ public class ValidTags {
         }
 
         GraphUtil.generateGapEdges(conf, peaks, gap);
+        //List<Peak[]> tags = new Analyzer(conf).getTags(peaks);
+        ///System.out.println("tags = " + tags.size());
+        peaks = GraphUtil.filterDuplicates(conf, peaks);
+        /*
+        double prev = -1;
+        for (Peak peak : peaks) {
+            double value = peak.getValue();
+            if (value - prev > 0.1) {
+                System.out.println();
+            }
+            System.out.print(value + " ");
+            prev = value;
+        } */
+
         if (BASIC.equals(type) || VIRTUAL_MONO.equals(type)) {
             filterMonotags(peaks);
         }
