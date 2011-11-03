@@ -53,12 +53,16 @@ public class ValidTags {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
         for (int gap = 1; gap < 4; gap++) {
-            //validTags.process(COMBINED, BAR, gap, false, false);
-            //validTags.process(COMBINED, FULL, gap, false, false);//I
+            //validTags.process(COMBINED, BAR, gap, true, false);
+            validTags.process(COMBINED, FULL, gap, false, false);//I
+            validTags.process(COMBINED, FULL, gap, true, false);
+            validTags.process(COMBINED, BAR, gap, false, false);//I
+            validTags.process(COMBINED, BAR, gap, true, false);
         }
 
 
-        //if (true) return;
+
+        if (true) return;
         //validTags.process(COMBINED, BAR, 1, false, false);//I
         //validTags.process(COMBINED, FULL, 1, true, false);//I
 
@@ -112,7 +116,7 @@ public class ValidTags {
         System.out.println("fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(1946);
+        //keys.clear(); keys.add(3000);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -170,8 +174,13 @@ public class ValidTags {
         this.gap = gap;
         this.type = type;
         List<Double> precursorMassShifts = new ArrayList<Double>();
-        SpectrumResult spectrumResult = //getSpectrumResult(scan, protein, PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan));
-        getSpectrumResult(scan, protein, 0);
+        double shift =
+                //PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan)
+                0
+                ;
+        SpectrumResult spectrumResult = getSpectrumResult(scan, protein, shift);
+        //System.out.println("shift = " + shift);
+        //getSpectrumResult(scan, protein, 0);
         //precursorMassShifts.add(-1d);
         //precursorMassShifts.add(1d);
 
@@ -245,7 +254,9 @@ public class ValidTags {
         GraphUtil.generateGapEdges(conf, peaks, gap);
         //List<Peak[]> tags = new Analyzer(conf).getTags(peaks);
         ///System.out.println("tags = " + tags.size());
+        //System.out.println("size before " + peaks.size());
         peaks = GraphUtil.filterDuplicates(conf, peaks);
+        //System.out.println("size after " + peaks.size());
         /*
         double prev = -1;
         for (Peak peak : peaks) {
