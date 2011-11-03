@@ -99,9 +99,17 @@ public class PrecursorMassShiftFinder {
                 for (Acid acid : Acid.values()) {
                     if (acid.match(new double[]{absDelta - error,  absDelta + error})) {
                         double opt = delta > 0 ? delta - acid.getMass() : delta + acid.getMass();
-                        points.add(opt - dError);
-                        points.add(opt + dError);
-                        limits.add(new double[] {opt - dError, opt + dError});
+                        double min = opt - dError;
+                        double max = opt + dError;
+                        if (min < - error) {
+                            min = -error;
+                        }
+                        if (max > error) {
+                            max = error;
+                        }
+                        points.add(min);
+                        points.add(max);
+                        limits.add(new double[] {min, max});
                     }
                 }
             }
@@ -109,13 +117,13 @@ public class PrecursorMassShiftFinder {
         Collections.sort(points);
         double ans = 0;
         int score = 0000;
-        points.clear();
-        double min = - precursorMass * conf.getPpmCoef() * 3;
-        double delta = -min/100000;
-        for (int i = 0; i < 200000; i++) {
-            double p = min + delta * i;
-        //for (int i = 0; i < points.size() - 1; i++) {
-        //    double p = (points.get(i) + points.get(i + 1)) / 2;
+        //points.clear();
+        //double min = - precursorMass * conf.getPpmCoef() * 3;
+        //double delta = -min/100000;
+        //for (int i = 0; i < 200000; i++) {
+        //    double p = min + delta * i;
+        for (int i = 0; i < points.size() - 1; i++) {
+            double p = (points.get(i) + points.get(i + 1)) / 2;
             if (Math.abs(p) > conf.getPpmCoef() * 3 * precursorMass) {
                 continue;
             }
