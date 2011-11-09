@@ -3,7 +3,7 @@
     <property name="src.dir" value="src"/>
     <property name="lib.dir" value="lib"/>
     <property name="xsl.dir" value="xsl"/>
-    <property name="dataset" value="data/salmonella"/>
+    <property name="dataset" value="data/salmonella4"/>
     <property name="xml.dir" value="${dataset}/xml"/>
     <property name="html.dir" value="${dataset}/html"/>
 
@@ -34,8 +34,8 @@
 
 
     <target name="xslt">
-        <xslt basedir="${xml.dir}" destdir="${html.dir}" includes="scans/**/*.xml" extension=".html"
-              style="${xsl.dir}/scan.xsl">
+        <xslt basedir="${xml.dir}" destdir="${html.dir}" includes="prsm/scan*.xml" extension=".html"
+              style="${xsl.dir}/prsm.xsl">
             <factory name="net.sf.saxon.TransformerFactoryImpl"/>
         </xslt>
     </target>
