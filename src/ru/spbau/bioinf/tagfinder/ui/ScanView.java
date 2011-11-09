@@ -325,6 +325,21 @@ public class ScanView extends JComponent {
                     g.setColor(Color.GREEN);
                 }
 
+                int y = line * LINE_HEIGHT + delta;
+                int x1 = (int) (proteinSpectrum[match.getBegin()] * scale);
+                int x2 = (int) (proteinSpectrum[match.getEnd()] * scale);
+                int d = (x2 - x1) / 4;
+                double mod = match.getMod();
+
+                int x1mod = mod > 0 ? x1 : x1 + d + 2;
+                int x2mod = mod > 0 ? x2 - d - 2 : x2;
+                if (mod == 0) {
+                    x1mod = x1;
+                }
+                g.drawLine(x1mod, y, x2mod, y);
+
+
+
                 if (modAbs == 1) {
                     g.setColor(Color.ORANGE);
                 }
@@ -335,10 +350,12 @@ public class ScanView extends JComponent {
                     g.setColor(Color.MAGENTA);
                 }
 
-                int y = line * LINE_HEIGHT + delta;
-                int x1 = (int) (proteinSpectrum[match.getBegin()] * scale);
-                int x2 = (int) (proteinSpectrum[match.getEnd()] * scale);
-                g.drawLine(x1, y, x2, y);
+
+                if (mod < 0) {
+                    g.drawLine(x1, y, x1 + d, y);
+                } else if (mod > 0) {
+                    g.drawLine(x2 - d, y, x2, y);
+                }
                 delta+=2;
                 it.remove();
             }
