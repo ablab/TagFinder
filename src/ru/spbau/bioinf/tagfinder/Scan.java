@@ -4,6 +4,7 @@ import edu.ucsd.msalign.res.MassConstant;
 import edu.ucsd.msalign.spec.peak.DeconvPeak;
 import edu.ucsd.msalign.spec.sp.Ms;
 import edu.ucsd.msalign.spec.sp.MsHeader;
+import org.jdom.Element;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 import java.io.BufferedReader;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import ru.spbau.bioinf.tagfinder.util.XmlUtil;
 
 public class Scan {
 
@@ -68,6 +70,21 @@ public class Scan {
                 peaks.add(new Peak(mass, Double.parseDouble(data[1]), Integer.parseInt(data[2])));
             }
         }
+    }
+
+    public Element toXml() {
+        Element scan = new Element("scan");
+        XmlUtil.addElement(scan, "scan-id", id);
+        XmlUtil.addElement(scan, "precursor-mass", precursorMass);
+        XmlUtil.addElement(scan, "precursor-charge", precursorCharge);
+        XmlUtil.addElement(scan, "precursor-mz", precursorMz);
+        Element peaksList = new Element("peaks");
+        for (Peak peak : peaks) {
+            peaksList.addContent(peak.toXml());
+        }
+        scan.addContent(peaksList);
+        return scan;
+
     }
 
     public Scan(Scan original, List<Peak> peaks, int proteinId) {
