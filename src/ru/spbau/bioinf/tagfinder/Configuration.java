@@ -24,7 +24,7 @@ public class Configuration {
     private File inputDir;
     private File resultDir;
     private File xmlDir;
-    private File xmlSpectrumsDir;
+    private File xmlPrsmDir;
     private File xmlProteinsDir;
 
     private File datasetDir;
@@ -81,7 +81,7 @@ public class Configuration {
 
         resultDir = createDir("result");
         xmlDir = createDir("xml");
-        xmlSpectrumsDir = createDir(xmlDir, "spectrums");
+        xmlPrsmDir = createDir(xmlDir, "prsm");
         xmlProteinsDir = createDir(xmlDir, "proteins");
 
         xmlScansDir = new File(xmlDir, "scans");
@@ -95,6 +95,10 @@ public class Configuration {
 
     public File getInputDir() {
         return inputDir;
+    }
+
+    public File getXmlPrsmDir() {
+        return xmlPrsmDir;
     }
 
     private Map<Integer, Integer> spectrums = new HashMap<Integer, Integer>();
