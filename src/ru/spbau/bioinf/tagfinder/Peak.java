@@ -2,6 +2,8 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jdom.Element;
+import ru.spbau.bioinf.tagfinder.util.XmlUtil;
 
 public class Peak implements Comparable<Peak>{
     private double value;
@@ -33,6 +35,14 @@ public class Peak implements Comparable<Peak>{
         this.intensity = intensity;
         this.charge = charge;
         peakType = PeakType.Y;
+    }
+
+    public Element toXml() {
+        Element peak = new Element("peak");
+        XmlUtil.addElement(peak, "mass", mass);
+        XmlUtil.addElement(peak, "intencity", intensity);
+        XmlUtil.addElement(peak, "charge", charge);
+        return peak;
     }
 
     public void convertToY(double precursorMass) {
