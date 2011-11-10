@@ -19,7 +19,14 @@
                 </script>
 
                 <div>
-                Scale <input id="scale" value="100" onchange="repaintPrsm();"/>%   <a onclick="repaintPrsm();" href="#">Repaint</a>
+                Scale <input id="scale" value="100" size="5" onchange="repaintPrsm();"/>%
+                    <a href="#" onclick="zoom(1);" id="zoomIn" alt="Zoom In">+Zoom In</a>
+                    <xsl:text> </xsl:text>
+                    <a href="#" onclick="zoom(-1);" id="zoomOut" alt="Zoom Out">-Zoom Out</a>
+                    <xsl:text> </xsl:text>
+                    <a href="#" onclick="prefixLen++; leftRightMove();" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
+                    <xsl:text> </xsl:text>
+                    <a href="#" onclick="prefixLen--; leftRightMove();" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
                 </div>
 
                 <div id="prefix">...</div>
@@ -32,6 +39,8 @@
 
                 <script>
                     var prsmCanvas = document.getElementById('prsm');
+                    var leftArrow = document.getElementById('leftArrow');
+                    var rightArrow = document.getElementById('rightArrow');
                     var ctx = prsmCanvas.getContext('2d');
                     var font = "10pt Arial";
                     ctx.font = font;
@@ -46,22 +55,33 @@
 
                     document.getElementById('deltas').value = deltas;
                     var prefix = document.getElementById('prefix');
-                    repaintPrsm();
-
 
                     function doKeyDown(e) {
                         switch (e.keyCode) {
-                            case 107: scaleControl.value++; repaintPrsm(); break;
-                            case 109: document.getElementById('scale').value--; repaintPrsm(); break;
+                            case 107: zoom(+1); break;
+                            case 109: zoom(-1); break;
                             case 39: if (sequence.length > prefixLen) prefixLen++; leftRightMove(); break;
                             case 37: if (prefixLen > 0) prefixLen--; leftRightMove(); break;
                         }
                     }
 
-                    function leftRightMove() {
+                    function leftRightMove(){
                         prefix.innerHTML = sequence.substr(0, prefixLen) + "...";
+                        leftArrow.style.display = sequence.length > prefixLen ? "" : "none";
+                        rightArrow.style.display = prefixLen > 0 ? "" : "none" ;
                         repaintPrsm();
                     }
+
+                    function zoom(delta){
+                        scaleControl.value = parseInt(scaleControl.value) + parseInt(delta);
+                        if (1 > scaleControl.value) {
+                            scaleControl.value = 1;
+                        }
+                        document.getElementById('zoomOut').style.display = scaleControl.value > 1 ? "" : "none";
+                        repaintPrsm();
+                    }
+
+                    leftRightMove();
 
                     window.addEventListener('keydown', doKeyDown, true);
                 </script>
