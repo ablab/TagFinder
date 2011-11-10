@@ -20,13 +20,13 @@
 
                 <div>
                 Scale <input id="scale" value="100" size="5" onchange="repaintPrsm();"/>%
-                    <a href="#" onclick="zoom(1);" id="zoomIn" alt="Zoom In">+Zoom In</a>
+                    <a href="#" onclick="zoom(1); return false;" id="zoomIn" alt="Zoom In">+Zoom In</a>
                     <xsl:text> </xsl:text>
-                    <a href="#" onclick="zoom(-1);" id="zoomOut" alt="Zoom Out">-Zoom Out</a>
+                    <a href="#" onclick="zoom(-1); return false;" id="zoomOut" alt="Zoom Out">-Zoom Out</a>
                     <xsl:text> </xsl:text>
-                    <a href="#" onclick="prefixLen++; leftRightMove();" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
+                    <a href="#" onclick="prefixLen++; leftRightMove(); return false;" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
                     <xsl:text> </xsl:text>
-                    <a href="#" onclick="prefixLen--; leftRightMove();" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
+                    <a href="#" onclick="prefixLen--; leftRightMove(); return false;" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
                 </div>
 
                 <div id="prefix">...</div>
