@@ -19,14 +19,16 @@
                 </script>
 
                 <div>
-                Scale <input id="scale" value="100" size="5" onchange="repaintPrsm();"/>%
-                    <a href="#" onclick="zoom(1); return false;" id="zoomIn" alt="Zoom In">+Zoom In</a>
-                    <xsl:text> </xsl:text>
-                    <a href="#" onclick="zoom(-1); return false;" id="zoomOut" alt="Zoom Out">-Zoom Out</a>
-                    <xsl:text> </xsl:text>
-                    <a href="#" onclick="prefixLen++; leftRightMove(); return false;" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
-                    <xsl:text> </xsl:text>
-                    <a href="#" onclick="prefixLen--; leftRightMove(); return false;" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
+                <!-- <input id="scale" value="100" size="5" onchange="repaintPrsm();"/>%-->
+                    Scale <input type="range" id="scale" min="0" max="200" onchange="update(0);"/><span id="scaleDisplay"></span>%
+                    <xsl:text>&#160;&#160;</xsl:text>
+                    <a href="#" onclick="update(1); return false;" id="zoomIn" alt="Zoom In">+Zoom In</a>
+                    <xsl:text>&#160;&#160;</xsl:text>
+                    <a href="#" onclick="update(-1); return false;" id="zoomOut" alt="Zoom Out">-Zoom Out</a>
+                    <xsl:text>&#160;&#160;&#160;&#160;&#160;</xsl:text>
+                    <a href="#" onclick="prefixLen++; update(); return false;" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
+                    <xsl:text>&#160;&#160;</xsl:text>
+                    <a href="#" onclick="prefixLen--; update(); return false;" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
                 </div>
 
                 <div id="prefix">...</div>
@@ -58,30 +60,30 @@
 
                     function doKeyDown(e) {
                         switch (e.keyCode) {
-                            case 107: zoom(+1); break;
-                            case 109: zoom(-1); break;
-                            case 39: if (sequence.length > prefixLen) prefixLen++; leftRightMove(); break;
-                            case 37: if (prefixLen > 0) prefixLen--; leftRightMove(); break;
+                            case 107: update(+1); break;
+                            case 109: update(-1); break;
+                            case 39: if (sequence.length > prefixLen) prefixLen++; update(); break;
+                            case 37: if (prefixLen > 0) prefixLen--; update(); break;
                         }
                     }
 
-                    function leftRightMove(){
+                    function update(scaleDelta){
+                        if (scaleDelta != null) {
+                            scaleControl.value = parseInt(scaleControl.value) + parseInt(scaleDelta);
+                            if (1 > scaleControl.value) {
+                                scaleControl.value = 1;
+                            }
+                        }
+                        document.getElementById('scaleDisplay').innerHTML = scaleControl.value;
+                        document.getElementById('zoomOut').style.display = scaleControl.value > 1 ? "" : "none";
+
                         prefix.innerHTML = sequence.substr(0, prefixLen) + "...";
                         leftArrow.style.display = sequence.length > prefixLen ? "" : "none";
                         rightArrow.style.display = prefixLen > 0 ? "" : "none" ;
-                        repaintPrsm();
+                        repaintPrsm(scaleControl.value);
                     }
 
-                    function zoom(delta){
-                        scaleControl.value = parseInt(scaleControl.value) + parseInt(delta);
-                        if (1 > scaleControl.value) {
-                            scaleControl.value = 1;
-                        }
-                        document.getElementById('zoomOut').style.display = scaleControl.value > 1 ? "" : "none";
-                        repaintPrsm();
-                    }
-
-                    leftRightMove();
+                    update();
 
                     window.addEventListener('keydown', doKeyDown, true);
                 </script>

@@ -208,10 +208,9 @@ var y;
 var dx;
 var k;
 
-function repaintPrsm() {
+function repaintPrsm(scale) {
     clear(ctx);
     var mass = 0;
-    var scale = document.getElementById('scale').value;
     if (scale <=0 || isNaN(scale)) {
         scale = 100;
     }
