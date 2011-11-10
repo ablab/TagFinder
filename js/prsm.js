@@ -1,6 +1,6 @@
 function clear(ctx) {
     ctx.fillStyle = "white";
-    ctx.clearRect(0, 0, 6000, 6000);
+    ctx.clearRect(0, 0, 100000, 100000);
     ctx.strokeStyle = "black";
     ctx.fillStyle = "black";
 }
@@ -27,7 +27,7 @@ function matchRecalibrated(peak, mass, diff) {
      if (diff == null) {
         diff = 0;
      }
-     var error = mass * ppm * 0.3;
+     var error = mass * ppm * 0.5;
      var m = peak.recalibrationMass - diff;
      return m > mass - error && m  < mass + error;
 }
@@ -36,7 +36,7 @@ function initPrsm() {
     for (var i = 0; i <= sequence.length; i++) {
         dist[i] = [];
     }
-    for (var i = 0; i < sequence.length; i++) {
+    for (var i = 0; i <= sequence.length; i++) {
         cleavages[i] = i;
         startStat[i] = 0;
         finishStat[i] = 0;
@@ -142,15 +142,18 @@ function getBestScore(unmatched) {
         for (var s = 0; s < shifts.length; s++) {
             var shift = shifts[s];
             var score = 0;
+            var delta = 0;
             for (var u = 0; u < unmatched.length; u++) {
                 var peak = unmatched[u];
                 for (var j = 0; j <= sequence.length; j++) {
                     if (matchRecalibrated(peak, dist[i][j], shift)) {
                         score++;
+                        delta += peak.recalibrationMass - shift - dist[i][j];
                         break;
                     }
                 }
             }
+            shift += delta / score;
 
             if (score > bestScore.score || (score == bestScore.score && Math.abs(shift) < Math.abs(bestScore.diff))) {
                 bestScore.diff = shift;
