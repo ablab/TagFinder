@@ -25,24 +25,21 @@
                 <div id="prefix">...</div>
 
 
-                <div id="canvasesdiv" style="position:relative; width:{$width}px; height:1000px">
-                    <canvas id="prsm" style="z-index: 1; position:absolute; left:0px; top:0px;" width="{$width}" height="1000"/>
-                    <canvas id="tooltip" style="z-index: 2; position:absolute; left:0px; top:0px;" width="{$width}" height="1000"/>
-                </div>
+                <canvas id="prsm" width="6000px" height="1000"/>
+
 
                 <textarea id="deltas" cols="50" rows="5"></textarea>
 
                 <script>
                     var prsmCanvas = document.getElementById('prsm');
-                    var tooltipCanvas = document.getElementById('tooltip');
                     var ctx = prsmCanvas.getContext('2d');
-                    var tCtx = tooltipCanvas.getContext('2d');
                     var font = "10pt Arial";
                     ctx.font = font;
                     var peaks = [
                         <xsl:apply-templates select="scan/peaks/peak"/>
                     ];
 
+                    var scaleControl =  document.getElementById('scale');
 
                     var prefixLen = 0;
                     initPrsm();
@@ -51,7 +48,7 @@
                     var prefix = document.getElementById('prefix');
                     repaintPrsm();
 
-                    var scaleControl =  document.getElementById('scale');
+
                     function doKeyDown(e) {
                         switch (e.keyCode) {
                             case 107: scaleControl.value++; repaintPrsm(); break;

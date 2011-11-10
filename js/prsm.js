@@ -56,6 +56,8 @@ function initPrsm() {
         }
     }
 
+    scaleControl.value = Math.round((window.innerWidth - 100) * 100/dist[0][sequence.length]);
+
     var recalibration = 0;
 
     if (deltas.length >= 10) {
