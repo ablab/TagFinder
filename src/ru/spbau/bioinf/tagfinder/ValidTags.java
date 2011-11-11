@@ -2,6 +2,8 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,9 +43,12 @@ public class ValidTags {
         annotatedSpectrums = conf.getAnnotatedSpectrums();
     }
 
-    private static NumberFormat df = NumberFormat.getInstance();
+    private static DecimalFormat df = (DecimalFormat)NumberFormat.getNumberInstance();
     static {
         df.setMaximumFractionDigits(2);
+        DecimalFormatSymbols dfs = new DecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        df.setDecimalFormatSymbols(dfs);
     }
 
     private boolean addOnes = false;
@@ -52,17 +57,23 @@ public class ValidTags {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
-        for (int gap = 1; gap < 4; gap++) {
-            //validTags.process(COMBINED, BAR, gap, true, false);
-            validTags.process(COMBINED, FULL, gap, false, false);//I
-            validTags.process(COMBINED, FULL, gap, true, false);
-            validTags.process(COMBINED, BAR, gap, false, false);//I
-            validTags.process(COMBINED, BAR, gap, true, false);
+
+
+        createTexTable(validTags);
+
+        if (true) return;
+        if (true) {
+            for (int gap = 1; gap < 4; gap++) {
+                //validTags.process(COMBINED, BAR, gap, true, false);
+                validTags.process(COMBINED, FULL, gap, false, false);//I
+                validTags.process(COMBINED, FULL, gap, true, false);
+                validTags.process(COMBINED, BAR, gap, false, false);//I
+                validTags.process(COMBINED, BAR, gap, true, false);
+            }
         }
 
 
-
-        if (true) return;
+        //if (true) return;
         //validTags.process(COMBINED, BAR, 1, false, false);//I
         //validTags.process(COMBINED, FULL, 1, true, false);//I
 
@@ -76,10 +87,63 @@ public class ValidTags {
             validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//2
             //validTags.process(COMBINED, BAR, gap, false, false);
             validTags.process(BASIC, BAR, gap, false, true);
+            validTags.process(BASIC, BAR, gap, true, true);
 
             validTags.process(BASIC, BAR, gap, true, false);//3
             validTags.process(VIRTUAL_FULL, BAR, gap, true, false);
         }
+    }
+
+
+    static int start = 1;
+    static int end = 20;
+
+    private static void createTexTable(ValidTags validTags) throws Exception {
+        String type1 = COMBINED;
+        String type2 = VIRTUAL_FULL;
+        boolean needCorrectInTable = true;
+        boolean addOnes = false;
+
+        System.out.print("\\begin{table}[h]\\tiny\n" +
+                "\\vspace{3mm}\n" +
+                "{\\centering\n" +
+                "\\begin{center}\n" +
+                "\\begin{tabular}{|c|l|");
+        for (int i = start; i <= end; i++) {
+            System.out.print("c|");
+        }
+        System.out.print("}\n" +
+                "  \\hline\n" +
+                "  \\multicolumn{2}{|c|}{ } & \\multicolumn{ " + (end - start + 1)+ " }{|c|}{correct $d$-tags (\\%)} \\\\\n" +
+                "  \\cline{3- " + (end - start  + 3)  + "}\n" +
+                "  \\multicolumn{2}{|c|}{ } ");
+        //"& 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23 & 24
+        for (int i = start; i <= end; i++) {
+            System.out.print(" & " + i);
+        }
+        System.out.print("\\\\\n" +
+                "  \\hline\n" +
+                "  \\multirow{3}{*}{exp}\n");
+
+
+        validTags.process(type1, BAR, 1, needCorrectInTable, addOnes);
+        validTags.process(type1, BAR, 2, needCorrectInTable, addOnes);
+        validTags.process(type1, BAR, 3, needCorrectInTable, addOnes);
+        System.out.println(" \\hline\n  \\multirow{3}{*}{virt} ");
+        validTags.process(type2, BAR, 1, needCorrectInTable, addOnes);
+        validTags.process(type2, BAR, 2, needCorrectInTable, addOnes);
+        validTags.process(type2, BAR, 3, needCorrectInTable, addOnes);
+        System.out.println(" \\hline\n" +
+                "\\end{tabular}\n" +
+                "\\end{center}\n" +
+                "\\par}\n" +
+                "\\centering\n" +
+                "\\caption{Average percentage of correct $d$-tags.}\n" +
+                "\\vspace{3mm}\n" +
+                "\\label{table:correct-d-tags}\n" +
+                "\\end{table}");
+
+        if (true) return;
     }
 
     private PrintWriter output;
@@ -113,10 +177,10 @@ public class ValidTags {
         outputKD = ReaderUtil.createOutputFile(new File("res", "kd_" + fileName + ".txt"));
         //outputIntencity = ReaderUtil.createOutputFile(new File("res", "intencity_" + fileName + ".txt"));
 
-        System.out.println("fileName = " + fileName);
+        System.out.println("%fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(3000);
+        //keys.clear(); keys.add(1754);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -133,7 +197,7 @@ public class ValidTags {
                 for (int i = 1; i < stat.length; i++) {
                     long good = stat[i][0];
                     long total = good + stat[i][1];
-                    if (total > 0) {
+                    if (total != 0) {
                         global[i] += (100d * good) / total;
                         count[i]++;
                     } else {
@@ -145,15 +209,17 @@ public class ValidTags {
                 usedProteins.add(proteinId);
             }
         }
-        for (int i = 1; i < count.length; i++) {
+        System.out.print("& " + gap + "-aa");
+        for (int i = start; i <= end; i++) {
             int n = count[i];
+            String text = " & ";
             if (n > 0) {
-                String text = df.format(global[i] / n) + " ";
-                System.out.print(text);
-                output.print(text);
-            } else {
-                break;
+                text += df.format(global[i] / n);
             }
+
+            System.out.print(text);
+            output.print(text);
+
         }
         List<KD> values  = new ArrayList<KD>();
         values.addAll(kdStat.keySet());
@@ -165,12 +231,10 @@ public class ValidTags {
 
         output.close();
         outputKD.close();
-        System.out.println();
+        System.out.println("\\\\");
     }
 
     public long[][] process(Scan scan, Protein protein, String type, int gap) {
-        wrongCache.clear();
-        correctCache.clear();
         this.gap = gap;
         this.type = type;
         List<Double> precursorMassShifts = new ArrayList<Double>();
@@ -238,6 +302,9 @@ public class ValidTags {
     }
 
     private SpectrumResult getSpectrumResult(Scan scan, Protein protein, double precursorMassShift) {
+        wrongCache.clear();
+        correctCache.clear();
+
         String sequence = protein.getSimplifiedAcids();
         List<Peak> peaks;
 
