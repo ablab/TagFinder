@@ -26,9 +26,9 @@
                     <xsl:text>&#160;&#160;</xsl:text>
                     <a href="#" onclick="update(-1); return false;" id="zoomOut" alt="Zoom Out">-Zoom Out</a>
                     <xsl:text>&#160;&#160;&#160;&#160;&#160;</xsl:text>
-                    <a href="#" onclick="prefixLen++; update(); return false;" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
+                    <a href="#" onclick="prefixLen--; update(); return false;" id="leftArrow" alt="Move protein to the left"><xsl:text disable-output-escaping="yes">&amp;larr;Left</xsl:text></a>
                     <xsl:text>&#160;&#160;</xsl:text>
-                    <a href="#" onclick="prefixLen--; update(); return false;" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
+                    <a href="#" onclick="prefixLen++; update(); return false;" id="rightArrow" alt="Move protein to the right"><xsl:text disable-output-escaping="yes">Right&amp;rarr;</xsl:text></a>
                 </div>
 
                 <div id="prefix">...</div>
@@ -59,11 +59,16 @@
                     var prefix = document.getElementById('prefix');
 
                     function doKeyDown(e) {
-                        switch (e.keyCode) {
-                            case 107: update(+1); break;
-                            case 109: update(-1); break;
-                            case 39: if (sequence.length > prefixLen) prefixLen++; update(); break;
-                            case 37: if (prefixLen > 0) prefixLen--; update(); break;
+                        if (event.ctrlKey) {
+                            switch (e.keyCode) {
+                                case 39: if (sequence.length > prefixLen) prefixLen++; update(); break;
+                                case 37: if (prefixLen > 0) prefixLen--; update(); break;
+                            }
+                        }  else {
+                            switch (e.keyCode) {
+                                case 107: update(+1); break;
+                                case 109: update(-1); break;
+                            }
                         }
                     }
 
