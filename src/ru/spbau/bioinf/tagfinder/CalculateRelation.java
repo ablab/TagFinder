@@ -18,10 +18,15 @@ public class CalculateRelation {
 
     public static void main(String[] args) throws Exception {
         for (int gap = 1; gap <=3; gap++) {
-            compare("share_bar_basic_" + gap + "_correct.txt", "share_bar_basic_" + gap +"_proper.txt");
+            //compare("share_bar_basic_" + gap + "_correct.txt", "share_bar_basic_" + gap +"_proper.txt");
+            //compare("share_bar_basic_" + gap + "_correct_add.txt", "share_bar_basic_" + gap +"_proper_add.txt");
+            //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
             correctD("share_bar_basic_" + gap +"_correct.txt");
+        }
+        for (int gap = 1; gap <=3; gap++) {
             correctD("share_bar_virtual_full_" + gap +"_correct.txt");
         }
+
     }
 
     public static void compare(String fileFirst, String fileSecond) throws Exception {
@@ -43,7 +48,8 @@ public class CalculateRelation {
         do {
             String s1 = inOne.readLine();
             String s2 = inTwo.readLine();
-            if (s1.indexOf(",") > 0) {
+            System.out.println(s1);
+            if (s1.indexOf("&") > 0) {
                 break;
             }
             long[] d1 = getData(s1);
@@ -95,16 +101,18 @@ public class CalculateRelation {
     }
 
     public static void correctD(String file) throws Exception {
-        System.out.println(file);
+        System.out.print(file + " ");
         BufferedReader in = ReaderUtil.createInputReader(new File("res", file));
 
         List<long[]> pairs = new ArrayList<long[]>();
         int n = 0;
         int[] dShare = new int[MAX_TAG];
+        boolean[] exists = new boolean[50];
+        exists[0] = true;
         do {
             String s1 = in.readLine();
 
-            if (s1.indexOf(",") > 0) {
+            if (s1.indexOf("&") > 0) {
                 break;
             }
             long[] d1 = getData(s1);
@@ -114,6 +122,7 @@ public class CalculateRelation {
 
             int maxD = 0;
             while (pos < d1.length) {
+                exists[d] = true;
                 if (d1[pos] > 0) {
                     maxD = d;
                 }
@@ -123,15 +132,15 @@ public class CalculateRelation {
             dShare[maxD]++;
         } while(true);
         double total = pairs.size();
-        System.out.println("Distribution of longest tags: ");
-        for (int i = 0; i < dShare.length; i++) {
+        //System.out.println("Distribution of longest tags: ");
+        for (int i = 0; i <= 38; i++) {
             int v = dShare[i];
-            if (v > 0) {
-                System.out.println(i + " " + v + " " + df.format(100 * v / total));
-            }
-
+            //if (v > 0) {
+                //System.out.println(i + " " + v + " " + df.format(100 * v / total));
+            //}
+            System.out.print(" &  " +  (exists[i] ? df.format(100 * v / total) : " "));
         }
-
+        System.out.println("\\\\");
     }
 
     private static void printPercentage(List<Double>[] stat) {
