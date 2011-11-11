@@ -2,6 +2,8 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,26 +13,37 @@ public class CalculateRelation {
 
     public static final int MAX_TAG = 100;
 
-    private static NumberFormat df = NumberFormat.getInstance();
+    private static DecimalFormat df = (DecimalFormat)NumberFormat.getNumberInstance();
+
     static {
         df.setMaximumFractionDigits(2);
+        DecimalFormatSymbols dfs = new DecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        df.setDecimalFormatSymbols(dfs);
+
     }
 
     public static void main(String[] args) throws Exception {
         for (int gap = 1; gap <=3; gap++) {
-            //compare("share_bar_basic_" + gap + "_correct.txt", "share_bar_basic_" + gap +"_proper.txt");
-            //compare("share_bar_basic_" + gap + "_correct_add.txt", "share_bar_basic_" + gap +"_proper_add.txt");
+            //compare("share_bar_virtual_mono_" + gap + "_proper.txt", "share_bar_virtual_full_" + gap +"_proper.txt");
+
             //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
-            correctD("share_bar_basic_" + gap +"_correct.txt");
+            //correctD("share_bar_basic_" + gap +"_correct.txt");
         }
         for (int gap = 1; gap <=3; gap++) {
-            correctD("share_bar_virtual_full_" + gap +"_correct.txt");
+            compare("share_bar_virtual_full_" + gap + "_correct.txt", "share_bar_virtual_full_" + gap +"_proper.txt");
+
+            //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
+            //correctD("share_bar_basic_" + gap +"_correct.txt");
+        }
+        for (int gap = 1; gap <=3; gap++) {
+            //correctD("share_bar_virtual_full_" + gap +"_correct.txt");
         }
 
     }
 
     public static void compare(String fileFirst, String fileSecond) throws Exception {
-        System.out.println(fileFirst + " " + fileSecond);
+        System.out.println("%" +fileFirst + " " + fileSecond);
         BufferedReader inOne = ReaderUtil.createInputReader(new File("res", fileFirst));
         BufferedReader inTwo = ReaderUtil.createInputReader(new File("res", fileSecond));
         List<long[]> pairs = new ArrayList<long[]>();
@@ -48,7 +61,6 @@ public class CalculateRelation {
         do {
             String s1 = inOne.readLine();
             String s2 = inTwo.readLine();
-            System.out.println(s1);
             if (s1.indexOf("&") > 0) {
                 break;
             }
@@ -92,12 +104,12 @@ public class CalculateRelation {
             } while (true);
             n++;
         } while(true);
-        System.out.println("Good to All: ");
-        printPercentage(goodToAll);
-        System.out.println("Good to Good: ");
+        //System.out.println("Good to All: ");
+        //printPercentage(goodToAll);
+        //System.out.println("Good to Good: ");
         printPercentage(goodToGood);
-        System.out.println("All to All: ");
-        printPercentage(allToAll);
+        //System.out.println("All to All: ");
+        //printPercentage(allToAll);
     }
 
     public static void correctD(String file) throws Exception {
@@ -144,16 +156,19 @@ public class CalculateRelation {
     }
 
     private static void printPercentage(List<Double>[] stat) {
-        for (int d = 1; d < MAX_TAG; d++) {
+        int start = 1;
+        int end = 19;
+        System.out.println("% "  +start + " " + end);
+        for (int d = start; d <= end; d++) {
             List<Double> values = stat[d];
             if (values.size() == 0) {
-                break;
+                //break;
             }
             double total = 0;
             for (double value : values) {
                 total += value;
             }
-            System.out.print(df.format(100 * total / values.size()) + " ");
+            System.out.print(" & " + (total > 0 ? df.format(100 * total / values.size()): " "));
         }
         System.out.println();
     }
