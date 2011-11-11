@@ -17,6 +17,9 @@
                 <script>
                     var sequence = '<xsl:value-of select="protein/protein-sequence"/>';
                 </script>
+                <div>
+                    Recalibration : <span id="recalibrationSpan"></span>
+                </div>
 
                 <div>
                 <!-- <input id="scale" value="100" size="5" onchange="repaintPrsm();"/>%-->
@@ -37,8 +40,6 @@
                 <canvas id="prsm" width="6000px" height="1000"/>
 
 
-                <textarea id="deltas" cols="50" rows="5"></textarea>
-
                 <script>
                     var prsmCanvas = document.getElementById('prsm');
                     var leftArrow = document.getElementById('leftArrow');
@@ -52,10 +53,12 @@
 
                     var scaleControl =  document.getElementById('scale');
 
+                    var recalibration = 0;
+
                     var prefixLen = 0;
                     initPrsm();
 
-                    document.getElementById('deltas').value = deltas;
+                    document.getElementById('recalibrationSpan').innerHTML = "m <xsl:text disable-output-escaping="yes">&amp;rarr;</xsl:text> m * ( 1 - " + recalibration + ")";
                     var prefix = document.getElementById('prefix');
 
                     function doKeyDown(e) {
@@ -83,8 +86,8 @@
                         document.getElementById('zoomOut').style.display = scaleControl.value > 1 ? "" : "none";
 
                         prefix.innerHTML = sequence.substr(0, prefixLen) + "...";
-                        leftArrow.style.display = sequence.length > prefixLen ? "" : "none";
-                        rightArrow.style.display = prefixLen > 0 ? "" : "none" ;
+                        leftArrow.style.display = prefixLen > 0 ? "" : "none";
+                        rightArrow.style.display = sequence.length > prefixLen  ? "" : "none" ;
                         repaintPrsm(scaleControl.value);
                     }
 
