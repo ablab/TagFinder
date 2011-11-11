@@ -64,6 +64,9 @@ public class GraphUtil {
     }
 
     public static void generateGapEdges(Configuration conf, List<Peak> peaks, int gap) {
+        for (Peak peak : peaks) {
+            peak.clearEdges();
+        }
         int n = peaks.size();
         List<Double> masses = new ArrayList<Double>();
         Acid[] values = Acid.values();
