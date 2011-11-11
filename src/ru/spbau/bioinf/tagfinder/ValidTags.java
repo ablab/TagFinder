@@ -58,8 +58,19 @@ public class ValidTags {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
 
+        validTags.process(VIRTUAL_FULL, BAR, 2, true, false);//I
+        validTags.process(VIRTUAL_FULL, BAR, 2, false, false);//I
 
-        createTexTable(validTags);
+        if (true) return;
+
+        for (int gap = 1; gap < 4; gap++) {
+            validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//I
+            validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//I
+            validTags.process(VIRTUAL_FULL, BAR, gap, true, false);//I
+        }
+
+
+        //createTexTable(validTags);
 
         if (true) return;
         if (true) {
@@ -99,10 +110,10 @@ public class ValidTags {
     static int end = 20;
 
     private static void createTexTable(ValidTags validTags) throws Exception {
-        String type1 = COMBINED;
+        String type1 = BASIC;
         String type2 = VIRTUAL_FULL;
         boolean needCorrectInTable = true;
-        boolean addOnes = false;
+        boolean addOnes = true;
 
         System.out.print("\\begin{table}[h]\\tiny\n" +
                 "\\vspace{3mm}\n" +
@@ -310,7 +321,8 @@ public class ValidTags {
 
         int scanId = scan.getId();
         if (VIRTUAL_MONO.equals(type) || VIRTUAL_FULL.equals(type)) {
-            peaks = msAlignPeaks.get(scanId);
+            peaks =  new ArrayList<Peak>();
+            peaks.addAll(msAlignPeaks.get(scanId));
         } else {
             peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
         }
@@ -322,7 +334,7 @@ public class ValidTags {
         //List<Peak[]> tags = new Analyzer(conf).getTags(peaks);
         ///System.out.println("tags = " + tags.size());
         //System.out.println("size before " + peaks.size());
-        peaks = GraphUtil.filterDuplicates(conf, peaks);
+
         //System.out.println("size after " + peaks.size());
         /*
         double prev = -1;
@@ -338,6 +350,9 @@ public class ValidTags {
         if (BASIC.equals(type) || VIRTUAL_MONO.equals(type)) {
             filterMonotags(peaks);
         }
+        //System.out.println("peaks.size() before duplicates " + peaks.size());
+        peaks = GraphUtil.filterDuplicates(conf, peaks);
+        //System.out.println("peaks.size() before duplicates= " + peaks.size());
 
         int proteinId = protein.getProteinId();
         double[] proteinSpectrum = needCorrect ? annotatedSpectrums.get(scanId): ShiftEngine.getSpectrum(sequence);
@@ -370,9 +385,10 @@ public class ValidTags {
             for (Iterator<Peak> iterator = peak.getNext().iterator(); iterator.hasNext(); ) {
                 Peak next = iterator.next();
                 if (next.getPeakType() != peak.getPeakType()) {
-                    if (peak.getIntensity() != 0 && next.getIntensity() != 0) {
+                    //if (peak.getIntensity() != 0 && next.getIntensity() != 0) {
                         iterator.remove();
-                    }
+                        //System.out.println("removed");
+                    //}
                 }
             }
         }
