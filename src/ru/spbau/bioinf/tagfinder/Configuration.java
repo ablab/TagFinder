@@ -252,9 +252,10 @@ public class Configuration {
             match = match.replaceAll("L", "I");
             double mass = 0;
             int cur = 0;
+            boolean isWall = false;
             while (cur < match.length()) {
                 if (brackets ==0) {
-                    values.add(mass);
+                    values.add(isWall ? Integer.MIN_VALUE : mass);
                 }
                 char ch = match.charAt(cur);
                 switch (ch) {
@@ -262,9 +263,11 @@ public class Configuration {
                         int nextCur = match.indexOf(']', cur);
                         mass += Double.parseDouble(match.substring(cur + 1, nextCur));
                         cur = nextCur;
+                        isWall = false;
                         break;
                     case '(':
                         brackets++;
+                        isWall = true;
                         break;
                     case ')':
                         brackets--;
@@ -346,7 +349,7 @@ public class Configuration {
             });
             if (msalignFiles.length == 1) {
                 File msalignFile = msalignFiles[0];
-                System.out.println("msalign file = " + msalignFile.getCanonicalPath());
+                //System.out.println("msalign file = " + msalignFile.getCanonicalPath());
                 BufferedReader input = ReaderUtil.getBufferedReader(msalignFile);
                 Properties properties;
                 while ((properties = ReaderUtil.readPropertiesUntil(input, "PRECURSOR_MASS")).size() > 0) {
