@@ -2,48 +2,58 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class CalculateRelation {
 
+    static final int ALL_TO_ALL = 10;
+    static final int GOOD_TO_GOOD = 5;
+
     public static final int MAX_TAG = 100;
 
-    private static DecimalFormat df = (DecimalFormat)NumberFormat.getNumberInstance();
-
-    static {
-        df.setMaximumFractionDigits(2);
-        DecimalFormatSymbols dfs = new DecimalFormatSymbols();
-        dfs.setDecimalSeparator('.');
-        df.setDecimalFormatSymbols(dfs);
-
-    }
-
     public static void main(String[] args) throws Exception {
-        for (int gap = 1; gap <=3; gap++) {
+        for (int gap = 1; gap <= 3; gap++) {
             //compare("share_bar_virtual_mono_" + gap + "_proper.txt", "share_bar_virtual_full_" + gap +"_proper.txt");
 
             //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
             //correctD("share_bar_basic_" + gap +"_correct.txt");
         }
-        for (int gap = 1; gap <=3; gap++) {
-            compare("share_bar_virtual_full_" + gap + "_correct.txt", "share_bar_virtual_full_" + gap +"_proper.txt");
 
-            //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
-            //correctD("share_bar_basic_" + gap +"_correct.txt");
-        }
-        for (int gap = 1; gap <=3; gap++) {
+
+        double[][] res = new double[6][];
+        generateRelationData(res, 0, "bar_exp_annotated_correct_none", "bar_exp_annotated_proper_none", GOOD_TO_GOOD);
+        generateRelationData(res, 3, "bar_virt_annotated_correct_zero", "bar_virt_annotated_proper_zero", GOOD_TO_GOOD);
+        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $d$-tags w.r.t. proper $d$-tags.", "correct-vs-proper-d-tags", "correct $d$-tags");
+
+        res = new double[3][];
+        generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of $d$-mono-tags w.r.t. all $d$-tags.", "mono-d-tags", "mono $d$-tags");
+
+        res = new double[6][];
+        correctD(res, 0, "bar_exp_annotated_correct_none");
+        correctD(res, 3, "bar_virt_annotated_correct_zero");
+        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has length $d$.", "longest-correct-d-tag", "spectra");
+
+        //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
+        //correctD("share_bar_basic_" + gap +"_correct.txt");
+
+        for (int gap = 1; gap <= 3; gap++) {
             //correctD("share_bar_virtual_full_" + gap +"_correct.txt");
         }
 
     }
 
-    public static void compare(String fileFirst, String fileSecond) throws Exception {
-        System.out.println("%" +fileFirst + " " + fileSecond);
+    private static void generateRelationData(double[][] res, int start, String firstTable, String secondTable, int mode) throws Exception {
+        System.out.println("% relation for " + firstTable + " / " + secondTable);
+        for (int gap = 1; gap <= 3; gap++) {
+            res[start + gap - 1] = compare("share_" + firstTable + "_" + gap + ".txt", "share_" + secondTable + "_" + gap + ".txt", mode);
+        }
+    }
+
+    public static double[] compare(String fileFirst, String fileSecond, int mode) throws Exception {
+        //System.out.println("%" +fileFirst + " " + fileSecond);
         BufferedReader inOne = ReaderUtil.createInputReader(new File("res", fileFirst));
         BufferedReader inTwo = ReaderUtil.createInputReader(new File("res", fileSecond));
         List<long[]> pairs = new ArrayList<long[]>();
@@ -61,12 +71,12 @@ public class CalculateRelation {
         do {
             String s1 = inOne.readLine();
             String s2 = inTwo.readLine();
-            if (s1.indexOf("&") > 0) {
+            if (s1.indexOf(" ") == 0) {
                 break;
             }
             long[] d1 = getData(s1);
             long[] d2 = getData(s2);
-            pairs.add(new long[] {d1[0], d1[1]});
+            pairs.add(new long[]{d1[0], d1[1]});
             int pos = 2;
             int d = 1;
 
@@ -89,88 +99,106 @@ public class CalculateRelation {
             d = 1;
             do {
                 long[] q = stat[n][d];
-                double total =  q[2] + q[3];
+                double total = q[2] + q[3];
                 if (total == 0) {
                     break;
                 }
-                goodToAll[d].add((q[0])/total);
-                allToAll[d].add((q[0] + q[1])/total);
+                goodToAll[d].add((q[0]) / total);
+                allToAll[d].add((q[0] + q[1]) / total);
                 if (q[2] > 0) {
                     double v = q[2];
-                    goodToGood[d].add(q[0]/v);
+                    goodToGood[d].add(q[0] / v);
                 }
 
                 d++;
             } while (true);
             n++;
-        } while(true);
+        } while (true);
         //System.out.println("Good to All: ");
-        //printPercentage(goodToAll);
+        //getPercentage(goodToAll);
         //System.out.println("Good to Good: ");
-        printPercentage(goodToGood);
-        //System.out.println("All to All: ");
-        //printPercentage(allToAll);
-    }
-
-    public static void correctD(String file) throws Exception {
-        System.out.print(file + " ");
-        BufferedReader in = ReaderUtil.createInputReader(new File("res", file));
-
-        List<long[]> pairs = new ArrayList<long[]>();
-        int n = 0;
-        int[] dShare = new int[MAX_TAG];
-        boolean[] exists = new boolean[50];
-        exists[0] = true;
-        do {
-            String s1 = in.readLine();
-
-            if (s1.indexOf("&") > 0) {
-                break;
-            }
-            long[] d1 = getData(s1);
-            pairs.add(new long[] {d1[0], d1[1]});
-            int pos = 2;
-            int d = 1;
-
-            int maxD = 0;
-            while (pos < d1.length) {
-                exists[d] = true;
-                if (d1[pos] > 0) {
-                    maxD = d;
-                }
-                d++;
-                pos += 2;
-            }
-            dShare[maxD]++;
-        } while(true);
-        double total = pairs.size();
-        //System.out.println("Distribution of longest tags: ");
-        for (int i = 0; i <= 38; i++) {
-            int v = dShare[i];
-            //if (v > 0) {
-                //System.out.println(i + " " + v + " " + df.format(100 * v / total));
-            //}
-            System.out.print(" &  " +  (exists[i] ? df.format(100 * v / total) : " "));
+        switch (mode) {
+            case GOOD_TO_GOOD:
+                return getPercentage(goodToGood);
+            case ALL_TO_ALL:
+                return getPercentage(allToAll);
         }
-        System.out.println("\\\\");
+        return null;
+        //System.out.println("All to All: ");
+        //getPercentage(allToAll);
     }
 
-    private static void printPercentage(List<Double>[] stat) {
-        int start = 1;
-        int end = 19;
-        System.out.println("% "  +start + " " + end);
-        for (int d = start; d <= end; d++) {
+    public static void correctD(double[][] res, int start, String file) throws Exception {
+        System.out.println("% longest tags distribution for  " + file);
+        for (int gap = 1; gap <= 3; gap++) {
+            BufferedReader in = ReaderUtil.createInputReader(new File("res", "share_" + file + "_" + gap + ".txt"));
+
+            List<long[]> pairs = new ArrayList<long[]>();
+            int n = 0;
+            int[] dShare = new int[MAX_TAG];
+            boolean[] exists = new boolean[50];
+            exists[0] = true;
+            do {
+                String s1 = in.readLine();
+
+                if (s1.indexOf(" ") == 0) {
+                    break;
+                }
+                long[] d1 = getData(s1);
+                pairs.add(new long[]{d1[0], d1[1]});
+                int pos = 2;
+                int d = 1;
+
+                int maxD = 0;
+                while (pos < d1.length) {
+                    exists[d] = true;
+                    if (d1[pos] > 0) {
+                        maxD = d;
+                    }
+                    d++;
+                    pos += 2;
+                }
+                dShare[maxD]++;
+                if (maxD > n) {
+                    n = maxD;
+                }
+            } while (true);
+            double total = pairs.size();
+            //System.out.println("Distribution of longest tags: ");
+            double[] ans = new double[n + 1];
+            for (int i = 0; i <= n; i++) {
+                int v = dShare[i];
+                //if (v > 0) {
+                //System.out.println(i + " " + v + " " + df.format(100 * v / total));
+                //}
+                ans[i] = 100 * v / total;
+            }
+            res[start + gap - 1] = ans;
+        }
+    }
+
+    private static double[] getPercentage(List<Double>[] stat) {
+        List<Double> v = new ArrayList<Double>();
+        for (int d = 1; d <= 1000; d++) {
             List<Double> values = stat[d];
             if (values.size() == 0) {
-                //break;
+                break;
             }
             double total = 0;
             for (double value : values) {
                 total += value;
             }
-            System.out.print(" & " + (total > 0 ? df.format(100 * total / values.size()): " "));
+            if (total > 0) {
+                v.add(100 * total / values.size());
+            } else {
+                break;
+            }
         }
-        System.out.println();
+        double ans[] = new double[v.size()];
+        for (int i = 0; i < ans.length; i++) {
+            ans[i] = v.get(i);
+        }
+        return ans;
     }
 
     public static long[] getData(String s) {

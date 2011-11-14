@@ -19,10 +19,16 @@ public class ValidTags {
 
     public static final double TEN_PPM = 0.00001d;
 
-    public static final String VIRTUAL_FULL = "virtual_full";
-    public static final String VIRTUAL_MONO = "virtual_mono";
-    public static final String BASIC = "basic";
-    public static final String COMBINED = "combined";
+    public static final String INPUT_EXP = "exp";
+    public static final String INPUT_VIRT = "virt";
+    public static final String TARGET_BASE = "base";
+    public static final String TARGET_ANNOTATED = "annotated";
+    public static final String MATCH_CORRECT = "correct";
+    public static final String MATCH_PROPER = "proper";
+
+    public static final String BY_NONE = "none";
+    public static final String BY_ZERO = "zero";
+    public static final String BY_MORE = "more";
 
     public static final int FULL = 1;
     public static final int BAR = 0;
@@ -30,7 +36,10 @@ public class ValidTags {
     private Configuration conf;
 
     private int gap;
-    private String type;
+    private String inputType;
+    private String targetType;
+    private String monoType;
+    private String matchType;
     private static Map<Integer,List<Peak>> msAlignPeaks;
     private Map<KD,Integer> kdStat;
     private int k;
@@ -43,7 +52,8 @@ public class ValidTags {
         annotatedSpectrums = conf.getAnnotatedSpectrums();
     }
 
-    private static DecimalFormat df = (DecimalFormat)NumberFormat.getNumberInstance();
+    public  static DecimalFormat df = (DecimalFormat)NumberFormat.getNumberInstance();
+
     static {
         df.setMaximumFractionDigits(2);
         DecimalFormatSymbols dfs = new DecimalFormatSymbols();
@@ -52,120 +62,99 @@ public class ValidTags {
     }
 
     private boolean addOnes = false;
-    private boolean needCorrect = false;
+
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
 
-        validTags.process(VIRTUAL_FULL, BAR, 2, true, false);//I
-        validTags.process(VIRTUAL_FULL, BAR, 2, false, false);//I
 
-        if (true) return;
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false);
 
-        for (int gap = 1; gap < 4; gap++) {
-            validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//I
-            validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//I
-            validTags.process(VIRTUAL_FULL, BAR, gap, true, false);//I
-        }
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, false);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_PROPER, BY_ZERO, BAR, false);
 
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, true);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, true);
 
-        //createTexTable(validTags);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_MORE, BAR, false);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_MORE, BAR, false);
 
-        if (true) return;
-        if (true) {
-            for (int gap = 1; gap < 4; gap++) {
-                //validTags.process(COMBINED, BAR, gap, true, false);
-                validTags.process(COMBINED, FULL, gap, false, false);//I
-                validTags.process(COMBINED, FULL, gap, true, false);
-                validTags.process(COMBINED, BAR, gap, false, false);//I
-                validTags.process(COMBINED, BAR, gap, true, false);
-            }
-        }
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false);
+
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false);
 
 
-        //if (true) return;
-        //validTags.process(COMBINED, BAR, 1, false, false);//I
-        //validTags.process(COMBINED, FULL, 1, true, false);//I
 
-        for (int gap = 1; gap < 4; gap++) {
-            validTags.process(BASIC, FULL, gap, false, false);//I
-            validTags.process(BASIC, FULL, gap, true, false);
+        /*
+   //validTags.process(BASIC, BAR, 2, true, false);//I
+   validTags.process(VIRTUAL_MONO, BAR, 2, true, false);//I
+   validTags.process(BASIC, BAR, 2, false, false);//I
+   if (true) return;
 
-            validTags.process(BASIC, BAR, gap, false, false);//1
 
-            validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//2
-            validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//2
-            //validTags.process(COMBINED, BAR, gap, false, false);
-            validTags.process(BASIC, BAR, gap, false, true);
-            validTags.process(BASIC, BAR, gap, true, true);
+   for (int gap = 1; gap < 4; gap++) {
+       validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//I
+       validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//I
+       validTags.process(VIRTUAL_FULL, BAR, gap, true, false);//I
+   }
 
-            validTags.process(BASIC, BAR, gap, true, false);//3
-            validTags.process(VIRTUAL_FULL, BAR, gap, true, false);
-        }
+
+   //createTexTable(validTags);
+
+   //if (true) return;
+   if (true) {
+       for (int gap = 1; gap < 4; gap++) {
+           //validTags.process(COMBINED, BAR, gap, true, false);
+           validTags.process(COMBINED, FULL, gap, false, false);//I
+           validTags.process(COMBINED, FULL, gap, true, false);
+           validTags.process(COMBINED, BAR, gap, false, false);//I
+           validTags.process(COMBINED, BAR, gap, true, false);
+       }
+   }
+
+
+   //if (true) return;
+   //validTags.process(COMBINED, BAR, 1, false, false);//I
+   //validTags.process(COMBINED, FULL, 1, true, false);//I
+
+   for (int gap = 1; gap < 4; gap++) {
+       validTags.process(BASIC, FULL, gap, false, false);//I
+       validTags.process(BASIC, FULL, gap, true, false);
+
+       validTags.process(BASIC, BAR, gap, false, false);//1
+
+       validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//2
+       validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//2
+       //validTags.process(COMBINED, BAR, gap, false, false);
+       validTags.process(BASIC, BAR, gap, false, true);
+       validTags.process(BASIC, BAR, gap, true, true);
+
+       validTags.process(BASIC, BAR, gap, true, false);//3
+       validTags.process(VIRTUAL_FULL, BAR, gap, true, false);
+   }     */
     }
 
-
-    static int start = 1;
-    static int end = 20;
-
-    private static void createTexTable(ValidTags validTags) throws Exception {
-        String type1 = BASIC;
-        String type2 = VIRTUAL_FULL;
-        boolean needCorrectInTable = true;
-        boolean addOnes = true;
-
-        System.out.print("\\begin{table}[h]\\tiny\n" +
-                "\\vspace{3mm}\n" +
-                "{\\centering\n" +
-                "\\begin{center}\n" +
-                "\\begin{tabular}{|c|l|");
-        for (int i = start; i <= end; i++) {
-            System.out.print("c|");
-        }
-        System.out.print("}\n" +
-                "  \\hline\n" +
-                "  \\multicolumn{2}{|c|}{ } & \\multicolumn{ " + (end - start + 1)+ " }{|c|}{correct $d$-tags (\\%)} \\\\\n" +
-                "  \\cline{3- " + (end - start  + 3)  + "}\n" +
-                "  \\multicolumn{2}{|c|}{ } ");
-        //"& 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23 & 24
-        for (int i = start; i <= end; i++) {
-            System.out.print(" & " + i);
-        }
-        System.out.print("\\\\\n" +
-                "  \\hline\n" +
-                "  \\multirow{3}{*}{exp}\n");
-
-
-        validTags.process(type1, BAR, 1, needCorrectInTable, addOnes);
-        validTags.process(type1, BAR, 2, needCorrectInTable, addOnes);
-        validTags.process(type1, BAR, 3, needCorrectInTable, addOnes);
-        System.out.println(" \\hline\n  \\multirow{3}{*}{virt} ");
-        validTags.process(type2, BAR, 1, needCorrectInTable, addOnes);
-        validTags.process(type2, BAR, 2, needCorrectInTable, addOnes);
-        validTags.process(type2, BAR, 3, needCorrectInTable, addOnes);
-        System.out.println(" \\hline\n" +
-                "\\end{tabular}\n" +
-                "\\end{center}\n" +
-                "\\par}\n" +
-                "\\centering\n" +
-                "\\caption{Average percentage of correct $d$-tags.}\n" +
-                "\\vspace{3mm}\n" +
-                "\\label{table:correct-d-tags}\n" +
-                "\\end{table}");
-
-        if (true) return;
-    }
 
     private PrintWriter output;
     private PrintWriter outputKD;
     private PrintWriter outputIntencity;
 
 
-    private void process(String type, int datasetType,  int gap, boolean needCorrect, boolean addOnes) throws Exception {
+    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType,  boolean addOnes) throws Exception {
+        for (int gap = 1; gap < 4; gap++) {
+            process(inputType, targetType, matchType, monoType, datasetType,  gap, addOnes);
+        }
+    }
+    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType,  int gap,  boolean addOnes) throws Exception {
         this.gap = gap;
-        this.needCorrect = needCorrect;
         this.addOnes = addOnes;
+        this.inputType = inputType;
+        this.targetType = targetType;
+        this.matchType = matchType;
+        this.monoType = monoType;
         List<Protein> proteins = conf.getProteins();
         Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
@@ -179,11 +168,12 @@ public class ValidTags {
 
         String fileName = datasetType == FULL ? "full" : "bar";
 
-        fileName += "_" + type + "_" + gap + "_";
-        fileName += needCorrect ? "correct" : "proper";
+        fileName += "_" + inputType + "_" + targetType + "_" + matchType +  "_" + monoType;
         if (addOnes) {
             fileName += "_add";
         }
+         fileName += "_" + gap;
+
         output = ReaderUtil.createOutputFile(new File("res", "share_" + fileName + ".txt"));
         outputKD = ReaderUtil.createOutputFile(new File("res", "kd_" + fileName + ".txt"));
         //outputIntencity = ReaderUtil.createOutputFile(new File("res", "intencity_" + fileName + ".txt"));
@@ -191,7 +181,7 @@ public class ValidTags {
         System.out.println("%fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(1754);
+        //keys.clear(); keys.add(1658);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -201,8 +191,8 @@ public class ValidTags {
                 if (usedProteins.contains(proteinId) && datasetType == BAR) {
                     continue;
                 }
-                Protein protein = proteins.get(proteinId);
-                long[][] stat = process(scan, protein, type, gap);
+                double[] proteinSpectrum = TARGET_ANNOTATED.equals(targetType) ? annotatedSpectrums.get(scanId) : ShiftEngine.getSpectrum(proteins.get(proteinId).getSimplifiedAcids());
+                long[][] stat = process(scan, proteinSpectrum, proteinId);
 
 
                 for (int i = 1; i < stat.length; i++) {
@@ -220,10 +210,10 @@ public class ValidTags {
                 usedProteins.add(proteinId);
             }
         }
-        System.out.print("& " + gap + "-aa");
-        for (int i = start; i <= end; i++) {
+
+        for (int i = 1; i < count.length; i++) {
             int n = count[i];
-            String text = " & ";
+            String text = " ";
             if (n > 0) {
                 text += df.format(global[i] / n);
             }
@@ -245,15 +235,10 @@ public class ValidTags {
         System.out.println("\\\\");
     }
 
-    public long[][] process(Scan scan, Protein protein, String type, int gap) {
-        this.gap = gap;
-        this.type = type;
-        List<Double> precursorMassShifts = new ArrayList<Double>();
-        double shift =
-                //PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan)
-                0
-                ;
-        SpectrumResult spectrumResult = getSpectrumResult(scan, protein, shift);
+    public long[][] process(Scan scan, double[] proteinSpectrum, int proteinId) {
+        //List<Double> precursorMassShifts = new ArrayList<Double>();
+        double shift = BY_MORE.equals(monoType) ? PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan) : 0;
+        SpectrumResult spectrumResult = getSpectrumResult(scan, proteinSpectrum, shift);
         //System.out.println("shift = " + shift);
         //getSpectrumResult(scan, protein, 0);
         //precursorMassShifts.add(-1d);
@@ -266,6 +251,7 @@ public class ValidTags {
         //if (len > 0) {
             //System.out.println("scan + " + scan.getId() + " " + precursorMassShifts.get(0) + " " + precursorMassShifts.get(len - 1) + " " + len + " " + scan.getPrecursorMass());
         //}
+                                            /*
         long score = getScore(spectrumResult);
         for (Double precursorMassShift : precursorMassShifts) {
             SpectrumResult anotherResult = getSpectrumResult(scan, protein, precursorMassShift);
@@ -286,6 +272,7 @@ public class ValidTags {
             if (score - nextScore > 0) {
                 //System.out.println("bad" +  (score - nextScore));
             }
+            */
             /*
             KD newKD = anotherResult.kd;
             if (newKD.compareTo(spectrumResult.kd) < 0) {
@@ -293,9 +280,9 @@ public class ValidTags {
                 spectrumResult = anotherResult;
             }
             */
-        }
+        /*}*/
 
-        spectrumResult.output(kdStat, outputKD, scan.getId(), protein.getProteinId());
+        spectrumResult.output(kdStat, outputKD, scan.getId(), proteinId);
         return spectrumResult.stat;
     }
 
@@ -312,15 +299,14 @@ public class ValidTags {
         return score;
     }
 
-    private SpectrumResult getSpectrumResult(Scan scan, Protein protein, double precursorMassShift) {
+    private SpectrumResult getSpectrumResult(Scan scan, double[] proteinSpectrum, double precursorMassShift) {
         wrongCache.clear();
         correctCache.clear();
 
-        String sequence = protein.getSimplifiedAcids();
         List<Peak> peaks;
 
         int scanId = scan.getId();
-        if (VIRTUAL_MONO.equals(type) || VIRTUAL_FULL.equals(type)) {
+        if (INPUT_VIRT.equals(inputType)) {
             peaks =  new ArrayList<Peak>();
             peaks.addAll(msAlignPeaks.get(scanId));
         } else {
@@ -347,15 +333,13 @@ public class ValidTags {
             prev = value;
         } */
 
-        if (BASIC.equals(type) || VIRTUAL_MONO.equals(type)) {
+        if (BY_NONE.equals(monoType)) {
             filterMonotags(peaks);
         }
         //System.out.println("peaks.size() before duplicates " + peaks.size());
         peaks = GraphUtil.filterDuplicates(conf, peaks);
         //System.out.println("peaks.size() before duplicates= " + peaks.size());
 
-        int proteinId = protein.getProteinId();
-        double[] proteinSpectrum = needCorrect ? annotatedSpectrums.get(scanId): ShiftEngine.getSpectrum(sequence);
         return printGappedTagInfo(peaks, proteinSpectrum, scan.getPrecursorMass());
     }
 
@@ -397,6 +381,7 @@ public class ValidTags {
     private SpectrumResult printGappedTagInfo(List<Peak> peaks, double[] proteinSpectrum, double precursorMass) {
         long[][] stat = new long[1000][2];
         KD kd = new KD(0, 0);
+
         List<List<Peak>> components = GraphUtil.getComponentsFromGraph(peaks);
         for (List<Peak> component : components) {
             k = 0;
@@ -404,7 +389,7 @@ public class ValidTags {
             for (Peak peak : component) {
                 Set<Integer> starts = new HashSet<Integer>();
                 for (int i = 0; i < proteinSpectrum.length; i++) {
-                    if (needCorrect) {
+                    if (MATCH_CORRECT.equals(matchType)) {
                         double mass = proteinSpectrum[i];
                         double limit = peak.getPeakType() == PeakType.Y ? TEN_PPM * 1.5 * precursorMass : TEN_PPM * peak.getMass();
                         if (Math.abs(mass - peak.getValue()) < limit) {
@@ -428,6 +413,7 @@ public class ValidTags {
     private Map<Peak, List<CorrectResult>> correctCache = new HashMap<Peak, List<CorrectResult>>();
 
     private void processGappedTags(long[][] stat, Peak peak, int prefix, double[] proteinSpectrum, Set<Integer> starts) {
+        //System.out.println(prefix + " " + peak.getValue() + " " + starts.iterator().next());
         List<CorrectResult> results = correctCache.get(peak);
         if (results != null) {
             for (CorrectResult result : results) {
@@ -467,6 +453,9 @@ public class ValidTags {
         }
 
         if (prefix > 0) {
+            //if (prefix == 6) {
+            //    System.out.println("increment");
+            //}
             stat[prefix][0]++;
             if (prefix > k) {
                 k = prefix;
@@ -540,6 +529,9 @@ public class ValidTags {
         for (int pos : starts) {
             for (int i = 1; i <= gap; i++) {
                 if (pos + i < proteinSpectrum.length ) {
+                    if (proteinSpectrum[pos + i] < 0) {
+                        break;
+                    }
                     double m = proteinSpectrum[pos + i] - proteinSpectrum[pos];
                     if (limits[0] < m && m < limits[1]) {
                         nextStarts.add(pos + i);
