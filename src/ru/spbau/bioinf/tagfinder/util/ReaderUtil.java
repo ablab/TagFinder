@@ -47,6 +47,24 @@ public class ReaderUtil {
         return ans;
     }
 
+    public static double[] getLastString(File file) throws Exception {
+        BufferedReader input = getBufferedReader(file);
+        String s = null;
+        while (true) {
+            String t = input.readLine();
+            if (t == null) {
+                break;
+            } else {
+                s = t;
+            }
+        }
+        String[] d = s.trim().split(" ");
+        double[] ans = new double[d.length];
+        for (int i = 0; i < ans.length; i++) {
+            ans[i] = Double.parseDouble(d[i]);
+        }
+        return ans;
+    }
 
     public static String[] getDataArray(String s) {
         return s.split("[ \t]");
