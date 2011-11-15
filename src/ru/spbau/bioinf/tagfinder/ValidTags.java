@@ -40,11 +40,11 @@ public class ValidTags {
     private String targetType;
     private String monoType;
     private String matchType;
-    private static Map<Integer,List<Peak>> msAlignPeaks;
-    private Map<KD,Integer> kdStat;
+    private static Map<Integer, List<Peak>> msAlignPeaks;
+    private Map<KD, Integer> kdStat;
     private int k;
     private int d;
-    private Map<Integer,double[]> annotatedSpectrums;
+    private Map<Integer, double[]> annotatedSpectrums;
 
     public ValidTags(Configuration conf) throws Exception {
         this.conf = conf;
@@ -52,7 +52,7 @@ public class ValidTags {
         annotatedSpectrums = conf.getAnnotatedSpectrums();
     }
 
-    public  static DecimalFormat df = (DecimalFormat)NumberFormat.getNumberInstance();
+    public static DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance();
 
     static {
         df.setMaximumFractionDigits(2);
@@ -62,79 +62,36 @@ public class ValidTags {
     }
 
     private boolean addOnes = false;
+    private boolean needIntencity = false;
 
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
 
-
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false);
-        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false);
-
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, false);
-        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_PROPER, BY_ZERO, BAR, false);
-
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, true);
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, true);
-
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_MORE, BAR, false);
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_MORE, BAR, false);
-
-        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false);
-        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false);
-
-        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, false, true);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false, true);
 
 
+        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_PROPER, BY_NONE, FULL, false, false);
+        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_PROPER, BY_NONE, BAR, false, false);
 
-        /*
-   //validTags.process(BASIC, BAR, 2, true, false);//I
-   validTags.process(VIRTUAL_MONO, BAR, 2, true, false);//I
-   validTags.process(BASIC, BAR, 2, false, false);//I
-   if (true) return;
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false, false);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false, false);
 
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, false, false);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_PROPER, BY_ZERO, BAR, false, false);
 
-   for (int gap = 1; gap < 4; gap++) {
-       validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//I
-       validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//I
-       validTags.process(VIRTUAL_FULL, BAR, gap, true, false);//I
-   }
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, true, false);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, true, false);
 
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_MORE, BAR, false, false);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_MORE, BAR, false, false);
 
-   //createTexTable(validTags);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false, false);
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false, false);
 
-   //if (true) return;
-   if (true) {
-       for (int gap = 1; gap < 4; gap++) {
-           //validTags.process(COMBINED, BAR, gap, true, false);
-           validTags.process(COMBINED, FULL, gap, false, false);//I
-           validTags.process(COMBINED, FULL, gap, true, false);
-           validTags.process(COMBINED, BAR, gap, false, false);//I
-           validTags.process(COMBINED, BAR, gap, true, false);
-       }
-   }
-
-
-   //if (true) return;
-   //validTags.process(COMBINED, BAR, 1, false, false);//I
-   //validTags.process(COMBINED, FULL, 1, true, false);//I
-
-   for (int gap = 1; gap < 4; gap++) {
-       validTags.process(BASIC, FULL, gap, false, false);//I
-       validTags.process(BASIC, FULL, gap, true, false);
-
-       validTags.process(BASIC, BAR, gap, false, false);//1
-
-       validTags.process(VIRTUAL_FULL, BAR, gap, false, false);//2
-       validTags.process(VIRTUAL_MONO, BAR, gap, false, false);//2
-       //validTags.process(COMBINED, BAR, gap, false, false);
-       validTags.process(BASIC, BAR, gap, false, true);
-       validTags.process(BASIC, BAR, gap, true, true);
-
-       validTags.process(BASIC, BAR, gap, true, false);//3
-       validTags.process(VIRTUAL_FULL, BAR, gap, true, false);
-   }     */
+        validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false, false);
     }
 
 
@@ -143,20 +100,24 @@ public class ValidTags {
     private PrintWriter outputIntencity;
 
 
-    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType,  boolean addOnes) throws Exception {
+    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType, boolean addOnes, boolean needIntencity) throws Exception {
         for (int gap = 1; gap < 4; gap++) {
-            process(inputType, targetType, matchType, monoType, datasetType,  gap, addOnes);
+            process(inputType, targetType, matchType, monoType, datasetType, gap, addOnes, needIntencity);
         }
     }
-    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType,  int gap,  boolean addOnes) throws Exception {
+
+    private double intncityLevel;
+
+    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType, int gap, boolean addOnes, boolean needIntencity) throws Exception {
         this.gap = gap;
         this.addOnes = addOnes;
         this.inputType = inputType;
         this.targetType = targetType;
         this.matchType = matchType;
         this.monoType = monoType;
+        this.needIntencity = needIntencity;
         List<Protein> proteins = conf.getProteins();
-        Map<Integer,Integer> msAlignResults = conf.getMSAlignResults();
+        Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
@@ -168,11 +129,14 @@ public class ValidTags {
 
         String fileName = datasetType == FULL ? "full" : "bar";
 
-        fileName += "_" + inputType + "_" + targetType + "_" + matchType +  "_" + monoType;
+        fileName += "_" + inputType + "_" + targetType + "_" + matchType + "_" + monoType;
         if (addOnes) {
             fileName += "_add";
         }
-         fileName += "_" + gap;
+        if (needIntencity) {
+            fileName += "_intencity";
+        }
+        fileName += "_" + gap;
 
         output = ReaderUtil.createOutputFile(new File("res", "share_" + fileName + ".txt"));
         outputKD = ReaderUtil.createOutputFile(new File("res", "kd_" + fileName + ".txt"));
@@ -193,6 +157,27 @@ public class ValidTags {
                 }
                 double[] proteinSpectrum = TARGET_ANNOTATED.equals(targetType) ? annotatedSpectrums.get(scanId) : ShiftEngine.getSpectrum(proteins.get(proteinId).getSimplifiedAcids());
                 long[][] stat = process(scan, proteinSpectrum, proteinId);
+                if (needIntencity) {
+                    stat = new long[stat.length][2];
+                    boolean[] done = new boolean[stat.length];
+                    List<Double> intencities = new ArrayList<Double>();
+                    for (Peak p : scan.getPeaks()){
+                        intencities.add(p.getIntensity());
+                    }
+                    Collections.sort(intencities);
+                    for (int i =  intencities.size() - 1; i>=0; i--) {
+                        intncityLevel =  intencities.get(i);
+                        long[][] curStat = process(scan, proteinSpectrum, proteinId);
+                        for (int len = 1; len < stat.length; len++) {
+                            if (!done[len]) {
+                                if (curStat[len][0] + curStat[len][1] > 0) {
+                                    done[len] = true;
+                                    stat[len] = curStat[len];
+                                }
+                            }
+                        }
+                    }
+                }
 
 
                 for (int i = 1; i < stat.length; i++) {
@@ -222,7 +207,7 @@ public class ValidTags {
             output.print(text);
 
         }
-        List<KD> values  = new ArrayList<KD>();
+        List<KD> values = new ArrayList<KD>();
         values.addAll(kdStat.keySet());
         Collections.sort(values);
         for (KD value : values) {
@@ -249,37 +234,37 @@ public class ValidTags {
         //Collections.sort(precursorMassShifts);
         //int len = precursorMassShifts.size();
         //if (len > 0) {
-            //System.out.println("scan + " + scan.getId() + " " + precursorMassShifts.get(0) + " " + precursorMassShifts.get(len - 1) + " " + len + " " + scan.getPrecursorMass());
+        //System.out.println("scan + " + scan.getId() + " " + precursorMassShifts.get(0) + " " + precursorMassShifts.get(len - 1) + " " + len + " " + scan.getPrecursorMass());
         //}
-                                            /*
-        long score = getScore(spectrumResult);
-        for (Double precursorMassShift : precursorMassShifts) {
-            SpectrumResult anotherResult = getSpectrumResult(scan, protein, precursorMassShift);
-            long nextScore = getScore(anotherResult);
-            if (nextScore> score) {
-                if (nextScore - score > 1) {
-                    //System.out.println("WOW!");
-                }
-                if (nextScore - score > 2) {
-                   // System.out.println("WOW!WOW!");
-                }
-
-                System.out.println("For " + scan.getId() + " precursor mass shift " + +precursorMassShift + " provieds score " + nextScore + " instead of " + score);
-                spectrumResult = anotherResult;
-                score = nextScore;
+        /*
+    long score = getScore(spectrumResult);
+    for (Double precursorMassShift : precursorMassShifts) {
+        SpectrumResult anotherResult = getSpectrumResult(scan, protein, precursorMassShift);
+        long nextScore = getScore(anotherResult);
+        if (nextScore> score) {
+            if (nextScore - score > 1) {
+                //System.out.println("WOW!");
+            }
+            if (nextScore - score > 2) {
+               // System.out.println("WOW!WOW!");
             }
 
-            if (score - nextScore > 0) {
-                //System.out.println("bad" +  (score - nextScore));
-            }
-            */
-            /*
-            KD newKD = anotherResult.kd;
-            if (newKD.compareTo(spectrumResult.kd) < 0) {
-                System.out.println("For " + scan.getId() + " precursor mass shift " + +precursorMassShift + " provieds kd " + newKD.toString() + " instead of " + spectrumResult.kd);
-                spectrumResult = anotherResult;
-            }
-            */
+            System.out.println("For " + scan.getId() + " precursor mass shift " + +precursorMassShift + " provieds score " + nextScore + " instead of " + score);
+            spectrumResult = anotherResult;
+            score = nextScore;
+        }
+
+        if (score - nextScore > 0) {
+            //System.out.println("bad" +  (score - nextScore));
+        }
+        */
+        /*
+        KD newKD = anotherResult.kd;
+        if (newKD.compareTo(spectrumResult.kd) < 0) {
+            System.out.println("For " + scan.getId() + " precursor mass shift " + +precursorMassShift + " provieds kd " + newKD.toString() + " instead of " + spectrumResult.kd);
+            spectrumResult = anotherResult;
+        }
+        */
         /*}*/
 
         spectrumResult.output(kdStat, outputKD, scan.getId(), proteinId);
@@ -307,7 +292,7 @@ public class ValidTags {
 
         int scanId = scan.getId();
         if (INPUT_VIRT.equals(inputType)) {
-            peaks =  new ArrayList<Peak>();
+            peaks = new ArrayList<Peak>();
             peaks.addAll(msAlignPeaks.get(scanId));
         } else {
             peaks = scan.createSpectrumWithYPeaks(precursorMassShift);
@@ -370,8 +355,8 @@ public class ValidTags {
                 Peak next = iterator.next();
                 if (next.getPeakType() != peak.getPeakType()) {
                     //if (peak.getIntensity() != 0 && next.getIntensity() != 0) {
-                        iterator.remove();
-                        //System.out.println("removed");
+                    iterator.remove();
+                    //System.out.println("removed");
                     //}
                 }
             }
@@ -387,6 +372,9 @@ public class ValidTags {
             k = 0;
             d = 0;
             for (Peak peak : component) {
+                if (needIntencity && peak.getIntensity() < intncityLevel) {
+                    continue;
+                }
                 Set<Integer> starts = new HashSet<Integer>();
                 for (int i = 0; i < proteinSpectrum.length; i++) {
                     if (MATCH_CORRECT.equals(matchType)) {
@@ -467,6 +455,9 @@ public class ValidTags {
 
         List<Peak> nextPeaks = peak.getNext();
         for (Peak next : nextPeaks) {
+            if (needIntencity && peak.getIntensity() < intncityLevel) {
+                continue;
+            }
             double[] limits = conf.getEdgeLimits(peak, next);
             Set<Integer> nextStarts = getNextStarts(proteinSpectrum, starts, limits, gap);
             if (nextStarts.size() == 0) {
@@ -489,6 +480,7 @@ public class ValidTags {
     }
 
     private Map<Peak, long[]> wrongCache = new HashMap<Peak, long[]>();
+
     private void processWrongGappedTags(long[][] stat, Peak peak, int prefix) {
         if (wrongCache.containsKey(peak)) {
             long[] delta = wrongCache.get(peak);
@@ -515,6 +507,9 @@ public class ValidTags {
         }
 
         for (Peak next : nextPeaks) {
+            if (needIntencity && peak.getIntensity() < intncityLevel) {
+                continue;
+            }
             processWrongGappedTags(stat, next, prefix + 1);
         }
         long[] delta = new long[50];
@@ -528,7 +523,7 @@ public class ValidTags {
         Set<Integer> nextStarts = new HashSet<Integer>();
         for (int pos : starts) {
             for (int i = 1; i <= gap; i++) {
-                if (pos + i < proteinSpectrum.length ) {
+                if (pos + i < proteinSpectrum.length) {
                     if (proteinSpectrum[pos + i] < 0) {
                         break;
                     }
@@ -541,83 +536,84 @@ public class ValidTags {
         }
         return nextStarts;
     }
-            /*
+
+    /*
 public void researchIntencity(List<Peak> peaks, double[] proteinSpectrum) {
-        double[] bad = new double[100];
-        double[] good = new double[100];
-        int[] badCount = new int[100];
-        int[] goodCount = new int[100];
-        generateTags(peaks, proteinSpectrum);
+double[] bad = new double[100];
+double[] good = new double[100];
+int[] badCount = new int[100];
+int[] goodCount = new int[100];
+generateTags(peaks, proteinSpectrum);
 
-        for (int i = 1; i < good.length; i++) {
-            if (bad[i] + good[i] == 0) {
-                break;
-            }
-            int v = 0;
-            if (good[i] == bad[i]) {
-                v = 1;
-            }
-            if (good[i] > bad[i]) {
-                v = 2;
-            }
-            System.out.print(" " + df.format(100d * (goodCount[i] + 0.0d) / (goodCount[i] + badCount[i])));
-            if (goodCount[i] == 0) {
-                //System.out.println(" bb" + i + " ");
-            }
+for (int i = 1; i < good.length; i++) {
+  if (bad[i] + good[i] == 0) {
+      break;
+  }
+  int v = 0;
+  if (good[i] == bad[i]) {
+      v = 1;
+  }
+  if (good[i] > bad[i]) {
+      v = 2;
+  }
+  System.out.print(" " + df.format(100d * (goodCount[i] + 0.0d) / (goodCount[i] + badCount[i])));
+  if (goodCount[i] == 0) {
+      //System.out.println(" bb" + i + " ");
+  }
 
-        }
-        System.out.println();
-    }
+}
+System.out.println();
+}
 
-    public void generateTags(List<Peak> peaks, double[] proteinSpectrum) {
-        for (Peak peak : peaks) {
-            generateTags("", peak, proteinSpectrum,  getIntencity(peak));
-        }
-    }
+public void generateTags(List<Peak> peaks, double[] proteinSpectrum) {
+for (Peak peak : peaks) {
+  generateTags("", peak, proteinSpectrum,  getIntencity(peak));
+}
+}
 
-    private double getIntencity(Peak peak) {
-        if (peak.getIntensity() > 0) {
-            return peak.getIntensity();
-        }
-        return Integer.MAX_VALUE;
-    }
+private double getIntencity(Peak peak) {
+if (peak.getIntensity() > 0) {
+  return peak.getIntensity();
+}
+return Integer.MAX_VALUE;
+}
 
-    public void generateTags(String prefix, Peak peak, double[] proteinSpectrum, int i, double intencity) {
-        int d = prefix.length();
-        boolean isGood = i>=0;
-        if (isGood) {
-            if (good[d] == intencity) {
-                goodCount[d]++;
-            } else if (good[d] < intencity) {
-                goodCount[d] = 1;
-                good[d] = intencity;
-            }
-        } else {
-            if (bad[d] == intencity) {
-                badCount[d]++;
-            } else if (bad[d] < intencity) {
-                badCount[d] = 1;
-                bad[d] = intencity;
-            }
-        }
+public void generateTags(String prefix, Peak peak, double[] proteinSpectrum, int i, double intencity) {
+int d = prefix.length();
+boolean isGood = i>=0;
+if (isGood) {
+  if (good[d] == intencity) {
+      goodCount[d]++;
+  } else if (good[d] < intencity) {
+      goodCount[d] = 1;
+      good[d] = intencity;
+  }
+} else {
+  if (bad[d] == intencity) {
+      badCount[d]++;
+  } else if (bad[d] < intencity) {
+      badCount[d] = 1;
+      bad[d] = intencity;
+  }
+}
 
-        for (Peak next : peak.getNext()) {
-            for (Acid acid : Acid.values()) {
-                if (acid.match(conf.getEdgeLimits(peak, next))) {
-                    generateTags(prefix + acid.name(), next, proteinSpectrum, i+1, Math.min(intencity, getIntencity(peak)));
-                }
-            }
-        }
-    }
-              */
+for (Peak next : peak.getNext()) {
+  for (Acid acid : Acid.values()) {
+      if (acid.match(conf.getEdgeLimits(peak, next))) {
+          generateTags(prefix + acid.name(), next, proteinSpectrum, i+1, Math.min(intencity, getIntencity(peak)));
+      }
+  }
+}
+}
+    */
     private void printStat(long[][] stat, Integer proteinId, int scanId) {
-        output.print(scanId + " " +  proteinId);
+        output.print(scanId + " " + proteinId);
         for (int i = 1; i < stat.length; i++) {
             long good = stat[i][0];
             long total = good + stat[i][1];
             if (total > 0) {
                 //output.print(" " + df.format((100d * good)/total) + " " + stat[i][0] + " " + stat[i][1] + " ");
-                output.print(" " + stat[i][0] + " "  + stat[i][1]);
+                output.print(" " + stat[i][0] + " " + stat[i][1]);
             } else {
                 break;
             }
@@ -663,7 +659,7 @@ public void researchIntencity(List<Peak> peaks, double[] proteinSpectrum) {
             this.kd = kd;
         }
 
-        public void output(Map<KD,Integer> kdStat, PrintWriter outputKD, int scanId, int proteinId) {
+        public void output(Map<KD, Integer> kdStat, PrintWriter outputKD, int scanId, int proteinId) {
             if (kdStat.containsKey(kd)) {
                 kdStat.put(kd, 1 + kdStat.get(kd));
             } else {
