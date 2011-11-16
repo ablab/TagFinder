@@ -2,6 +2,8 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class IntencityTableGenerator {
@@ -31,6 +33,8 @@ public class IntencityTableGenerator {
 
         int max = 0;
 
+        List<Double>[] percentage = new List[100];
+
         do {
             String s = in.readLine();
             if (s.contains(",")) {
@@ -53,6 +57,10 @@ public class IntencityTableGenerator {
                 } else {
                     both[d]++;
                 }
+                if (percentage[d] == null) {
+                    percentage[d] = new ArrayList<Double>();
+                }
+                percentage[d].add(data[pos]*100.0d/(data[pos] + data[pos+1]));
 
                 d++;
                 pos += 2;
@@ -60,8 +68,11 @@ public class IntencityTableGenerator {
         } while (true);
         double[] ans = new double[max];
         for (int i = 1; i<= max; i++) {
-            double total = good[i] + bad[i] + both[i];
-            ans[i - 1] = (good[i])*100/total;
+            double total = 0;
+            for (double v : percentage[i]) {
+                total += v;
+            }
+            ans[i - 1] = total/percentage[i].size();
         }
         res[gap - 1] = ans;
 
