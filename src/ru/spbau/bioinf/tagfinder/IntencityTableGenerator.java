@@ -12,18 +12,18 @@ public class IntencityTableGenerator {
 
         double[][] res = new double[100][3];
         for (int gap = 1; gap <= 3; gap++) {
-            printTable(res, file1, "The number of $(k-d,d)$-spectra in the $ST$ data set for the case of " + gap + "-aa tags, for all $0\\le d\\le k\\le 25$.", gap);
+            printTable(res, file1, gap, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring " + gap + "-aa tags of length $k$ are correct (+) or incorrect (-).");
         }
         TexTableGenerator.createThreeRowsTable(res, "Average percentage of proper top-scoring tags", "k", "");
 
         res = new double[100][3];
         for (int gap = 1; gap <= 3; gap++) {
-            printTable(res, file2, "The number of $(k-d,d)$-spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags, for all $0\\le d\\le k\\le 25$.", gap);
+            printTable(res, file2, gap, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring " + gap + "-aa tags of length $k$ are correct (+) or incorrect (-).");
         }
         TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct top-scoring tags", "k", "");
     }
 
-    private static void printTable(double[][] res, String file, String caption, int gap) throws Exception {
+    private static void printTable(double[][] res, String file, int gap, String caption) throws Exception {
         BufferedReader in = ReaderUtil.createInputReader(new File("res", "share_" + file + "_" + gap + ".txt"));
         double[] good = new double[100];
         double[] bad = new double[100];
@@ -64,5 +64,53 @@ public class IntencityTableGenerator {
             ans[i - 1] = (good[i] + bad[i])*100/total;
         }
         res[gap - 1] = ans;
+
+        System.out.print("\\begin{table}[ht]\\footnotesize\n" +
+                "\\vspace{3mm}\n" +
+                "{\\centering\n" +
+                "\\begin{center}\n" +
+                "\\begin{tabular}{|c|c|c|");
+        for (int i = 1; i<= max; i++) {
+            System.out.print("c|");
+        }
+        System.out.println("}\n" +
+                "  \\hline\n" +
+                "  \\multicolumn{2}{|c|}{ } & \\multicolumn{ " + max + "}{|c|}{$k$} \\\\\n" +
+                "  \\cline{3-" + (max + 2)+ " }\n" +
+                "  \\multicolumn{2}{|c|}{ } ");
+        for (int i = 1; i<= max; i++) {
+            System.out.print(" & " + i);
+        }
+
+        System.out.print("\\\\\n" +
+                "  \\hline\n" +
+                "  \\multirow{2}{*}{spectra (\\%)} & + ");
+        for (int i = 1; i<= max; i++) {
+            System.out.print(" & ");
+            double total = good[i] + bad[i] + both[i];
+            if (total > 0) {
+                System.out.print(ValidTags.df.format(100 * good[i]/total));
+            }
+        }
+
+        System.out.print(" \\\\\n" +
+                "      & -- ");
+        for (int i = 1; i<= max; i++) {
+            System.out.print(" & ");
+            double total = good[i] + bad[i] + both[i];
+            if (total > 0) {
+                System.out.print(ValidTags.df.format(100 * bad[i]/total));
+            }
+        }
+        System.out.println(" \\\\\n" +
+                "  \\hline\n" +
+                "\\end{tabular}\n" +
+                "\\end{center}\n" +
+                "\\par}\n" +
+                "\\centering\n" +
+                "\\caption{" + caption + "}\n" +
+                "\\vspace{3mm}\n" +
+                "\\label{table:all-top-scoring}\n" +
+                "\\end{table}");
     }
 }
