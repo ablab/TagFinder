@@ -106,7 +106,7 @@ public class ValidTags {
         }
     }
 
-    private double intncityLevel;
+    private double intencityLevel;
 
     private void process(String inputType, String targetType, String matchType, String monoType, int datasetType, int gap, boolean addOnes, boolean needIntencity) throws Exception {
         this.gap = gap;
@@ -145,7 +145,7 @@ public class ValidTags {
         System.out.println("%fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(1658);
+        //keys.clear(); keys.add(694);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -156,9 +156,8 @@ public class ValidTags {
                     continue;
                 }
                 double[] proteinSpectrum = TARGET_ANNOTATED.equals(targetType) ? annotatedSpectrums.get(scanId) : ShiftEngine.getSpectrum(proteins.get(proteinId).getSimplifiedAcids());
-                long[][] stat = process(scan, proteinSpectrum, proteinId);
+                long[][] stat = new long[1000][2];
                 if (needIntencity) {
-                    stat = new long[stat.length][2];
                     boolean[] done = new boolean[stat.length];
                     List<Double> intencities = new ArrayList<Double>();
                     for (Peak p : scan.getPeaks()){
@@ -166,17 +165,31 @@ public class ValidTags {
                     }
                     Collections.sort(intencities);
                     for (int i =  intencities.size() - 1; i>=0; i--) {
-                        intncityLevel =  intencities.get(i);
+                        intencityLevel =  intencities.get(i);
                         long[][] curStat = process(scan, proteinSpectrum, proteinId);
                         for (int len = 1; len < stat.length; len++) {
                             if (!done[len]) {
                                 if (curStat[len][0] + curStat[len][1] > 0) {
+                                    /*
+                                    System.out.println(len + " " + intencityLevel + " " +  curStat[len][0] + " " + curStat[len][1] );
+                                    for (Peak p : scan.getPeaks()){
+                                        if (p.getIntensity() >= intencityLevel) {
+                                            if (p.getIntensity() == intencityLevel) {
+                                                System.out.println("*");
+                                            }
+                                            System.out.println(p.getMass());
+                                            
+                                        }
+                                    }
+                                    */
                                     done[len] = true;
                                     stat[len] = curStat[len];
                                 }
                             }
                         }
                     }
+                } else {
+                    stat = process(scan, proteinSpectrum, proteinId);
                 }
 
 
@@ -301,31 +314,29 @@ public class ValidTags {
             peaks = addOnes(peaks);
         }
 
-        GraphUtil.generateGapEdges(conf, peaks, gap);
-        //List<Peak[]> tags = new Analyzer(conf).getTags(peaks);
-        ///System.out.println("tags = " + tags.size());
-        //System.out.println("size before " + peaks.size());
-
-        //System.out.println("size after " + peaks.size());
-        /*
-        double prev = -1;
-        for (Peak peak : peaks) {
-            double value = peak.getValue();
-            if (value - prev > 0.1) {
-                System.out.println();
+        //System.out.println("peaks.size() before duplicates " + peaks.size());
+        if (needIntencity) {
+            for (Iterator<Peak> peakIterator = peaks.iterator(); peakIterator.hasNext(); ) {
+                Peak next = peakIterator.next();
+                if (next.getIntensity() < intencityLevel) {
+                    peakIterator.remove();
+                }
             }
-            System.out.print(value + " ");
-            prev = value;
-        } */
+        }
+
+        GraphUtil.generateGapEdges(conf, peaks, gap);
 
         if (BY_NONE.equals(monoType)) {
             filterMonotags(peaks);
         }
-        //System.out.println("peaks.size() before duplicates " + peaks.size());
-        peaks = GraphUtil.filterDuplicates(conf, peaks);
-        //System.out.println("peaks.size() before duplicates= " + peaks.size());
 
-        return printGappedTagInfo(peaks, proteinSpectrum, scan.getPrecursorMass());
+        //System.out.println("peaks.size() before duplicates= " + peaks.size());
+        peaks = GraphUtil.filterDuplicates(conf, peaks);
+        //System.out.println("peaks.size() before after= " + peaks.size());
+
+
+        SpectrumResult spectrumResult = printGappedTagInfo(peaks, proteinSpectrum, scan.getPrecursorMass());
+        return spectrumResult;
     }
 
     private List<Peak> addOnes(List<Peak> peaks) {
@@ -372,9 +383,6 @@ public class ValidTags {
             k = 0;
             d = 0;
             for (Peak peak : component) {
-                if (needIntencity && peak.getIntensity() < intncityLevel) {
-                    continue;
-                }
                 Set<Integer> starts = new HashSet<Integer>();
                 for (int i = 0; i < proteinSpectrum.length; i++) {
                     if (MATCH_CORRECT.equals(matchType)) {
@@ -455,9 +463,6 @@ public class ValidTags {
 
         List<Peak> nextPeaks = peak.getNext();
         for (Peak next : nextPeaks) {
-            if (needIntencity && peak.getIntensity() < intncityLevel) {
-                continue;
-            }
             double[] limits = conf.getEdgeLimits(peak, next);
             Set<Integer> nextStarts = getNextStarts(proteinSpectrum, starts, limits, gap);
             if (nextStarts.size() == 0) {
@@ -507,9 +512,6 @@ public class ValidTags {
         }
 
         for (Peak next : nextPeaks) {
-            if (needIntencity && peak.getIntensity() < intncityLevel) {
-                continue;
-            }
             processWrongGappedTags(stat, next, prefix + 1);
         }
         long[] delta = new long[50];
