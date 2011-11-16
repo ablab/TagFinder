@@ -12,7 +12,7 @@ public class IntencityTableGenerator {
 
         double[][] res = new double[100][3];
         for (int gap = 1; gap <= 3; gap++) {
-            printTable(res, file1, gap, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring " + gap + "-aa tags of length $k$ are correct (+) or incorrect (-).");
+            printTable(res, file1, gap, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring " + gap + "-aa tags of length $k$ are proper (+) or incorrect (-).");
         }
         TexTableGenerator.createThreeRowsTable(res, "Average percentage of proper top-scoring tags", "k", "");
 
@@ -48,7 +48,7 @@ public class IntencityTableGenerator {
                 max = Math.max(max, d);
                 if (data[pos] == 0) {
                     bad[d]++;
-                } else if (data[pos + 1] == 0) {
+                } else if (data[pos + 1] <= data[pos] ) {
                     good[d]++;
                 } else {
                     both[d]++;
@@ -61,7 +61,7 @@ public class IntencityTableGenerator {
         double[] ans = new double[max];
         for (int i = 1; i<= max; i++) {
             double total = good[i] + bad[i] + both[i];
-            ans[i - 1] = (good[i] + bad[i])*100/total;
+            ans[i - 1] = (good[i])*100/total;
         }
         res[gap - 1] = ans;
 
