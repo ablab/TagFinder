@@ -65,6 +65,33 @@ public class EValueAdapter {
         }
     }
 
+    public static PrSM getBestEValue(Scan scan, int proteinId) throws Exception  {
+        PrSM prsms[][][] = calculateEValue(scan, proteinId);
+        double best = 9E100;
+        PrSM ans = null;
+        if (prsms != null) {
+            for (int i = 0; i < prsms.length; i++) {
+                if (prsms[i] != null) {
+                    for (int j = 0; j < 4; j++) {
+                        if (prsms[i][j] != null) {
+                            for (int k = 0; k < prsms[i][j].length; k++) {
+                                if (prsms[i][j][k] != null) {
+                                    PrSM prsm = prsms[i][j][k];
+                                    double newValue = prsm.getEValue();
+                                    if (newValue < best) {
+                                        best = newValue;
+                                        ans = prsm;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+
     private static int[] input = new int[] {
 1082,  4375,
 1082, 392,
