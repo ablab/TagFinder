@@ -35,25 +35,10 @@ public class EValueChecker {
             int scanId = scan.getId();
             if (msAlignResults.containsKey(scanId)) {
                 Integer proteinId = msAlignResults.get(scanId);
-                PrSM[][][] prsms = EValueAdapter.calculateEValue(scan, proteinId);
+                PrSM prsm = EValueAdapter.getBestEValue(scan, proteinId);
                 double newEvalue =  999999999999999999999d;
-                if (prsms != null) {
-                    for (int i = 0; i < prsms.length; i++) {
-                        if (prsms[i] != null) {
-                            for (int j = 0; j < 4; j++) {
-                                if (prsms[i][j] != null) {
-                                    for (int k = 0; k < prsms[i][j].length; k++) {
-                                        if (prsms[i][j][k] != null) {
-                                            PrSM prsm = prsms[i][j][k];
-                                            if (prsm.getEValue() < newEvalue) {
-                                                newEvalue = prsm.getEValue();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                if (prsm != null) {
+                    newEvalue = prsm.getEValue();
                 }
                 Double oldEvalue = evalues.get(scanId);
                 System.out.println(scanId + " " + proteinId + " " + oldEvalue + " " + newEvalue + " " + (1 - (newEvalue / oldEvalue)));
