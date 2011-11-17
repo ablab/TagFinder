@@ -116,6 +116,7 @@ public class TagFinder extends JFrame {
                                                         PrSM prsm = prsms[i][j][k];
                                                         double eValue = prsm.getEValue();
                                                         if (bestEvalue < 0 || bestEvalue > eValue) {
+                                                            bestEvalue = eValue;
                                                             text = "Scan " + scanPanel.getScanId() + " protein " + scanPanel.getProteinId() + " shift " + i + " alignment type " + j + " score " + prsm.getUniqueScr() + " E-value " + eValue;
                                                         }
                                                     }
