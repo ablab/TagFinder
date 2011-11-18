@@ -46,9 +46,15 @@ public class ValidTags {
     private int d;
     private Map<Integer, double[]> annotatedSpectrums;
 
+    public static String parentDir = "res";
+
     public ValidTags(Configuration conf) throws Exception {
         this.conf = conf;
-        msAlignPeaks = conf.getMSAlignPeaks(conf.getScans());
+        try {
+            msAlignPeaks = conf.getMSAlignPeaks(conf.getScans());
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
         annotatedSpectrums = conf.getAnnotatedSpectrums();
     }
 
@@ -108,7 +114,7 @@ public class ValidTags {
 
     private double intencityLevel;
 
-    private void process(String inputType, String targetType, String matchType, String monoType, int datasetType, int gap, boolean addOnes, boolean needIntencity) throws Exception {
+    public void process(String inputType, String targetType, String matchType, String monoType, int datasetType, int gap, boolean addOnes, boolean needIntencity) throws Exception {
         this.gap = gap;
         this.addOnes = addOnes;
         this.inputType = inputType;
@@ -138,8 +144,8 @@ public class ValidTags {
         }
         fileName += "_" + gap;
 
-        output = ReaderUtil.createOutputFile(new File("res", "share_" + fileName + ".txt"));
-        outputKD = ReaderUtil.createOutputFile(new File("res", "kd_" + fileName + ".txt"));
+        output = ReaderUtil.createOutputFile(new File(parentDir, "share_" + fileName + ".txt"));
+        outputKD = ReaderUtil.createOutputFile(new File(parentDir, "kd_" + fileName + ".txt"));
         //outputIntencity = ReaderUtil.createOutputFile(new File("res", "intencity_" + fileName + ".txt"));
 
         System.out.println("%fileName = " + fileName);
