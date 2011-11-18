@@ -110,6 +110,12 @@ public class TexTableGenerator {
         int width = 20;
         if (maxLen > width) {
             width = (maxLen + 1)/2;
+            if (width > 20) {
+                width = (maxLen + 1)/3;
+                if (width  < 18) {
+                    width = 18;
+                }
+            }
         }
         for (int start = 1; start <= maxLen; start += width) {
             int end = Math.min(start + width - 1, maxLen);
@@ -143,9 +149,13 @@ public class TexTableGenerator {
                     "\\end{tabular}\n" +
                     "\\end{center}\n" +
                     "\\par}\n" +
-                    "\\centering\n" +
-                    "\\caption{ " + caption + "}\n" +
-                    "\\vspace{3mm}\n" +
+                    "\\centering\n");
+            if (end == maxLen) {
+                System.out.println("\\caption{ " + caption + "}\n");
+            }
+
+            System.out.println("\\vspace{3mm}\n" +
+
                     "\\label{table:" + label + "}\n" +
                     "\\end{table}");
         }
