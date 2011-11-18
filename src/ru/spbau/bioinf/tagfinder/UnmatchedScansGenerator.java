@@ -67,21 +67,33 @@ public class UnmatchedScansGenerator {
     private Set<Peak> getRemovedPeaksByShared(Scan scan, String sequence, double precursorMass) {
         Set<Peak> removed = new HashSet<Peak>();
         double[] protein = ShiftEngine.getSpectrum(sequence);
-        double bestShift = ShiftEngine.getBestShift(conf, scan, protein);
-        double[] mod = new double[]{0, -Consts.WATER, -Consts.AMMONIA, Consts.WATER, Consts.AMMONIA};
-        for (Peak peak : scan.getPeaks()) {
+        List<Peak> peaks = scan.getPeaks();
+        List<Peak> yPeaks = scan.getYPeaks();
+        removePeaks(peaks, precursorMass, removed, protein, ShiftEngine.getBestShift(peaks, protein));
+        removePeaks(yPeaks, precursorMass, removed, protein,ShiftEngine.getBestShift(yPeaks, protein));
+        for (Peak peak : peaks) {
+            if (removed.contains(peak.getYPeak())) {
+                removed.add(peak);
+            }
+        }
+        return removed;
+    }
+
+    private void removePeaks(List<Peak> peaks, double precursorMass, Set<Peak> removed, double[] protein, double bestShift) {
+        double[] mod = new double[]{0, -1, 1, -Consts.WATER, -Consts.AMMONIA, -Consts.WATER - Consts.AMMONIA};
+        for (Peak peak : peaks) {
             for (double dv : mod) {
                 double modMass = peak.getMass() + dv;
                 double v1 = modMass + bestShift;
-                double v2 = precursorMass - modMass + bestShift;
-                if (ShiftEngine.contains(precursorMass * 0.01/1000, protein, v1, v2)) {
+//                double v2 = precursorMass - modMass + bestShift;
+                if (ShiftEngine.contains(precursorMass * 0.01 / 1000, protein, v1)) {
                     removed.add(peak);
                     break;
                 }
             }
         }
-        return removed;
     }
+
     private Set<Peak> getRemovedPeaksByTags(List<Peak> peaks, String sequence) {
         String reverseSequence = ValidTags.getReverse(sequence);
 
