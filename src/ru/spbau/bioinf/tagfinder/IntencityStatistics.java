@@ -32,6 +32,12 @@ public class IntencityStatistics {
         List<Protein> proteins = conf.getProteins();
         Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
+        for (int gap = 1; gap <=3; gap++) {
+            process(conf, proteins, msAlignResults, scans, 1);
+        }
+    }
+
+    private static void process(Configuration conf, List<Protein> proteins, Map<Integer, Integer> msAlignResults, Map<Integer, Scan> scans, int gap) {
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
         Collections.sort(keys);
@@ -46,21 +52,16 @@ public class IntencityStatistics {
                     continue;
                 }
                 usedProteins.add(proteinId);
-                if (scanId == 1946) {
-                    continue;
-                }
 
-                statistics.analyzeScan(scan, proteins.get(proteinId).getSimplifiedAcids(), proteinId);
-
-
+                statistics.analyzeScan(scan, proteins.get(proteinId).getSimplifiedAcids(), proteinId, gap);
             }
         }
     }
 
-    public void analyzeScan(Scan scan, String sequence, int proteinId) {
+    public void analyzeScan(Scan scan, String sequence, int proteinId, int gap) {
         String reverseSequence = ValidTags.getReverse(sequence);
-        List<Peak> peaks = scan.getPeaks();
-        GraphUtil.generateEdges(conf, peaks);
+        List<Peak> peaks = scan.createStandardSpectrum();
+        GraphUtil.generateGapEdges(conf, peaks, gap);
         bad = new double[100];
         good = new double[100];
         badCount = new int[100];
@@ -78,7 +79,7 @@ public class IntencityStatistics {
             if (good[i] > bad[i]) {
                 v = 2;
             }
-            System.out.print(" " + ((goodCount[i] + 0.0d) / (goodCount[i] + badCount[i])));
+            System.out.print(" " + df.format(100d * (goodCount[i] + 0.0d) / (goodCount[i] + badCount[i])));
             if (goodCount[i] == 0) {
                 //System.out.println(" bb" + i + " ");
             }
@@ -89,8 +90,15 @@ public class IntencityStatistics {
 
     public void generateTags(List<Peak> peaks, String sequence, String reverseSequence) {
         for (Peak peak : peaks) {
-            generateTags("", peak, sequence, reverseSequence, peak.getIntensity());
+            generateTags("", peak, sequence, reverseSequence, getIntencity(peak));
         }
+    }
+
+    private double getIntencity(Peak peak) {
+        if (peak.getIntensity() > 0) {
+            return peak.getIntensity();
+        }
+        return Integer.MAX_VALUE;
     }
 
     public void generateTags(String prefix, Peak peak, String sequence, String reverseSequence, double intencity) {
@@ -115,7 +123,7 @@ public class IntencityStatistics {
         for (Peak next : peak.getNext()) {
             for (Acid acid : Acid.values()) {
                 if (acid.match(conf.getEdgeLimits(peak, next))) {
-                    generateTags(prefix + acid.name(), next, sequence, reverseSequence, Math.min(intencity, next.getIntensity()));
+                    generateTags(prefix + acid.name(), next, sequence, reverseSequence, Math.min(intencity, getIntencity(peak)));
                 }
             }
         }
