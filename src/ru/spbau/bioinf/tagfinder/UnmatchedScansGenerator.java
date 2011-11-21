@@ -69,8 +69,10 @@ public class UnmatchedScansGenerator {
         double[] protein = ShiftEngine.getSpectrum(sequence);
         List<Peak> peaks = scan.getPeaks();
         List<Peak> yPeaks = scan.getYPeaks();
-        removePeaks(peaks, precursorMass, removed, protein, ShiftEngine.getBestShift(peaks, protein));
-        removePeaks(yPeaks, precursorMass, removed, protein,ShiftEngine.getBestShift(yPeaks, protein));
+        double bestShiftB = ShiftEngine.getBestShift(peaks, protein);
+        double bestShiftY = ShiftEngine.getBestShift(yPeaks, protein);
+        removePeaks(peaks, precursorMass, removed, protein, bestShiftB);
+        removePeaks(yPeaks, precursorMass, removed, protein, bestShiftY);
         for (Peak peak : peaks) {
             if (removed.contains(peak.getYPeak())) {
                 removed.add(peak);
@@ -83,7 +85,7 @@ public class UnmatchedScansGenerator {
         double[] mod = new double[]{0, -1, 1, -Consts.WATER, -Consts.AMMONIA, -Consts.WATER - Consts.AMMONIA};
         for (Peak peak : peaks) {
             for (double dv : mod) {
-                double modMass = peak.getMass() + dv;
+                double modMass = peak.getValue() + dv;
                 double v1 = modMass + bestShift;
 //                double v2 = precursorMass - modMass + bestShift;
                 if (ShiftEngine.contains(precursorMass * 0.01 / 1000, protein, v1)) {
