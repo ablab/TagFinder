@@ -88,8 +88,8 @@ public class IntencityTableGenerator {
                 "set ylabel \"Percentage of spectre\"\n" +
                 "set xlabel \"Tag length\"\n" +
                 "plot");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:2 title 'correct',\\");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:3 title 'incorrect'");
+        gplFile.println("\"plots/" + tableId + ".dat\" using 1:2 title 'correct' with linespoints,\\");
+        gplFile.println("\"plots/" + tableId + ".dat\" using 1:3 title 'incorrect' with linespoints");
 
 
         gplFile.close();
