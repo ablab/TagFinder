@@ -173,7 +173,7 @@ public class GenerateMatchesTable {
                 "\\end{center}\n" +
                 "\\par}\n" +
                 "\\centering\n" +
-                "\\caption{PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to  large E-values of the matches, and alternatives suggested by a~tag-based analysis. Each candidate protein contains at least $3$ (possibly overlapping) tags of length $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated, and for each group of tags that occur in the same protein, the number of proteins containing all those tags simultaneously is provided.}\n" +
+                "\\caption{PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to large E-values of the matches, and alternatives with E-values less than $0.0024$ suggested by a~tag-based analysis. Each candidate protein contains a a tag of length at least $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated.}\n" +
                 "\\vspace{3mm}\n" +
                 "\\label{table:unident-spectra}\n" +
                 "\\end{table}");
