@@ -25,7 +25,7 @@ public class CalculateRelation {
         double[][] res = new double[6][];
         generateRelationData(res, 0, "bar_exp_annotated_correct_none", "bar_exp_annotated_proper_none", GOOD_TO_GOOD);
         generateRelationData(res, 3, "bar_virt_annotated_correct_zero", "bar_virt_annotated_proper_zero", GOOD_TO_GOOD);
-        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $d$-tags w.r.t. proper $d$-tags.", "correct-vs-proper-d-tags", "correct $d$-tags");
+        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $d$-tags w.r.t. proper $d$-tags (basic spectrum graphs).", "correct-vs-proper-d-tags", "correct $d$-tags");
 
         res = new double[3][];
         generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
