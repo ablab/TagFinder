@@ -29,7 +29,7 @@ public class UnmatchedStatistics {
         List<Scan> mixed = new ArrayList<Scan>();
         conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
         mixed.addAll(conf.getScans().values());
-        printStat(conf, mixed, "The number and percentage of mixed spectra with a given maximum tag length, for all the observed tag lengths.", "mixed-tags");
+        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
 
     }
 
