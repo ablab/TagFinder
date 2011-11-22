@@ -2,6 +2,7 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
@@ -76,6 +77,25 @@ public class IntencityTableGenerator {
         }
         res[gap - 1] = ans;
 
+        TexTableGenerator.tableId++;
+
+        int tableId = TexTableGenerator.tableId;
+        PrintWriter dataFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".dat"));
+
+        PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".gpl"));
+        gplFile.print("set terminal postscript eps\n" +
+                "set out \"plots/" + tableId + ".eps\"\n" +
+                "set ylabel \"Percentage of spectre\"\n" +
+                "set xlabel \"Tag length\"\n" +
+                "plot");
+        gplFile.println("\"plots/" + tableId + ".dat\" using 1:2 title 'correct',\\");
+        gplFile.println("\"plots/" + tableId + ".dat\" using 1:3 title 'incorrect'");
+
+
+        gplFile.close();
+
+        System.out.println("\\includegraphics{plots/" + TexTableGenerator.tableId + ".eps}\n");
+
         int width = 20;
         for (int start = 1; start <= max; start += width) {
             int end = Math.min(start + width - 1, max);
@@ -103,6 +123,14 @@ public class IntencityTableGenerator {
             for (int i = start; i <= end; i++) {
                 System.out.print(" & ");
                 double total = good[i] + bad[i] + both[i];
+                if (i <= 14) {
+                    dataFile.print(i + " ");
+                    if (total > 0) {
+                        dataFile.println(" " + 100 * good[i] / total + " " + 100 * bad[i] / total);
+                    } else {
+                        dataFile.print(" ? ? ");
+                    }
+                }
                 if (total > 0) {
                     System.out.print(ValidTags.df.format(100 * good[i] / total));
                 }
@@ -131,5 +159,6 @@ public class IntencityTableGenerator {
                     "\\label{table:all-top-scoring}\n" +
                     "\\end{table}");
         }
+        dataFile.close();
     }
 }
