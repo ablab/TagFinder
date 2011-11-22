@@ -366,7 +366,7 @@ public class Configuration {
                     //"detail_new_theo_patt"
                     : "env" + mod
         );
-        System.out.println("scanDir = " + scanDir.getCanonicalPath());
+        System.out.println("%scanDir = " + scanDir.getCanonicalPath());
         File[] files = scanDir.listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(".env");
