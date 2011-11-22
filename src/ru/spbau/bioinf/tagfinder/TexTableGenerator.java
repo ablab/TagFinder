@@ -10,11 +10,11 @@ public class TexTableGenerator {
     public static int tableId = 0;
 
     public static void main(String[] args) throws Exception {
-        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $d$-tags.", "correct-d-tags", "correct $d$-tags");
-        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $d$-tags.", "proper-d-tags", "proper $d$-tags");
-        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $d$-tags.", "correct-d-tags", "correct $d$-tags");
+        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $d$-tags (basic spectrum graphs).", "correct-d-tags", "correct $d$-tags");
+        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $d$-tags (basic spectrum graphs).", "proper-d-tags", "proper $d$-tags");
+        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $d$-tags (error-correcting spectrum graphs).", "correct-d-tags", "correct $d$-tags");
 
-        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $d$-tags.", "correct-d-tags", "correct $d$-tags");
+        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $d$-tags (combined spectrum graphs).", "correct-d-tags", "correct $d$-tags");
 
         createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct $d$-mono-tags w.r.t. all $d$-mono-tags.","correct-d-mono-tags", "correct $d$-mono-tags");
 
