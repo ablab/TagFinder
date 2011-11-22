@@ -11,29 +11,43 @@ public class UnmatchedStatistics {
         Configuration conf = new Configuration(args);
         Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
-        int[] stat = new int[100];
-        int max = 0;
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
         Collections.sort(keys);
-        int total = 0;
+        List<Scan> unmatched = new ArrayList<Scan>();
+
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
             if (!msAlignResults.containsKey(scanId)) {
-                List<Peak> peaks = scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan));
-                GraphUtil.generateEdges(conf, peaks);
-                Peak[] bestTag = GraphUtil.findBestTag(peaks);
-                int v = bestTag.length - 1;
-                //if (v >= 3) {
-                System.out.println(scanId + " " + v);
-                //}
-                stat[v]++;
-                if (max < v) {
-                    max = v;
-                }
-                total++;
+                unmatched.add(scan);
             }
+        }
+
+        printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length, for all the observed tag lengths.", "unident-tags");
+
+        List<Scan> mixed = new ArrayList<Scan>();
+        conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
+        mixed.addAll(conf.getScans().values());
+        printStat(conf, mixed, "The number and percentage of mixed spectra with a given maximum tag length, for all the observed tag lengths.", "mixed-tags");
+
+    }
+
+    private static void printStat(Configuration conf, List<Scan> unmatched, String caption, String label) {
+        int[] stat = new int[100];
+        int max = 0;
+        int total = 0;
+
+        for (Scan scan : unmatched) {
+            List<Peak> peaks = scan.createSpectrumWithYPeaks(PrecursorMassShiftFinder.getPrecursorMassShiftForMoreEdges(conf, scan));
+            GraphUtil.generateEdges(conf, peaks);
+            Peak[] bestTag = GraphUtil.findBestTag(peaks);
+            int v = bestTag.length - 1;
+            stat[v]++;
+            if (max < v) {
+                max = v;
+            }
+            total++;
         }
 
         System.out.println("\\begin{table}[h]\n" +
@@ -68,7 +82,7 @@ public class UnmatchedStatistics {
 
 
         for (int i = 0; i <= max; i++) {
-            System.out.print(" & " + ValidTags.df.format(stat[i] * 100d/total));
+            System.out.print(" & " + ValidTags.df.format(stat[i] * 100d / total));
         }
 
 
@@ -78,9 +92,9 @@ public class UnmatchedStatistics {
                 "\\end{center}\n" +
                 "\\par}\n" +
                 "\\centering\n" +
-                "\\caption{The number and percentage of unidentified spectra with a given maximum tag length, for all the observed tag lengths.}\n" +
+                "\\caption{" + caption + "}\n" +
                 "\\vspace{3mm}\n" +
-                "\\label{table:unident-tags}\n" +
+                "\\label{table:" + label + "}\n" +
                 "\\end{table}");
     }
 }
