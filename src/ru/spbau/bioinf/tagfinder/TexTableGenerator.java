@@ -124,7 +124,7 @@ public class TexTableGenerator {
             if (gap > 3) {
                 gap = gap - 3;
             }
-            gplFile.print("\"plots/" + tableId + ".dat\" using 1:" + (i + 1) + " title '" + (i > 3 ? "virt" : " exp") + " " + gap + "-aa'");
+            gplFile.print("\"plots/" + tableId + ".dat\" using 1:" + (i + 1) + " title '" + (i > 3 ? "virt" : " exp") + " " + gap + "-aa' with linespoints");
             if ( i < rows) {
                 gplFile.println(", \\");
             }
