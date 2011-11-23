@@ -6,8 +6,8 @@ import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class KdTableGenerator {
     public static void main(String[] args) throws Exception {
-        String file1 = "full_exp_base_proper_none";
-        String file2 = "bar_exp_base_proper_none";
+        String file1 = "full_exp_base_correct_none";
+        String file2 = "bar_exp_base_correct_none";
 
 
         for (int gap = 1; gap <= 3; gap++) {
