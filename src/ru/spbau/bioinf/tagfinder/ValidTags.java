@@ -75,6 +75,9 @@ public class ValidTags {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
 
+        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, false, false);
+        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, BAR, false, false);
+
         validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_PROPER, BY_NONE, BAR, false, true);
         validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, BAR, false, true);
 
