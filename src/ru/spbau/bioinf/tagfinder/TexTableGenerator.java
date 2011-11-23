@@ -10,13 +10,13 @@ public class TexTableGenerator {
     public static int tableId = 0;
 
     public static void main(String[] args) throws Exception {
-        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $\\ell$-tags (basic spectrum graphs).", "correct $\\ell$-tags");
-        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $\\ell$-tags (basic spectrum graphs).", "proper $\\ell$-tags");
-        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $\\ell$-tags (error-correcting spectrum graphs).", "correct $\\ell$-tags");
+        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags");
+        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $\\ell$-tags (basic spectrum graphs)", "proper $\\ell$-tags");
+        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $\\ell$-tags (error-correcting spectrum graphs)", "correct $\\ell$-tags");
 
-        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $\\ell$-tags (combined spectrum graphs).", "correct $\\ell$-tags");
+        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $\\ell$-tags (combined spectrum graphs)", "correct $\\ell$-tags");
 
-        createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct mono-$\\ell$-tags w.r.t. all mono-$\\ell$-tags.", "correct mono-$\\ell$-tags");
+        createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct mono-$\\ell$-tags w.r.t. all mono-$\\ell$-tags", "correct mono-$\\ell$-tags");
 
         ///createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct $d$-tags.", "correct-d-tags");
     }
@@ -89,7 +89,7 @@ public class TexTableGenerator {
                     "\\par}\n" +
                     "\\centering\n");
             if (end == maxLen) {
-                table.append("\\caption{ " + caption + "}\n");
+                table.append("\\caption{ " + caption + ".}\n");
             }
 
             table.append("\\vspace{3mm}\n" +
@@ -124,7 +124,11 @@ public class TexTableGenerator {
             if (gap > 3) {
                 gap = gap - 3;
             }
-            gplFile.print("\"plots/" + tableId + ".dat\" using 1:" + (i + 1) + " title '" + (i > 3 ? "virt" : " exp") + " " + gap + "-aa' with linespoints");
+            String titlePrefix  = "";
+            if (rows > 3) {
+                titlePrefix = i > 3 ? "virt" : " exp";
+            }
+            gplFile.print("\"plots/" + tableId + ".dat\" using 1:" + (i + 1) + " title '" + titlePrefix  + " " + gap + "-aa' with linespoints");
             if ( i < rows) {
                 gplFile.println(", \\");
             }
@@ -198,7 +202,7 @@ public class TexTableGenerator {
                     "\\par}\n" +
                     "\\centering\n");
             if (end == maxLen) {
-                System.out.println("\\caption{ " + caption + "}\n");
+                System.out.println("\\caption{ " + caption + ".}\n");
             }
 
             System.out.println("\\vspace{3mm}\n" +

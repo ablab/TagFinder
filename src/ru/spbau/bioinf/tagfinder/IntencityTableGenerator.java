@@ -149,7 +149,7 @@ public class IntencityTableGenerator {
         PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".gpl"));
         gplFile.print("set terminal postscript eps\n" +
                 "set out \"plots/" + tableId + ".eps\"\n" +
-                "set ylabel \"Percentage of spectre\"\n" +
+                "set ylabel \"Percentage of spectra\"\n" +
                 "set xlabel \"Tag length\"\n" +
                 "plot");
         gplFile.println("\"plots/" + tableId + ".dat\" using 1:2 title '1-aa +' with linespoints,\\");
