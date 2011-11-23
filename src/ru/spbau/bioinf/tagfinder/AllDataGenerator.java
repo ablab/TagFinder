@@ -19,6 +19,7 @@ public class AllDataGenerator {
         IntencityTableGenerator.main(args);
         UnmatchedStatistics.main(args);
         GenerateMatchesTable.main(args);
+        KdTableGenerator.main(args);
         System.out.println("\n" +
                 "\\end{document}");
     }
