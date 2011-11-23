@@ -25,16 +25,16 @@ public class CalculateRelation {
         double[][] res = new double[6][];
         generateRelationData(res, 0, "bar_exp_annotated_correct_none", "bar_exp_annotated_proper_none", GOOD_TO_GOOD);
         generateRelationData(res, 3, "bar_virt_annotated_correct_zero", "bar_virt_annotated_proper_zero", GOOD_TO_GOOD);
-        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $d$-tags w.r.t. proper $d$-tags (basic spectrum graphs).", "correct-vs-proper-d-tags", "correct $d$-tags");
+        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $\\ell$-tags w.r.t. proper $\\ell$-tags (basic spectrum graphs).", "correct $\\ell$-tags");
 
         res = new double[3][];
         generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
-        TexTableGenerator.createThreeRowsTable(res, "Average percentage of $d$-mono-tags w.r.t. all $d$-tags.", "mono-d-tags", "mono $d$-tags");
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of mono$\\ell$-tags w.r.t. all $\\ell$-tags.", "mono-$\\ell$-tags");
 
         res = new double[6][];
         correctD(res, 0, "bar_exp_annotated_correct_none");
         correctD(res, 3, "bar_virt_annotated_correct_zero");
-        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has length $d$.", "longest-correct-d-tag", "spectra");
+        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a length.", "spectra");
 
         //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
         //correctD("share_bar_basic_" + gap +"_correct.txt");

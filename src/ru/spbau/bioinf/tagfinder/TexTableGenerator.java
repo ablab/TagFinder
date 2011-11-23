@@ -10,18 +10,18 @@ public class TexTableGenerator {
     public static int tableId = 0;
 
     public static void main(String[] args) throws Exception {
-        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $d$-tags (basic spectrum graphs).", "correct-d-tags", "correct $d$-tags");
-        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $d$-tags (basic spectrum graphs).", "proper-d-tags", "proper $d$-tags");
-        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $d$-tags (error-correcting spectrum graphs).", "correct-d-tags", "correct $d$-tags");
+        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $\\ell$-tags (basic spectrum graphs).", "correct $\\ell$-tags");
+        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $\\ell$-tags (basic spectrum graphs).", "proper $\\ell$-tags");
+        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $\\ell$-tags (error-correcting spectrum graphs).", "correct $\\ell$-tags");
 
-        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $d$-tags (combined spectrum graphs).", "correct-d-tags", "correct $d$-tags");
+        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $\\ell$-tags (combined spectrum graphs).", "correct $\\ell$-tags");
 
-        createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct $d$-mono-tags w.r.t. all $d$-mono-tags.","correct-d-mono-tags", "correct $d$-mono-tags");
+        createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct mono-$\\ell$-tags w.r.t. all mono-$\\ell$-tags.", "correct mono-$\\ell$-tags");
 
         ///createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct $d$-tags.", "correct-d-tags");
     }
 
-    private static void createTexTable(String fileFirst, String fileSecond, String caption, String label, String header) throws Exception {
+    private static void createTexTable(String fileFirst, String fileSecond, String caption, String header) throws Exception {
         System.out.println("% 6-rows table for " + fileFirst + " and " + fileSecond);
         double[][] data = new double[6][];
         for (int gap = 1; gap <= 3; gap++) {
@@ -29,10 +29,10 @@ public class TexTableGenerator {
             data[gap + 2] = ReaderUtil.getLastString(new File("res", "share_" + fileSecond + "_" + gap + ".txt"));
         }
 
-        createSixRowsTable(data, caption, label, header);
+        createSixRowsTable(data, caption, header);
     }
 
-    public static void createSixRowsTable(double[][] data, String caption, String label, String header) throws Exception {
+    public static void createSixRowsTable(double[][] data, String caption, String header) throws Exception {
         int maxLen = 0;
         for (int i = 0; i < data.length; i++) {
             maxLen = Math.max(maxLen, data[i].length);
@@ -93,7 +93,7 @@ public class TexTableGenerator {
             }
 
             table.append("\\vspace{3mm}\n" +
-                    "\\label{table:" + label + "}\n" +
+                    "\\label{table:table" + tableId + "}\n" +
                     "\\end{table}\n\n");
         }
 
@@ -116,7 +116,7 @@ public class TexTableGenerator {
         PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".gpl"));
         gplFile.print("set terminal postscript eps\n" +
                 "set out \"plots/" + tableId + ".eps\"\n" +
-                "set ylabel \"" + caption.replaceAll("\\$", "") + "\"\n" +
+                "set ylabel \"" + caption.replaceAll("\\$\\\\ell\\$", "l") + "\"\n" +
                 "set xlabel \"Tag length\"\n" +
                 "plot");
         for (int i = 1; i <= rows; i++) {
@@ -134,17 +134,17 @@ public class TexTableGenerator {
     }
 
 
-    private static void createTexTable(String fileFirst, String caption, String label, String header) throws Exception {
+    private static void createTexTable(String fileFirst, String caption, String header) throws Exception {
         System.out.println("% 3-rows table for " + fileFirst);
         double[][] data = new double[3][];
         for (int gap = 1; gap <= 3; gap++) {
             data[gap - 1] = ReaderUtil.getLastString(new File("res", "share_" + fileFirst + "_" + gap + ".txt"));
         }
 
-        createThreeRowsTable(data, caption, label, header);
+        createThreeRowsTable(data, caption, header);
     }
 
-    public static void createThreeRowsTable(double[][] data, String caption, String label, String header) throws Exception {
+    public static void createThreeRowsTable(double[][] data, String caption, String header) throws Exception {
         int maxLen = 0;
         for (int i = 0; i < data.length; i++) {
             maxLen = Math.max(maxLen, data[i].length);
@@ -203,7 +203,7 @@ public class TexTableGenerator {
 
             System.out.println("\\vspace{3mm}\n" +
 
-                    "\\label{table:" + label + "}\n" +
+                    "\\label{table:table" + tableId + "}\n" +
                     "\\end{table}");
         }
     }

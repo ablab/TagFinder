@@ -24,12 +24,12 @@ public class UnmatchedStatistics {
             }
         }
 
-        printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length, for all the observed tag lengths.", "unident-tags");
+        printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length $k$, for all the observed tag lengths.", "unident-tags");
 
         List<Scan> mixed = new ArrayList<Scan>();
         conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
         mixed.addAll(conf.getScans().values());
-        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
+        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
 
     }
 
@@ -62,7 +62,7 @@ public class UnmatchedStatistics {
 
         System.out.println("}\n" +
                 "  \\hline\n" +
-                "  \\multicolumn{2}{|c|}{} & \\multicolumn{ " + (max + 1) + "}{|c|}{maximum tag length} \\\\\n" +
+                "  \\multicolumn{2}{|c|}{} & \\multicolumn{ " + (max + 1) + "}{|c|}{$k$} \\\\\n" +
                 "  \\cline{3-" + (max  + 3)+ "}\n" +
                 "  \\multicolumn{2}{|c|}{} ");
         for (int i = 0; i <= max; i++) {
