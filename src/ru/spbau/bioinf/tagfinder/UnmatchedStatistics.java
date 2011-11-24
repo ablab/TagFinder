@@ -24,7 +24,7 @@ public class UnmatchedStatistics {
             }
         }
 
-        printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length $k$, for all the observed tag lengths.", "unident-tags");
+        printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length~$k$, for all the observed tag lengths.", "unident-tags");
 
         List<Scan> mixed = new ArrayList<Scan>();
         conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);

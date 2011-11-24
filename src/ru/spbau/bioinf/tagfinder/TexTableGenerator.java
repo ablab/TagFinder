@@ -10,17 +10,23 @@ public class TexTableGenerator {
     public static int tableId = 0;
 
     public static void main(String[] args) throws Exception {
-        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags");
-        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $\\ell$-tags (basic spectrum graphs)", "proper $\\ell$-tags");
-        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $\\ell$-tags (error-correcting spectrum graphs)", "correct $\\ell$-tags");
-
-        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $\\ell$-tags (combined spectrum graphs)", "correct $\\ell$-tags");
-
-        createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct mono-$\\ell$-tags w.r.t. all mono-$\\ell$-tags", "correct mono-$\\ell$-tags");
-
-        ///createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct $d$-tags.", "correct-d-tags");
+        tableOneTwo();
+        tablesNineTen();
+        tableThirteen();
     }
 
+    public static void tableOneTwo() throws Exception {
+        createTexTable("bar_exp_annotated_correct_none", "bar_virt_annotated_correct_zero", "Average percentage of correct $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags");
+        createTexTable("bar_exp_annotated_proper_none", "bar_virt_annotated_proper_zero", "Average percentage of proper $\\ell$-tags (basic spectrum graphs)", "proper $\\ell$-tags");
+    }
+    public static void tablesNineTen() throws Exception {
+        createTexTable("bar_exp_annotated_correct_none_add", "Average percentage of correct $\\ell$-tags (error-correcting spectrum graphs)", "correct $\\ell$-tags");
+        createTexTable("bar_exp_annotated_correct_more", "Average percentage of correct $\\ell$-tags (combined spectrum graphs)", "correct $\\ell$-tags");
+    }
+
+    public static void tableThirteen() throws Exception {
+        createTexTable("bar_virt_annotated_correct_none", "Average percentage of correct mono-$\\ell$-tags w.r.t. all mono-$\\ell$-tags", "correct mono-$\\ell$-tags");
+    }
     private static void createTexTable(String fileFirst, String fileSecond, String caption, String header) throws Exception {
         System.out.println("% 6-rows table for " + fileFirst + " and " + fileSecond);
         double[][] data = new double[6][];

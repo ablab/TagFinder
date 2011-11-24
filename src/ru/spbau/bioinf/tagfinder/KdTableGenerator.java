@@ -5,17 +5,26 @@ import java.io.File;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class KdTableGenerator {
+
+    private static String file1 = "full_exp_base_proper_none";
+    private static String file2 = "bar_exp_base_proper_none";
+    private static String file3 = "full_exp_base_correct_none";
+    private static String file4 = "bar_exp_base_correct_none";
+
     public static void main(String[] args) throws Exception {
-        String file1 = "full_exp_base_correct_none";
-        String file2 = "bar_exp_base_correct_none";
-
-
         for (int gap = 1; gap <= 3; gap++) {
-            printKd(file1, "The number of $(k-d,d)$-spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap);
+            printTablesProper(gap);
         }
-        for (int gap = 1; gap <= 3; gap++) {
-            printKd(file2, "The number of $(k-d,d)$-spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap);
-        }
+    }
+
+    public static void printTablesProper(int gap) throws Exception {
+        printKd(file1, "The number of $(k-d,d)$-proper spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap);
+        printKd(file2, "The number of $(k-d,d)$-proper spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap);
+    }
+
+    public static void printTablesCorrect(int gap) throws Exception {
+        printKd(file3, "The number of $(k-d,d)$-correct spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap);
+        printKd(file4, "The number of $(k-d,d)$-correct spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap);
     }
 
     private static void printKd(String file, String caption, int gap) throws Exception {

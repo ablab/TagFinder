@@ -9,14 +9,20 @@ import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class IntencityTableGenerator {
 
+    private static String file1 = "bar_exp_annotated_proper_none_intencity";
+    private static String file2 = "bar_exp_annotated_correct_none_intencity";
+
     public static void main(String[] args) throws Exception {
-        String file1 = "bar_exp_annotated_proper_none_intencity";
-        String file2 = "bar_exp_annotated_correct_none_intencity";
 
         double[][] res = new double[100][3];
         printTable(res, file1, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are proper (+) or improper (-).");
         TexTableGenerator.createThreeRowsTable(res, "Average percentage of proper top-scoring tags of a given length", "");
 
+        tableFourteenFifteen();
+    }
+
+    public static void tableFourteenFifteen() throws Exception {
+        double[][] res;
         res = new double[100][3];
         printTable(res, file2, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are correct (+) or incorrect (-).");
         TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct top-scoring tags  of a given length", "");

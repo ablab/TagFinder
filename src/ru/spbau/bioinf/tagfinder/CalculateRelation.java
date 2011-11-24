@@ -14,35 +14,30 @@ public class CalculateRelation {
     public static final int MAX_TAG = 100;
 
     public static void main(String[] args) throws Exception {
-        for (int gap = 1; gap <= 3; gap++) {
-            //compare("share_bar_virtual_mono_" + gap + "_proper.txt", "share_bar_virtual_full_" + gap +"_proper.txt");
+        tableThree();
+        tableFour();
+        tableTwelve();
+    }
 
-            //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
-            //correctD("share_bar_basic_" + gap +"_correct.txt");
-        }
-
-
+    public static void tableThree() throws Exception {
         double[][] res = new double[6][];
         generateRelationData(res, 0, "bar_exp_annotated_correct_none", "bar_exp_annotated_proper_none", GOOD_TO_GOOD);
         generateRelationData(res, 3, "bar_virt_annotated_correct_zero", "bar_virt_annotated_proper_zero", GOOD_TO_GOOD);
         TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $\\ell$-tags w.r.t. proper $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags");
+    }
 
-        res = new double[3][];
-        generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
-        TexTableGenerator.createThreeRowsTable(res, "Average percentage of mono$\\ell$-tags w.r.t. all $\\ell$-tags", "mono-$\\ell$-tags");
-
+    public static void tableFour() throws Exception {
+        double[][] res;
         res = new double[6][];
         correctD(res, 0, "bar_exp_annotated_correct_none");
         correctD(res, 3, "bar_virt_annotated_correct_zero");
-        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a length", "spectra");
+        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra");
+    }
 
-        //compare("share_bar_basic_" + gap + "_proper.txt", "share_bar_basic_" + gap +"_proper.txt");
-        //correctD("share_bar_basic_" + gap +"_correct.txt");
-
-        for (int gap = 1; gap <= 3; gap++) {
-            //correctD("share_bar_virtual_full_" + gap +"_correct.txt");
-        }
-
+    public static void tableTwelve() throws Exception {
+        double[][] res = new double[3][];
+        generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of mono-$\\ell$-tags w.r.t. all $\\ell$-tags", "mono-$\\ell$-tags");
     }
 
     private static void generateRelationData(double[][] res, int start, String firstTable, String secondTable, int mode) throws Exception {
