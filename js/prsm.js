@@ -33,6 +33,16 @@ function matchRecalibrated(peak, mass, diff) {
 }
 
 function initPrsm() {
+    dist = [];
+    startStat = [];
+    finishStat = [];
+    totalStat = [];
+    cleavages = [];
+    match = [];
+    deltas = [];
+
+    modes = [];
+
     for (var i = 0; i <= sequence.length; i++) {
         dist[i] = [];
     }
