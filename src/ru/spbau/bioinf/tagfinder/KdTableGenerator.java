@@ -11,10 +11,10 @@ public class KdTableGenerator {
 
 
         for (int gap = 1; gap <= 3; gap++) {
-            printKd(file1, "The number of $(k-d,d)$-spectra in the $ST$ data set for the case of " + gap + "-aa tags, for all $0\\le d\\le k\\le 25$.", gap);
+            printKd(file1, "The number of $(k-d,d)$-spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap);
         }
         for (int gap = 1; gap <= 3; gap++) {
-            printKd(file2, "The number of $(k-d,d)$-spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags, for all $0\\le d\\le k\\le 25$.", gap);
+            printKd(file2, "The number of $(k-d,d)$-spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap);
         }
     }
 
@@ -23,6 +23,9 @@ public class KdTableGenerator {
         int[][] res = new int[1000][1000];
         int rows = 0;
         int maxD = 0;
+        int kLessThan3 = 0;
+        int kLessThan4 = 0;
+        int kTotal = 0;
         do {
             String s = in.readLine();
             if (s == null) {
@@ -36,9 +39,19 @@ public class KdTableGenerator {
             int d = Integer.parseInt(data[1]);
             int n = Integer.parseInt(data[2]);
             res[k][d] += n;
+            kTotal += n;
+            if (k < 3) {
+                kLessThan3 +=n;
+            }
+            if (k < 4) {
+                kLessThan4 +=n;
+            }
             rows = Math.max(rows, k - d);
             maxD = Math.max(maxD, d);
         } while (true);
+        System.out.println("% k <=2 - " + kLessThan3 + " " + (ValidTags.df.format(100d * kLessThan3 / kTotal)) + "%");
+        System.out.println("% k <=3 - " + kLessThan4 + " " + (ValidTags.df.format(100d * kLessThan4 / kTotal)) + "%");
+
         System.out.println("\\begin{table}[h]\\footnotesize\n" +
                 "%\\vspace{3mm}\n" +
                 "{\\centering\n" +
