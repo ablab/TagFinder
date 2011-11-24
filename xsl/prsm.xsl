@@ -7,7 +7,8 @@
     <xsl:template match="prsm">
         <html>
             <title>Scan #<xsl:value-of select="scan/scan-id"/> matched to protein #<xsl:value-of select="protein/protein-id"/></title>
-            <script type="text/javascript" src="../../../../js/prsm.js"/>
+            <script type="text/javascript" src="prsm.js"/>
+            <script type="text/javascript" src="proteins.js"/>
             <body>
                 <h3>Scan #<xsl:value-of select="scan/scan-id"/></h3>
                 <div>Precursor Mass <xsl:value-of select="scan/precursor-mass"/>, <xsl:value-of select="count(scan/peaks/peak)"/> peaks. </div>
@@ -20,7 +21,9 @@
                 <div>
                     Recalibration : <span id="recalibrationSpan"></span>
                 </div>
-
+                <div>
+                New protein ID: <input id="proteinId"/> <a href="#" onclick="updateProteinId(); return false;">Update</a>
+                </div>
                 <div>
                 <!-- <input id="scale" value="100" size="5" onchange="repaintPrsm();"/>%-->
                     Scale <input type="range" id="scale" min="0" max="200" onchange="update(0);"/><span id="scaleDisplay"></span>%
@@ -56,10 +59,15 @@
                     var recalibration = 0;
 
                     var prefixLen = 0;
-                    initPrsm();
 
-                    document.getElementById('recalibrationSpan').innerHTML = "m <xsl:text disable-output-escaping="yes">&amp;rarr;</xsl:text> m * ( 1 - " + recalibration + ")";
-                    var prefix = document.getElementById('prefix');
+                    initPrsm();
+                    initRecalibration();
+                    update();
+
+                    function initRecalibration() {
+                        document.getElementById('recalibrationSpan').innerHTML = "m <xsl:text disable-output-escaping="yes">&amp;rarr;</xsl:text> m * ( 1 - " + recalibration + ")";
+                        var prefix = document.getElementById('prefix');
+                    }
 
                     function doKeyDown(e) {
                         if (event.ctrlKey) {
@@ -91,7 +99,13 @@
                         repaintPrsm(scaleControl.value);
                     }
 
-                    update();
+                    function updateProteinId() {
+                        var proteinId = document.getElementById('proteinId').value;
+                        sequence = proteins[proteinId];
+                        initPrsm();
+                        initRecalibration();
+                        update();
+                    }
 
                     window.addEventListener('keydown', doKeyDown, true);
                 </script>
