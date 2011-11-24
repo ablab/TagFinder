@@ -38,7 +38,7 @@ public class TexTableGenerator {
             maxLen = Math.max(maxLen, data[i].length);
         }
 
-        prepareEps(data, caption, 6);
+        prepareEps(data, header + " (%)", 6);
 
         int width = 20;
         if (maxLen > width) {
@@ -100,7 +100,7 @@ public class TexTableGenerator {
         System.out.println(table.toString());
     }
 
-    private static void prepareEps(double[][] data, String caption, int rows) throws IOException {
+    private static void prepareEps(double[][] data, String header, int rows) throws IOException {
         tableId++;
 
         PrintWriter dataFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".dat"));
@@ -116,7 +116,7 @@ public class TexTableGenerator {
         PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".gpl"));
         gplFile.print("set terminal postscript eps\n" +
                 "set out \"plots/" + tableId + ".eps\"\n" +
-                "set ylabel \"" + caption.replaceAll("\\$\\\\ell\\$", "l") + "\"\n" +
+                "set ylabel \"" + header.replaceAll("\\$\\\\ell\\$", "l") + "\"\n" +
                 "set xlabel \"Tag length\"\n" +
                 "plot");
         for (int i = 1; i <= rows; i++) {
@@ -155,7 +155,7 @@ public class TexTableGenerator {
         }
 
 
-        prepareEps(data, caption, 3);
+        prepareEps(data, header + " (%)", 3);
         int width = 20;
         if (maxLen > width) {
             width = (maxLen + 1)/2;
