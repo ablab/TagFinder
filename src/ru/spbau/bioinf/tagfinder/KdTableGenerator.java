@@ -61,6 +61,7 @@ public class KdTableGenerator {
         System.out.println("% k <=2 - " + kLessThan3 + " " + (ValidTags.df.format(100d * kLessThan3 / kTotal)) + "%");
         System.out.println("% k <=3 - " + kLessThan4 + " " + (ValidTags.df.format(100d * kLessThan4 / kTotal)) + "%");
 
+        System.out.println("\\begin{landscape}");
         System.out.println("\\begin{table}[h]\\footnotesize\n" +
                 "%\\vspace{3mm}\n" +
                 "{\\centering\n" +
@@ -98,5 +99,6 @@ public class KdTableGenerator {
                 "\\vspace{3mm}\n" +
                 "\\label{table:kd-1-ST}\n" +
                 "\\end{table}");
+        System.out.println("\\end{landscape}");
     }
 }

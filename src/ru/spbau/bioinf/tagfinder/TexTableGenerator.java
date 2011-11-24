@@ -52,8 +52,7 @@ public class TexTableGenerator {
         }
         StringBuilder table = new StringBuilder();
 
-        table.append("\\includegraphics{plots/" + tableId + ".eps}");
-
+        table.append("\\begin{landscape}");
         for (int start = 1; start <= maxLen; start += width) {
             int end = Math.min(start + width - 1, maxLen);
 
@@ -102,8 +101,11 @@ public class TexTableGenerator {
                     "\\label{table:table" + tableId + "}\n" +
                     "\\end{table}\n\n");
         }
+        table.append("\\end{landscape}");
 
         System.out.println(table.toString());
+
+        table.append("\\includegraphics{plots/" + tableId + ".eps}");
     }
 
     private static void prepareEps(double[][] data, String header, int rows) throws IOException {
@@ -172,8 +174,8 @@ public class TexTableGenerator {
                 }
             }
         }
-        System.out.println("\\includegraphics{plots/" + tableId+ ".eps}\n");
 
+        System.out.println("\\begin{landscape}");
         for (int start = 1; start <= maxLen; start += width) {
             int end = Math.min(start + width - 1, maxLen);
 
@@ -215,7 +217,11 @@ public class TexTableGenerator {
 
                     "\\label{table:table" + tableId + "}\n" +
                     "\\end{table}");
+
+
         }
+        System.out.println("\\end{landscape}");
+        System.out.println("\\includegraphics{plots/" + tableId+ ".eps}\n");
     }
 
     private static void printRows(double[][] data, int row, int start, int end, boolean needAmp) {

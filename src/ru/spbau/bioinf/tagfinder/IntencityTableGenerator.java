@@ -93,6 +93,7 @@ public class IntencityTableGenerator {
         }
 
         int width = 19;
+        System.out.println("\\begin{landscape}");
         for (int start = 1; start <= max; start += width) {
             int end = Math.min(start + width - 1, max);
             System.out.print("\\begin{table}[ht]\\footnotesize\n" +
@@ -145,6 +146,7 @@ public class IntencityTableGenerator {
                     "\\label{table:all-top-scoring}\n" +
                     "\\end{table}");
         }
+        System.out.println("\\end{landscape}");
 
         TexTableGenerator.tableId++;
 

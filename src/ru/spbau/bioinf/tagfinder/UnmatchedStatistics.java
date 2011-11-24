@@ -50,6 +50,7 @@ public class UnmatchedStatistics {
             total++;
         }
 
+        System.out.println("\\begin{landscape}");
         System.out.println("\\begin{table}[h]\n" +
                 "\\vspace{3mm}\\\n" +
                 "{\\centering\n" +
@@ -96,5 +97,6 @@ public class UnmatchedStatistics {
                 "\\vspace{3mm}\n" +
                 "\\label{table:" + label + "}\n" +
                 "\\end{table}");
+        System.out.println("\\end{landscape}");
     }
 }

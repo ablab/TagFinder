@@ -43,6 +43,7 @@ public class GenerateMatchesTable {
         }
 
 
+        System.out.println("\\begin{landscape}");
         System.out.println("\\begin{table}[h]\\footnotesize\n" +
                 "\\vspace{3mm}\\\n" +
                 "{\\centering\n" +
@@ -177,6 +178,7 @@ public class GenerateMatchesTable {
                 "\\vspace{3mm}\n" +
                 "\\label{table:unident-spectra}\n" +
                 "\\end{table}");
+        System.out.println("\\end{landscape}");
 
 
     }
