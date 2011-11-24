@@ -184,7 +184,7 @@ public class Configuration {
                 int spectrumId = Integer.parseInt(data[2]);
                 spectrums.put(spectrumId, scanId);
                 int proteinId = Integer.parseInt(data[3]);
-                double EValue = Double.parseDouble(data[data.length - 3]);
+                double EValue = Double.parseDouble(data[data.length - 4]);
                 evalues.put(scanId, EValue);
                 if (EValue < EVALUE_LIMIT) {
                     ans.put(scanId, proteinId);
