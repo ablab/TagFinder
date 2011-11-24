@@ -834,6 +834,34 @@ c|c|c|c|c|c|c|c|}
 \end{landscape}
 \includegraphics{plots/10.eps}
 
+%scanDir = C:\Users\Yakov Sirotkin\projects\TagFinder\data\salmonella4\input\env3
+\begin{landscape}
+\begin{table}[h]
+\vspace{3mm}\
+{\centering
+\begin{center}
+\begin{tabular}{|c|c|
+c|c|c|c|c|c|c|c|c|c|c|c|c|}
+  \hline
+  \multicolumn{2}{|c|}{} & \multicolumn{ 13}{|c|}{$k$} \\
+  \cline{3-15}
+  \multicolumn{2}{|c|}{} 
+ & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12\\
+  \hline
+  \multirow{2}{*}{spectra} & \#
+ & 225 & 382 & 333 & 243 & 154 & 71 & 44 & 20 & 7 & 8 & 2 & 1 & 1\\
+   & \%
+ & 15.09 & 25.62 & 22.33 & 16.3 & 10.33 & 4.76 & 2.95 & 1.34 & 0.47 & 0.54 & 0.13 & 0.07 & 0.07\\
+  \hline
+\end{tabular}
+\end{center}
+\par}
+\centering
+\caption{The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.}
+\vspace{3mm}
+\label{table:mixed-tags}
+\end{table}
+\end{landscape}
 \begin{landscape}
 \begin{table}[h]
 \vspace{3mm}\
@@ -861,32 +889,51 @@ c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
 \label{table:unident-tags}
 \end{table}
 \end{landscape}
-%scanDir = C:\Users\Yakov Sirotkin\projects\TagFinder\data\salmonella4\input\env3
 \begin{landscape}
-\begin{table}[h]
+\begin{table}[h]\footnotesize
 \vspace{3mm}\
 {\centering
 \begin{center}
-\begin{tabular}{|c|c|
-c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|c|c||c|c|c|c|}
   \hline
-  \multicolumn{2}{|c|}{} & \multicolumn{ 13}{|c|}{$k$} \\
-  \cline{3-15}
-  \multicolumn{2}{|c|}{} 
- & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12\\
+  \multicolumn{2}{|c||}{PrSM by MS-Align+} & \multicolumn{4}{|c|}{tag-based matches} \\
   \hline
-  \multirow{2}{*}{spectra} & \#
- & 225 & 382 & 333 & 243 & 154 & 71 & 44 & 20 & 7 & 8 & 2 & 1 & 1\\
-   & \%
- & 15.09 & 25.62 & 22.33 & 16.3 & 10.33 & 4.76 & 2.95 & 1.34 & 0.47 & 0.54 & 0.13 & 0.07 & 0.07\\
+  scan & protein & protein & tag & occurrences & E-Value\\
+
   \hline
-\end{tabular}
+1718& 604 & 4226& 
+EGVQEIDYK & 1 & 1.29E-3\\
+  \hline
+1252& 1100 & 3302& 
+AVSFMV & 1 & 1.69E-3\\
+  \hline
+1251& 1100 & 3302& 
+VSFMV & 1 & 4.39E-5\\
+  \hline
+1250& 2264 & 3302& 
+VSFMV & 1 & 1.22E-4\\
+  \hline
+1726& 3508 & 4226& 
+NYITE & 2 & 2.37E-5\\
+  \hline
+1247& 1100 & 3302& 
+AVSFMV & 1 & 5.27E-10\\
+  \hline
+1088& 3101 & 3949& 
+HPNYVEIT & 1 & 1.8E-3\\
+  \hline
+1675& 2127 & 983& 
+AYNYA & 2 & 1.01E-4\\
+  \hline
+1243& 1100 & 3302& 
+VSFMV & 1 & 8.59E-6\\
+\hline\end{tabular}
 \end{center}
 \par}
 \centering
-\caption{The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.}
+\caption{PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to large E-values of the matches, and alternatives with E-values less than $0.0024$ suggested by a~tag-based analysis. Each candidate protein contains a a tag of length at least $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated.}
 \vspace{3mm}
-\label{table:mixed-tags}
+\label{table:unident-spectra}
 \end{table}
 \end{landscape}
 

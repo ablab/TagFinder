@@ -57,7 +57,7 @@ public class AllDataGenerator {
         IntencityTableGenerator.tableFourteenFifteen();
         UnmatchedStatistics.main(new String[]{});//16-17
 
-        //GenerateMatchesTable.main(args);
+        GenerateMatchesTable.main(args);
 
 
         ///CalculateRelation.main(args);

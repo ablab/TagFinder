@@ -8,7 +8,14 @@ import java.util.Map;
 public class UnmatchedStatistics {
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration(args);
+        Configuration conf;
+
+        List<Scan> mixed = new ArrayList<Scan>();
+        conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
+        mixed.addAll(conf.getScans().values());
+        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
+
+        conf = new Configuration(args);
         Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
@@ -26,10 +33,6 @@ public class UnmatchedStatistics {
 
         printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length~$k$, for all the observed tag lengths.", "unident-tags");
 
-        List<Scan> mixed = new ArrayList<Scan>();
-        conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
-        mixed.addAll(conf.getScans().values());
-        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
 
     }
 
