@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ShiftEngine {
 
-    public static final double EPSILON = 0.01;
+    public static final double EPSILON = 0.02;
 
     public static double[] getSpectrum(String sequence) {
         double[] ans = new double[sequence.length() + 1];
@@ -41,16 +41,20 @@ public class ShiftEngine {
     }
 
     public static double[] merge(double[] peaks) {
+        return merge(peaks, peaks.length);
+    }
+    public static double[] merge(double[] peaks, int limit) {
         if (peaks.length <= 1) {
             return peaks;
         }
-        Arrays.sort(peaks);
+        Arrays.sort(peaks, 0, limit);
 
         ArrayList<Double> a = new ArrayList<Double>();
         double prev = 0;
         int count = 0;
         double sum = 0;
-        for (double s : peaks) {
+        for (int i = 0; i < limit; i++) {
+            double s = peaks[i];
             if (s - prev < EPSILON) {
                 count++;
                 sum += s;
@@ -70,6 +74,36 @@ public class ShiftEngine {
             ans[i] = a.get(i);
         }
         return ans;
+    }
+
+    public static List<Double> mergeFast(double[] peaks, int limit) {
+        List<Double> a = new ArrayList<Double>();
+        if (peaks.length <= 1) {
+            return a;
+        }
+        Arrays.sort(peaks, 0, limit);
+
+
+        double prev = 0;
+        int count = 0;
+        double sum = 0;
+        for (int i = 0; i < limit; i++) {
+            double s = peaks[i];
+            if (s - prev < 0.1) {
+                count++;
+                sum += s;
+                prev = s;
+            } else {
+                if (count > 5) {
+                    a.add(sum / count);
+                }
+                count = 1;
+                prev = s;
+                sum = s;
+            }
+        }
+        a.add(sum / count);
+        return a;
     }
 
     public static List<double[]> getRanges(double[] shifts) {
@@ -128,9 +162,9 @@ public class ShiftEngine {
         int j = 0;
         do {
             double diff = scan[j] - protein[i] + shift;
-            if (diff < -0.1) {
+            if (diff < -0.2) {
                 j++;
-            } else if (diff > 0.1) {
+            } else if (diff > 0.2) {
                 i++;
             } else {
                 score++;
@@ -199,6 +233,32 @@ public class ShiftEngine {
         double bestScore = 0;
         double[] spectrum = getSpectrum(peaks);
         for (Double shift : shifts) {
+            double nextScore = getScore(spectrum, proteinSpectrum, shift);
+            if (nextScore > bestScore) {
+                bestScore = nextScore;
+                bestShift = shift;
+            }
+        }
+        return bestShift;
+    }
+
+    private static double[] shiftsList = new double[10000*10000];
+
+    public static double getBestShiftFast(double[] spectrum, double[] proteinSpectrum) {
+        int cur = 0;
+        for (double v : proteinSpectrum) {
+            for (double p : spectrum) {
+                shiftsList[cur++] = v - p;
+            }
+        }
+        //Arrays.sort(shiftsList, 0, spectrum.length * proteinSpectrum.length);
+
+
+        List<Double> shifts = mergeFast(shiftsList, spectrum.length * proteinSpectrum.length);
+
+        double bestShift = 0;
+        double bestScore = 0;
+        for (double shift : shifts) {
             double nextScore = getScore(spectrum, proteinSpectrum, shift);
             if (nextScore > bestScore) {
                 bestScore = nextScore;
