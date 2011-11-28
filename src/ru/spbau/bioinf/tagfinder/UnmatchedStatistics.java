@@ -1,5 +1,6 @@
 package ru.spbau.bioinf.tagfinder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,14 +9,14 @@ import java.util.Map;
 public class UnmatchedStatistics {
 
     public static void main(String[] args) throws Exception {
+        tableSixteen();
+        tableEighteen();
+    }
+
+    public static void tableEighteen() throws IOException {
         Configuration conf;
 
-        List<Scan> mixed = new ArrayList<Scan>();
-        conf = new Configuration(args, UnmatchedScansGenerator.SHARED_MODE);
-        mixed.addAll(conf.getScans().values());
-        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
-
-        conf = new Configuration(args);
+        conf = new Configuration(new String[]{});
         Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
@@ -32,8 +33,15 @@ public class UnmatchedStatistics {
         }
 
         printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length~$k$, for all the observed tag lengths.", "unident-tags");
+    }
 
+    public static void tableSixteen() throws IOException {
+        Configuration conf;
 
+        List<Scan> mixed = new ArrayList<Scan>();
+        conf = new Configuration(new String[]{}, UnmatchedScansGenerator.SHARED_MODE);
+        mixed.addAll(conf.getScans().values());
+        printStat(conf, mixed, "The number and percentage of candidate mixed spectra with a given maximum tag length $k$ in the reduced spectra, for all the observed tag lengths.", "mixed-tags");
     }
 
     private static void printStat(Configuration conf, List<Scan> unmatched, String caption, String label) {
@@ -53,7 +61,7 @@ public class UnmatchedStatistics {
             total++;
         }
 
-        System.out.println("\\begin{landscape}");
+        System.out.println("\\begin{landscape}\n");
         System.out.println("\\begin{table}[h]\n" +
                 "\\vspace{3mm}\\\n" +
                 "{\\centering\n" +

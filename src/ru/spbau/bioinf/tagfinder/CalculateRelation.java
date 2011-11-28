@@ -23,7 +23,7 @@ public class CalculateRelation {
         double[][] res = new double[6][];
         generateRelationData(res, 0, "bar_exp_annotated_correct_none", "bar_exp_annotated_proper_none", GOOD_TO_GOOD);
         generateRelationData(res, 3, "bar_virt_annotated_correct_zero", "bar_virt_annotated_proper_zero", GOOD_TO_GOOD);
-        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $\\ell$-tags w.r.t. proper $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags");
+        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $\\ell$-tags w.r.t. proper $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags", 0);
     }
 
     public static void tableFour() throws Exception {
@@ -31,7 +31,7 @@ public class CalculateRelation {
         res = new double[6][];
         correctD(res, 0, "bar_exp_annotated_correct_none");
         correctD(res, 3, "bar_virt_annotated_correct_zero");
-        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra");
+        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra", -1);
     }
 
     public static void tableTwelve() throws Exception {

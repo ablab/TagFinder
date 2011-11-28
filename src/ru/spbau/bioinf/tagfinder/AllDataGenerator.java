@@ -21,7 +21,7 @@ public class AllDataGenerator {
         KdTableGenerator.printTablesCorrect(1);
         TexTableGenerator.tablesNineTen();
 
-        System.out.println("\\begin{landscape}");
+        System.out.println("\\begin{landscape}\n");
         System.out.println("\\begin{table}[ht]\\footnotesize\n" +
                 "\\vspace{3mm}\n" +
                 "{\\centering\n" +
@@ -55,10 +55,10 @@ public class AllDataGenerator {
         CalculateRelation.tableTwelve();
         TexTableGenerator.tableThirteen();
         IntencityTableGenerator.tableFourteenFifteen();
-        UnmatchedStatistics.main(new String[]{});//16-17
-
-        GenerateMatchesTable.main(args);
-
+        UnmatchedStatistics.tableSixteen();
+        GenerateMatchesTable.tableSeventeen();
+        UnmatchedStatistics.tableEighteen();
+        GenerateMatchesTable.tableNineteen();
 
         ///CalculateRelation.main(args);
         //IntencityTableGenerator.main(args);

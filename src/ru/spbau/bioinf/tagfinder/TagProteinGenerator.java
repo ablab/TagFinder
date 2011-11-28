@@ -12,17 +12,15 @@ import java.util.Set;
 
 public class TagProteinGenerator {
 
-    private static Configuration conf = new Configuration(new String[]{});
+    private static Configuration conf = new Configuration(new String[]{}, UnmatchedScansGenerator.SHARED_MODE);
 
     private static Map<Integer,Integer> msAlignResults;
 
 
     public static void main(String[] args) throws Exception {
-        conf = new Configuration(args//, UnmatchedScansGenerator.SHARED_MODE
-        );
         List<Protein> proteins = conf.getProteins();
         Map<Integer, Integer> badMSAlignResults = conf.getBadMSAlignResults();
-        msAlignResults = conf.getMSAlignResults();
+        msAlignResults = new Configuration(args).getMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
@@ -41,11 +39,8 @@ public class TagProteinGenerator {
             int oldProteinId = -1;
 
             if (msAlignResults.containsKey(scanId)) {
-                //if (!badMSAlignResults.containsKey(scanId)) {
-                continue;
-                //} else {
-                //    System.out.println(scanId + " in both");
-                //}
+                //continue;
+                oldProteinId = msAlignResults.get(scanId);
             }
 
             if (badMSAlignResults.containsKey(scanId)) {
@@ -64,6 +59,7 @@ public class TagProteinGenerator {
         }
     }
 
+    private static Set<String> done = new HashSet<String>();
 
     public static void generateFiveAcidsTags(List<Peak> peaks, List<String> sequences, int oldProteinId, Scan scan) throws Exception {
         List<Set<String>> allTags = new ArrayList<Set<String>>();
@@ -108,7 +104,7 @@ public class TagProteinGenerator {
                     }
                     if (seq.contains(tag)) {
                         found.add(tag);
-                        if (found.size() > 2 || tag.length() >= 5) {
+                        if (found.size() > 2 || tag.length() >= 6) {
                             isMatch = true;
                         }
                     }
@@ -132,10 +128,19 @@ public class TagProteinGenerator {
                 if (otherMatches == 0) {
                     //continue;
                 }
-                PrSM prsm = EValueAdapter.getBestEValue(scan, proteinId);
-                double eValue = prsm == null? 9E10 : prsm.getEValue();
 
-                System.out.println(scan.getId() + " " + oldProteinId + " " + proteinId + " " + eValue);
+                String key = scan.getId() + "_" + proteinId;
+
+
+                if (!done.contains(key)) {
+                    PrSM prsm = EValueAdapter.getBestEValue(scan, proteinId);
+                    double eValue = prsm == null? 9E10 : prsm.getEValue();
+                    done.add(key);
+                    System.out.println(scan.getId() + " " + oldProteinId + " " + proteinId + " " + eValue);
+
+                }
+
+
             }
         }
 
@@ -150,6 +155,7 @@ public class TagProteinGenerator {
     }
 
     public static void generateTags(Set<String> used, Peak peak, String prefix, int depth) {
+        //System.out.println(prefix + " " + peak.getValue() + " " + peak.getMass());
         if (prefix.length() == depth) {
             used.add(prefix);
         } else {

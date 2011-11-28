@@ -93,10 +93,10 @@ public class IntencityTableGenerator {
         }
 
         int width = 19;
-        System.out.println("\\begin{landscape}");
+        System.out.println("\\begin{landscape}\n");
         for (int start = 1; start <= max; start += width) {
             int end = Math.min(start + width - 1, max);
-            System.out.print("\\begin{table}[ht]\\footnotesize\n" +
+            System.out.print("\\begin{table}[ht]\\tiny\n" +
                     "\\vspace{3mm}\n" +
                     "{\\centering\n" +
                     "\\begin{center}\n" +
@@ -140,22 +140,28 @@ public class IntencityTableGenerator {
                     "\\centering\n");
 
             if (end == max) {
-                System.out.println("\\caption{" + caption + "}\n");
+                System.out.println("\\caption{" + caption + "}\n" +
+                        "\\label{table:all-top-scoring}\n");
             }
             System.out.println("\\vspace{3mm}\n" +
-                    "\\label{table:all-top-scoring}\n" +
                     "\\end{table}");
         }
         System.out.println("\\end{landscape}");
 
         TexTableGenerator.tableId++;
 
+        System.out.println("\n\\begin{figure}\n" +
+                "  \\begin{center}");
         System.out.println("\\includegraphics{plots/" + TexTableGenerator.tableId + ".eps}\n");
+        System.out.println("\\end{center}\n" +
+                "\\caption{" + caption + "}\n" +
+                "  \\label{fig:LABEL}\n" +
+                "\\end{figure}\n");
 
         int tableId = TexTableGenerator.tableId;
         PrintWriter dataFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".dat"));
         PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".gpl"));
-        gplFile.print("set terminal postscript eps\n" +
+        gplFile.print("set terminal postscript eps color\n" +
                 "set out \"plots/" + tableId + ".eps\"\n" +
                 "set ylabel \"Percentage of spectra\"\n" +
                 "set xlabel \"Tag length\"\n" +

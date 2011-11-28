@@ -28,9 +28,32 @@ public class GenerateMatchesTable {
     }
 
     public static void main(String[] args) throws Exception {
+        tableSeventeen();
+        tableNineteen();
+    }
 
-        conf = new Configuration(args//, UnmatchedScansGenerator.SHARED_MODE
-        );
+
+    public static void tableNineteen() throws Exception {
+        printTable(
+                new String[]{},
+                "PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to large E-values of the matches, and alternatives with E-values less than $0.0024$ suggested by a~tag-based analysis. Each candidate protein contains a a tag of length at least $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated.",
+                "matches.txt");
+    }
+
+    public static void tableSeventeen() throws Exception {
+        printTable(
+                new String[]{UnmatchedScansGenerator.SHARED_MODE},
+
+                "PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to  large E-values of the matches, and alternatives suggested " +
+                        " by a~tag-based analysis. Each candidate protein contains at least $3$ (possibly overlapping) tags of length $5$ from the respective spectrum. " +
+                        "For each retrieved tag, the number of its occurrences in the database is indicated, and for each group of tags that occur in the same protein, " +
+                        "the number of proteins containing all those tags simultaneously is provided.",
+                "matched-mixed.txt");
+    }
+
+
+    private static void printTable(String[] args, String caption, String fileName) throws Exception {
+        conf = new Configuration(args);
         List<Protein> proteins = conf.getProteins();
         Map<Integer, Integer> badMSAlignResults = conf.getBadMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
@@ -43,7 +66,7 @@ public class GenerateMatchesTable {
         }
 
 
-        System.out.println("\\begin{landscape}");
+        System.out.println("\\begin{landscape}\n");
         System.out.println("\\begin{table}[h]\\footnotesize\n" +
                 "\\vspace{3mm}\\\n" +
                 "{\\centering\n" +
@@ -56,17 +79,24 @@ public class GenerateMatchesTable {
         );
 
 
-        BufferedReader in = ReaderUtil.getBufferedReader(new File("matches.txt"));
+        BufferedReader in = ReaderUtil.getBufferedReader(new File(fileName));
         String s;
         Map<Integer, List<MatchResult>> res = new HashMap<Integer, List<MatchResult>>();
 
         HashMap<String, Integer> stat = new HashMap<String, Integer>();
+
+        Set<Integer> usedProteins = new HashSet<Integer>();
 
         while ((s = in.readLine()) != null) {
             String[] data = s.split(" ");
             int scanId = Integer.parseInt(data[0]);
             int proteinId = Integer.parseInt(data[2]);
             double eValue = Double.parseDouble(data[3]);
+
+            if (usedProteins.contains(proteinId)) {
+                //continue;
+            }
+            usedProteins.add(proteinId);
 
             if (eValue > 0.0024) {
                 continue;
@@ -144,7 +174,7 @@ public class GenerateMatchesTable {
                 MatchResult match = matchResults.get(i);
                     System.out.println(
                             "  \\hline\n" + scanId + "& " +
-                                    (oldProteinId == null ? "" : oldProteinId) +
+                                    (oldProteinId == null ? match.proteinId : oldProteinId) +
                                     " & " + match.proteinId + "& ");
 
                 List<String> tags = match.tags;
@@ -174,13 +204,12 @@ public class GenerateMatchesTable {
                 "\\end{center}\n" +
                 "\\par}\n" +
                 "\\centering\n" +
-                "\\caption{PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to large E-values of the matches, and alternatives with E-values less than $0.0024$ suggested by a~tag-based analysis. Each candidate protein contains a a tag of length at least $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated.}\n" +
+                "\\caption{" + caption
+                + "}\n" +
                 "\\vspace{3mm}\n" +
                 "\\label{table:unident-spectra}\n" +
                 "\\end{table}");
         System.out.println("\\end{landscape}");
-
-
     }
 
 
