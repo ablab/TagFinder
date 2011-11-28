@@ -67,12 +67,12 @@ public class TexTableGenerator {
             }
             System.out.print("}\n" +
                     "  \\hline\n" +
-                    "  \\multicolumn{2}{|c|}{ } & \\multicolumn{ " + (end - start + 1  + columnHeaderDelta) + " }{|c|}{ " + header + " (\\%)} \\\\\n" +
+                    "  \\multicolumn{2}{|c|}{ } & \\multicolumn{ " + (end - start + 1) + " }{|c|}{ " + header + " (\\%)} \\\\\n" +
                     "  \\cline{3- " + (end - start + 3) + "}\n" +
                     "  \\multicolumn{2}{|c|}{ } ");
             //"& 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 & 21 & 22 & 23 & 24
             for (int i = start; i <= end; i++) {
-                System.out.print(" & " + i);
+                System.out.print(" & " + (i + columnHeaderDelta));
             }
             System.out.print("\\\\\n" +
                     "  \\hline\n" +
