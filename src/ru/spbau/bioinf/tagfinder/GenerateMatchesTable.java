@@ -37,7 +37,7 @@ public class GenerateMatchesTable {
         printTable(
                 new String[]{},
                 "PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to large E-values of the matches, and alternatives with E-values less than $0.0024$ suggested by a~tag-based analysis. Each candidate protein contains a a tag of length at least $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated.",
-                "matches.txt");
+                "matches.txt", false);
     }
 
     public static void tableSeventeen() throws Exception {
@@ -48,18 +48,18 @@ public class GenerateMatchesTable {
                         " by a~tag-based analysis. Each candidate protein contains at least $3$ (possibly overlapping) tags of length $5$ from the respective spectrum. " +
                         "For each retrieved tag, the number of its occurrences in the database is indicated, and for each group of tags that occur in the same protein, " +
                         "the number of proteins containing all those tags simultaneously is provided.",
-                "matched-mixed.txt");
+                "matched-mixed.txt", true);
     }
 
 
-    private static void printTable(String[] args, String caption, String fileName) throws Exception {
+    private static void printTable(String[] args, String caption, String fileName, boolean isMixed) throws Exception {
+        Configuration originalConf = new Configuration();
+        originalConf.getMSAlignResults();
+
         conf = new Configuration(args);
         List<Protein> proteins = conf.getProteins();
         Map<Integer, Integer> badMSAlignResults = conf.getBadMSAlignResults();
         Map<Integer, Scan> scans = conf.getScans();
-        List<Integer> keys = new ArrayList<Integer>();
-        keys.addAll(scans.keySet());
-        Collections.sort(keys);
         List<String> sequences = new ArrayList<String>();
         for (Protein protein : proteins) {
             sequences.add(protein.getSimplifiedAcids());
@@ -67,15 +67,24 @@ public class GenerateMatchesTable {
 
 
         System.out.println("\\begin{landscape}\n");
-        System.out.println("\\begin{table}[h]\\footnotesize\n" +
-                "\\vspace{3mm}\\\n" +
-                "{\\centering\n" +
-                "\\begin{center}\n" +
+        String header = isMixed ?
+                "\\begin{tabular}{|c|c|c||c|c|c|}\n" +
+                "  \\hline\n" +
+                "  \\multicolumn{3}{|c||}{PrSM by MS-Align+} & \\multicolumn{3}{|c|}{reduced spectrum} \\\\\n"  +
+                "  \\hline\n" +
+                "  scan & protein & E-value & tag & occurrences & E-Value\\\\\n"
+                :
                 "\\begin{tabular}{|c|c||c|c|c|c|}\n" +
                 "  \\hline\n" +
                 "  \\multicolumn{2}{|c||}{PrSM by MS-Align+} & \\multicolumn{4}{|c|}{tag-based matches} \\\\\n" +
                 "  \\hline\n" +
-                "  scan & protein & protein & tag & occurrences & E-Value\\\\\n"
+                "  scan & protein & protein & tag & occurrences & E-Value\\\\\n";
+
+        System.out.println("\\begin{table}[h]\\footnotesize\n" +
+                "\\vspace{3mm}\\\n" +
+                "{\\centering\n" +
+                "\\begin{center}\n" +
+                header
         );
 
 
@@ -166,16 +175,26 @@ public class GenerateMatchesTable {
             }
         }
 
-        for (Map.Entry<Integer, List<MatchResult>> entry : res.entrySet()) {
-            int scanId = entry.getKey();
-            List<MatchResult> matchResults = entry.getValue();
+        List<Integer> keys = new ArrayList<Integer>();
+        keys.addAll(res.keySet());
+        Collections.sort(keys);
+        for (int scanId : keys) {
+            List<MatchResult> matchResults = res.get(scanId);
             for (int i = 0; i < matchResults.size(); i++) {
                 Integer oldProteinId = badMSAlignResults.get(scanId);
                 MatchResult match = matchResults.get(i);
-                    System.out.println(
+                int proteinId = match.proteinId;
+                System.out.println(
                             "  \\hline\n" + scanId + "& " +
-                                    (oldProteinId == null ? match.proteinId : oldProteinId) +
-                                    " & " + match.proteinId + "& ");
+                                    (oldProteinId == null ? proteinId : oldProteinId) +
+                                    " & ");
+                if (isMixed) {
+                    System.out.println(df.format(originalConf.getEvalues().get(scanId)));
+                } else {
+                    System.out.println(proteinId);
+                }
+                System.out.println(" & ");
+
 
                 List<String> tags = match.tags;
                 for (int j = 0; j < tags.size(); j++) {
