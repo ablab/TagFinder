@@ -18,16 +18,16 @@ public class KdTableGenerator {
     }
 
     public static void printTablesProper(int gap) throws Exception {
-        printKd(file1, "The number of $(k-d,d)$-proper spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap);
-        printKd(file2, "The number of $(k-d,d)$-proper spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap);
+        printKd(file1, "The number of $(k-d,d)$-proper spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap, "kd-" + gap + "-proper-ST");
+        printKd(file2, "The number of $(k-d,d)$-proper spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap, "kd-" + gap + "-proper-ST-bar");
     }
 
     public static void printTablesCorrect(int gap) throws Exception {
-        printKd(file3, "The number of $(k-d,d)$-correct spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap);
-        printKd(file4, "The number of $(k-d,d)$-correct spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap);
+        printKd(file3, "The number of $(k-d,d)$-correct spectra in the $ST$ data set for the case of " + gap + "-aa tags.", gap, "kd-" + gap + "-correct-ST");
+        printKd(file4, "The number of $(k-d,d)$-correct spectra in the $\\STbar$ data set for the case of " + gap + "-aa tags.", gap, "kd-" + gap + "-correct-ST-bar");
     }
 
-    private static void printKd(String file, String caption, int gap) throws Exception {
+    private static void printKd(String file, String caption, int gap, String label) throws Exception {
         BufferedReader in = ReaderUtil.createInputReader(new File("res", "kd_" + file + "_" + gap + ".txt"));
         int[][] res = new int[1000][1000];
         int rows = 0;
@@ -97,7 +97,7 @@ public class KdTableGenerator {
                 "\\centering\n" +
                 "\\caption{" + caption + "}\n" +
                 "\\vspace{3mm}\n" +
-                "\\label{table:kd-1-ST}\n" +
+                "\\label{table:" + label + "}\n" +
                 "\\end{table}");
         System.out.println("\\end{landscape}");
     }

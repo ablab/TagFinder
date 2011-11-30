@@ -29,11 +29,11 @@ public class GenerateMatchesTable {
 
     public static void main(String[] args) throws Exception {
         tableSeventeen();
-        tableNineteen();
+        tableMatches();
     }
 
 
-    public static void tableNineteen() throws Exception {
+    public static void tableMatches() throws Exception {
         printTable(
                 new String[]{},
                 "PrSMs indicated by MS-Align+ for spectra considered to be unidentified due to large E-values of the matches, and alternatives with E-values less than $0.0024$ suggested by a~tag-based analysis. Each candidate protein contains a a tag of length at least $5$ from the respective spectrum. For each retrieved tag, the number of its occurrences in the database is indicated.",
@@ -65,8 +65,6 @@ public class GenerateMatchesTable {
             sequences.add(protein.getSimplifiedAcids());
         }
 
-
-        System.out.println("\\begin{landscape}\n");
         String header = isMixed ?
                 "\\begin{tabular}{|c|c|c||c|c|c|}\n" +
                 "  \\hline\n" +
@@ -228,7 +226,6 @@ public class GenerateMatchesTable {
                 "\\vspace{3mm}\n" +
                 "\\label{table:unident-spectra}\n" +
                 "\\end{table}");
-        System.out.println("\\end{landscape}");
     }
 
 

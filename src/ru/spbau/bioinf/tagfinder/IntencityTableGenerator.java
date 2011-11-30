@@ -15,20 +15,20 @@ public class IntencityTableGenerator {
     public static void main(String[] args) throws Exception {
 
         double[][] res = new double[100][3];
-        printTable(res, file1, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are proper (+) or improper (-).");
-        TexTableGenerator.createThreeRowsTable(res, "Average percentage of proper top-scoring tags of a given length", "");
+        printTable(res, file1, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are proper (+) or improper (-).", "label16");
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of proper top-scoring tags of a given length", "", "label10");
 
-        tableFourteenFifteen();
+        tableTopscoreAllAndAvg();
     }
 
-    public static void tableFourteenFifteen() throws Exception {
+    public static void tableTopscoreAllAndAvg() throws Exception {
         double[][] res;
         res = new double[100][3];
-        printTable(res, file2, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are correct (+) or incorrect (-).");
-        TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct top-scoring tags  of a given length", "");
+        printTable(res, file2, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are correct (+) or incorrect (-).", "all-top-scoring");
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct top-scoring tags  of a given length", "", "avg-top-scoring");
     }
 
-    private static void printTable(double[][] res, String file, String caption) throws Exception {
+    private static void printTable(double[][] res, String file, String caption, String label) throws Exception {
 
 
         double[][] res2 = new double[6][];
@@ -148,30 +148,28 @@ public class IntencityTableGenerator {
         }
         System.out.println("\\end{landscape}");
 
-        TexTableGenerator.tableId++;
 
         System.out.println("\n\\begin{figure}\n" +
                 "  \\begin{center}");
-        System.out.println("\\includegraphics{plots/" + TexTableGenerator.tableId + ".eps}\n");
+        System.out.println("\\includegraphics{" + label + "}");
         System.out.println("\\end{center}\n" +
                 "\\caption{" + caption + "}\n" +
-                "  \\label{fig:LABEL}\n" +
+                "  \\label{fig:" + label + "}\n" +
                 "\\end{figure}\n");
 
-        int tableId = TexTableGenerator.tableId;
-        PrintWriter dataFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".dat"));
-        PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", tableId + ".gpl"));
+        PrintWriter dataFile = ReaderUtil.createOutputFile(new File("plots", label + ".dat"));
+        PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", label + ".gpl"));
         gplFile.print("set terminal postscript eps color\n" +
-                "set out \"plots/" + tableId + ".eps\"\n" +
+                "set out \"" + label + ".eps\"\n" +
                 "set ylabel \"Percentage of spectra\"\n" +
                 "set xlabel \"Tag length\"\n" +
                 "plot");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:2 title '1-aa +' with linespoints,\\");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:3 title '1-aa -' with linespoints,\\");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:4 title '2-aa +' with linespoints,\\");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:5 title '2-aa -' with linespoints,\\");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:6 title '3-aa +' with linespoints,\\");
-        gplFile.println("\"plots/" + tableId + ".dat\" using 1:7 title '3-aa -' with linespoints");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:2 title '1-aa +' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:3 title '1-aa -' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:4 title '2-aa +' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:5 title '2-aa -' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:6 title '3-aa +' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:7 title '3-aa -' with linespoints");
 
 
         gplFile.close();

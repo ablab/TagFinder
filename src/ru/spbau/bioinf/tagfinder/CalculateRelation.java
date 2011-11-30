@@ -14,34 +14,34 @@ public class CalculateRelation {
     public static final int MAX_TAG = 100;
 
     public static void main(String[] args) throws Exception {
-        tableThree();
-        tableFour();
-        tableTwelve();
+        tableCorrectVsProper();
+        tableLongestCorrect();
+        tableMono();
     }
 
-    public static void tableThree() throws Exception {
+    public static void tableCorrectVsProper() throws Exception {
         double[][] res = new double[6][];
         generateRelationData(res, 0, "bar_exp_annotated_correct_none", "bar_exp_annotated_proper_none", GOOD_TO_GOOD);
         generateRelationData(res, 3, "bar_virt_annotated_correct_zero", "bar_virt_annotated_proper_zero", GOOD_TO_GOOD);
-        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $\\ell$-tags w.r.t. proper $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags", 0);
+        TexTableGenerator.createSixRowsTable(res, "Average percentage of correct $\\ell$-tags w.r.t. proper $\\ell$-tags (basic spectrum graphs)", "correct $\\ell$-tags", 0, "correct-vs-proper-l-tags");
     }
 
-    public static void tableFour() throws Exception {
+    public static void tableLongestCorrect() throws Exception {
         double[][] res;
         res = new double[6][];
         correctD(res, 0, "bar_exp_annotated_correct_none");
         correctD(res, 3, "bar_virt_annotated_correct_zero");
-        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra", -1);
+        TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra", -1, "longest-correct-l");
     }
 
-    public static void tableTwelve() throws Exception {
+    public static void tableMono() throws Exception {
         double[][] res = new double[3][];
         generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
-        TexTableGenerator.createThreeRowsTable(res, "Average percentage of mono-$\\ell$-tags w.r.t. all $\\ell$-tags", "mono-$\\ell$-tags");
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of mono-$\\ell$-tags w.r.t. all $\\ell$-tags", "mono-$\\ell$-tags", "l-mono");
     }
 
     private static void generateRelationData(double[][] res, int start, String firstTable, String secondTable, int mode) throws Exception {
-        System.out.println("% relation for " + firstTable + " / " + secondTable);
+        //System.out.println("% relation for " + firstTable + " / " + secondTable);
         for (int gap = 1; gap <= 3; gap++) {
             res[start + gap - 1] = compare("share_" + firstTable + "_" + gap + ".txt", "share_" + secondTable + "_" + gap + ".txt", mode);
         }
@@ -124,7 +124,7 @@ public class CalculateRelation {
     }
 
     public static void correctD(double[][] res, int start, String file) throws Exception {
-        System.out.println("% longest tags distribution for  " + file);
+        //System.out.println("% longest tags distribution for  " + file);
         for (int gap = 1; gap <= 3; gap++) {
             BufferedReader in = ReaderUtil.createInputReader(new File("res", "share_" + file + "_" + gap + ".txt"));
 

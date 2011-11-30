@@ -10,10 +10,10 @@ public class UnmatchedStatistics {
 
     public static void main(String[] args) throws Exception {
         tableSixteen();
-        tableEighteen();
+        tableUnident();
     }
 
-    public static void tableEighteen() throws IOException {
+    public static void tableUnident() throws IOException {
         Configuration conf;
 
         conf = new Configuration(new String[]{});
@@ -61,7 +61,6 @@ public class UnmatchedStatistics {
             total++;
         }
 
-        System.out.println("\\begin{landscape}\n");
         System.out.println("\\begin{table}[h]\n" +
                 "\\vspace{3mm}\\\n" +
                 "{\\centering\n" +
@@ -108,6 +107,5 @@ public class UnmatchedStatistics {
                 "\\vspace{3mm}\n" +
                 "\\label{table:" + label + "}\n" +
                 "\\end{table}");
-        System.out.println("\\end{landscape}");
     }
 }
