@@ -53,7 +53,7 @@ public class Configuration {
     }
 
     private void init(String[] args) {
-        String dataset = "data/salmonella4";
+        String dataset = "data/salmonella5";
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -216,22 +216,27 @@ public class Configuration {
         String s;
         Properties properties;
         while ((properties = ReaderUtil.readPropertiesUntil(input, "BEGIN MATCH_PAIR")).size() > 0) {
-            int scanId = spectrums.get(Integer.parseInt(properties.getProperty("SPECTRUM_ID")));
-            double precursorMass = scans.get(scanId).getPrecursorMass();
-            List<Peak> peaks = new ArrayList<Peak>();
-            peaks.add(new Peak(0,0 ,0));
-            while(!(s = input.readLine()).equals("END MATCH_PAIR")) {
-                String[] data = ReaderUtil.getDataArray(s);
-                double mass = Double.parseDouble(data[3]);
-                boolean isB = "B".equals(data[4]);
-                double value = isB ? mass : precursorMass - mass;
-                Peak peak = isB ? new Peak(value, 0, 0) : new Peak(precursorMass - mass, mass, 0, 0);
-                peaks.add(peak);
+            String spectrumIdProperty = properties.getProperty("SPECTRUM_ID");
+            int spectrumIdKey = Integer.parseInt(spectrumIdProperty);
+            if (spectrums.containsKey(spectrumIdKey)) {
+                int scanId = spectrums.get(spectrumIdKey);
+                double precursorMass = scans.get(scanId).getPrecursorMass();
+                List<Peak> peaks = new ArrayList<Peak>();
+                peaks.add(new Peak(0,0 ,0));
+                while(!(s = input.readLine()).equals("END MATCH_PAIR")) {
+                    String[] data = ReaderUtil.getDataArray(s);
+                    double mass = Double.parseDouble(data[3]);
+                    boolean isB = "B".equals(data[4]);
+                    double value = isB ? mass : precursorMass - mass;
+                    Peak peak = isB ? new Peak(value, 0, 0) : new Peak(precursorMass - mass, mass, 0, 0);
+                    peaks.add(peak);
+                }
+                peaks.add(new Peak(precursorMass, 0, 0));
+                Collections.sort(peaks);
+                ans.put(scanId, peaks);
             }
-            peaks.add(new Peak(precursorMass, 0, 0));
-            Collections.sort(peaks);
-            ans.put(scanId, peaks);
             ReaderUtil.readPropertiesUntil(input, "END PRSM");
+
         }
         return ans;
     }
