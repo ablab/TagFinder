@@ -4,8 +4,11 @@ package ru.spbau.bioinf.tagfinder;
 import edu.ucsd.msalign.align.prsm.PrSM;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,11 +26,13 @@ public class FastSearch {
     private static PrintWriter cacheOut;
 
     public static void main(String[] args) throws Exception {
-        BufferedReader in = ReaderUtil.createInputReader(new File("fs", "1.txt"));
-        cacheOut = ReaderUtil.createOutputFile(new File("cacheOut.txt"));
+        File cacheFile = new File("cache.txt");
+        BufferedReader in = ReaderUtil.createInputReader(cacheFile);
+        cacheOut = new PrintWriter(new OutputStreamWriter(
+                new FileOutputStream(cacheFile, true), "UTF-8"));
         do {
             String  s = in.readLine();
-            if (s.contains("matches")) {
+            if (s == null) {
                 break;
             }
             String[] data = s.split(" ");
@@ -36,6 +41,7 @@ public class FastSearch {
 
         int count = 0;
         Configuration conf = new Configuration(args);
+        System.out.println("MS-Align results: " + conf.getMSAlignResults().keySet().size());
         proteins = conf.getProteins();
         scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
@@ -68,35 +74,83 @@ public class FastSearch {
         long finish = System.currentTimeMillis();
         System.out.println(count + " matches  found in " + (finish - start));
 
-        for (Integer scanId : unmatchedScans) {
-            for (int proteinId : discoveredProteins) {
-                double eValue = getEValue(scanId, proteinId);
-                if (eValue < Configuration.EVALUE_LIMIT) {
-                    System.out.println(scanId + " " + proteinId + " " + eValue);
-                    count++;
-                }
+        List<Integer> unmatchedScans2 = new ArrayList<Integer>();
+        for (int scanId : unmatchedScans) {
+            if (checkScanAgainstProteins(scanId, discoveredProteins)) {
+                count++;
+            } else {
+                unmatchedScans2.add(scanId);
             }
         }
 
         long finish2 = System.currentTimeMillis();
         System.out.println(count + " matches  for plus " + (finish2 - finish));
 
+
+        List<Integer> unmatchedScans3 = new ArrayList<Integer>();
+        for (int scanId : unmatchedScans2) {
+            Scan scan = scans.get(scanId);
+            List<Peak> spectrum = scan.createSpectrumWithYPeaks(0);
+            GraphUtil.generateEdges(conf, spectrum);
+            Set<String> tags = GraphUtil.generateTags(conf, spectrum);
+            List<Integer> proteinsForCheck = new ArrayList<Integer>();
+            for (int len = 10; len >=5; len--) {
+                for (String tag : tags) {
+                    if (tag.length() == len) {
+                        for (Protein protein : proteins) {
+                            if (protein.getSimplifiedAcids().contains(tag)) {
+                                int proteinId = protein.getProteinId();
+                                if (!proteinsForCheck.contains(proteinId)) {
+                                       proteinsForCheck.add(proteinId);
+                                       if (proteinsForCheck.size() > 100) {
+                                           break;
+                                       }
+                                   }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (checkScanAgainstProteins(scanId, proteinsForCheck)) {
+                count++;
+            } else {
+                unmatchedScans3.add(scanId);
+            }
+        }
+
+        long finish3 = System.currentTimeMillis();
+        System.out.println(count + " matches  for plus " + (finish3 - finish2));
+
         cacheOut.println("end matches");
         cacheOut.close();
 
+    }
+
+    private static  boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
+        for (int proteinId : proteins) {
+            double eValue = getEValue(scanId, proteinId);
+            if (eValue < Configuration.EVALUE_LIMIT) {
+                System.out.println(scanId + " " + proteinId + " " + eValue);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static double getEValue(int scanId, int proteinId) throws Exception {
         String key = scanId + "_" + proteinId;
         double ans = Integer.MAX_VALUE;
         if (evalues.containsKey(key)) {
-            ans = evalues.get(key);
+            return evalues.get(key);
         } else {
             PrSM prsm = EValueAdapter.getBestEValue(scans.get(scanId), proteinId);
             if (prsm != null) {
                 ans = prsm.getEValue();
             }
+            evalues.put(key, ans);
         }
+
         cacheOut.println(scanId + " " + proteinId + " " + ans);
         cacheOut.flush();
         return ans;
