@@ -24,6 +24,7 @@ public class FastSearch {
 
     private static Map<String, Double> evalues = new HashMap<String, Double>();
     private static PrintWriter cacheOut;
+    private static Map<Integer, Integer> ans = new HashMap<Integer, Integer>();
 
     public static void main(String[] args) throws Exception {
         File cacheFile = new File("cache.txt");
@@ -41,7 +42,8 @@ public class FastSearch {
 
         int count = 0;
         Configuration conf = new Configuration(args);
-        System.out.println("MS-Align results: " + conf.getMSAlignResults().keySet().size());
+        Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
+        System.out.println("MS-Align results: " + msAlignResults.keySet().size());
         proteins = conf.getProteins();
         scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
@@ -62,7 +64,7 @@ public class FastSearch {
                 p[i] = peaks.get(i).getMass(); //+ shift;
             }
             int proteinId = getBestProtein(p);
-            double eValue = getEValue(scanId, proteinId);
+            double eValue = getEValueWrapper(scanId, proteinId);
             if (eValue < Configuration.EVALUE_LIMIT) {
                 System.out.println(scanId + " " + proteinId + " " + eValue);
                 count++;
@@ -122,14 +124,30 @@ public class FastSearch {
         long finish3 = System.currentTimeMillis();
         System.out.println(count + " matches  for plus " + (finish3 - finish2));
 
-        cacheOut.println("end matches");
+        //cacheOut.println("end matches");
         cacheOut.close();
+        System.out.println("PrSM found " + ans.keySet().size());
+        Map<Integer, Double> evaluesOld = conf.getEvalues();
+        System.out.println("MS-Align only");
+        for (Integer scanId : msAlignResults.keySet()) {
+            if (!ans.containsKey(scanId)) {
+                int proteinId = msAlignResults.get(scanId);
+                System.out.println(scanId + " " + proteinId + " " + evaluesOld.get(scanId) + " " + getEValue(scanId, proteinId));
+            }
+        }
+        System.out.println("New matches ");
+        for (Integer scanId : ans.keySet()) {
+            if (!msAlignResults.containsKey(scanId)) {
+                int proteinId = ans.get(scanId);
+                System.out.println(scanId + " " + proteinId + " " + getEValue(scanId, proteinId));
+            }
+        }
 
     }
 
     private static  boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
         for (int proteinId : proteins) {
-            double eValue = getEValue(scanId, proteinId);
+            double eValue = getEValueWrapper(scanId, proteinId);
             if (eValue < Configuration.EVALUE_LIMIT) {
                 System.out.println(scanId + " " + proteinId + " " + eValue);
                 return true;
@@ -138,6 +156,14 @@ public class FastSearch {
         return false;
     }
 
+    private static double getEValueWrapper(int scanId, int proteinId) throws Exception {
+        double ret = getEValue(scanId, proteinId);
+        if (ret < Configuration.EVALUE_LIMIT) {
+            ans.put(scanId, proteinId);
+        }
+        return ret;
+    }
+    
     private static double getEValue(int scanId, int proteinId) throws Exception {
         String key = scanId + "_" + proteinId;
         double ans = Integer.MAX_VALUE;
