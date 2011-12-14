@@ -86,6 +86,11 @@ public class FastSearch {
         long start = System.currentTimeMillis();
         unmatchedScans.addAll(keys);
 
+        List<int[]>[] candidates = new List[27];
+        for (int i = 0; i < candidates.length; i++) {
+            candidates[i] = new ArrayList<int[]>();
+        }
+
         for (int scanId : keys) {
             Scan scan = scans.get(scanId);
             List<Peak> peaks = scan.getPeaks();
@@ -95,20 +100,32 @@ public class FastSearch {
                 p[i] = peaks.get(i).getMass(); //+ shift;
             }
             int[] ans = getBestProtein(p);
+            if (scanId == 2787) {
+                System.out.println(ans[0] + " " + ans[1]);
+            }
             int proteinId = ans[0];
             if (ans[1] >= 27) {
                 getEValueWrapper(scanId, proteinId);
+            } else {
+                candidates[ans[1]].add(new int[] {scanId, ans[0]});
             }
         }
         long finish = System.currentTimeMillis();
         System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
 
 
-        for (int len = 10; len >= 4; len--) {
-            System.out.println("processing tags of length " + len);
+        for (int len = 10; len >= 5; len--) {
             checkTags(conf, len);
-            System.out.println("results  " + goodRequest + " " + badRequest);
+
         }
+
+        for (int[] pair : candidates[26]) {
+            getEValueWrapper(pair[0], pair[1]);
+        }
+        System.out.println("results for 26 " + goodRequest + " " + badRequest);
+
+        checkTags(conf, 4);
+
 
         long finish2 = System.currentTimeMillis();
         System.out.println(count + " matches  for plus " + (finish2 - finish));
@@ -128,6 +145,7 @@ public class FastSearch {
     }
 
     private static void checkTags(Configuration conf, int len) throws Exception {
+        System.out.println("processing tags of length " + len);
         Map<String, List<TagProtein>> tagsMap = new HashMap<String, List<TagProtein>>();
         for (Protein protein : proteins) {
             int proteinId = protein.getProteinId();
@@ -187,6 +205,7 @@ public class FastSearch {
             }
             checkScanAgainstProteins(scanId, proteinsForCheck);
         }
+        System.out.println("results  " + goodRequest + " " + badRequest);
     }
 
     private static boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
@@ -208,6 +227,9 @@ public class FastSearch {
 
     private static double getEValueWrapper(int scanId, int proteinId) throws Exception {
         double ret = getEValue(scanId, proteinId);
+        if (!unmatchedScans.contains(scanId)) {
+            return ret;
+        }
         if (ret < Configuration.EVALUE_LIMIT) {
             ans.put(scanId, proteinId);
             unmatchedScans.remove(scanId);
