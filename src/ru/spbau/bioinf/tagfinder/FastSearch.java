@@ -2,6 +2,7 @@ package ru.spbau.bioinf.tagfinder;
 
 
 import edu.ucsd.msalign.align.prsm.PrSM;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,12 +16,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class FastSearch {
 
     private static List<Protein> proteins;
-    private static Map<Integer,Scan> scans;
+    private static Map<Integer, Scan> scans;
 
     private static Map<String, Double> evalues = new HashMap<String, Double>();
     private static PrintWriter cacheOut;
@@ -34,7 +36,7 @@ public class FastSearch {
         cacheOut = new PrintWriter(new OutputStreamWriter(
                 new FileOutputStream(cacheFile, true), "UTF-8"));
         do {
-            String  s = in.readLine();
+            String s = in.readLine();
             if (s == null) {
                 break;
             }
@@ -94,14 +96,12 @@ public class FastSearch {
             }
             int[] ans = getBestProtein(p);
             int proteinId = ans[0];
-            if (ans[1]>= 27) {
+            if (ans[1] >= 27) {
                 getEValueWrapper(scanId, proteinId);
             }
         }
         long finish = System.currentTimeMillis();
         System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
-
-
 
 
         for (int len = 10; len >= 5; len--) {
@@ -128,36 +128,68 @@ public class FastSearch {
     }
 
     private static void checkTags(Configuration conf, int len) throws Exception {
+        Map<String, List<TagProtein>> tagsMap = new HashMap<String, List<TagProtein>>();
+        for (Protein protein : proteins) {
+            int proteinId = protein.getProteinId();
+            if (proteinId == 1518 || proteinId == 3889 || proteinId == 4122) {
+                continue; //Strange symbols
+            }
+            String sequence = protein.getSimplifiedAcids();
+            double mass = 0;
+            double total = 0;
+            for (int i = 0; i < sequence.length(); i++) {
+                total += Acid.getAcid(sequence.charAt(i)).getMass();
+            }
+            for (int i = 0; i < sequence.length() - len; i++) {
+                mass += Acid.getAcid(sequence.charAt(i)).getMass();
+                String tag = sequence.substring(i, i + len);
+                if (!tagsMap.containsKey(tag)) {
+                    tagsMap.put(tag, new ArrayList<TagProtein>());
+                }
+                tagsMap.get(tag).add(new TagProtein(protein.getProteinId(), mass, total - mass));
+            }
+        }
         List<Integer> scansForProcess = new ArrayList<Integer>();
         scansForProcess.addAll(unmatchedScans);
         for (int scanId : scansForProcess) {
             Scan scan = scans.get(scanId);
             List<Peak> spectrum = scan.createSpectrumWithYPeaks(0);
             GraphUtil.generateEdges(conf, spectrum);
-            Set<String> tags = GraphUtil.generateTags(conf, spectrum);
+            Map<String, Peak> tags = GraphUtil.generateTagsWithStarts(conf, spectrum);
             List<Integer> proteinsForCheck = new ArrayList<Integer>();
-                for (String tag : tags) {
-                    if (tag.length() == len) {
-                        for (Protein protein : proteins) {
-                            if (protein.getSimplifiedAcids().contains(tag)) {
-                                int proteinId = protein.getProteinId();
-                                if (!proteinsForCheck.contains(proteinId)) {
-                                       proteinsForCheck.add(proteinId);
-                                       if (proteinsForCheck.size() > 100) {
-                                           break;
-                                       }
-                                   }
+            for (String tag : tags.keySet()) {
+                List<TagProtein> tagProteins = tagsMap.get(tag);
+                if (tagProteins != null) {
+                    for (TagProtein tagProtein : tagProteins) {
+                        Peak startPeak = tags.get(tag);
+                        if (startPeak.getPeakType() == PeakType.Y) {
+                            if (tagProtein.suffix + 200 < startPeak.getMass()) {
+                                if (scanId == 2843) {
+                                    System.out.println(tagProtein.suffix + " " + startPeak.getMass());
+                                }
+                                continue;
+                            }
+                        } else {
+                            if (tagProtein.prefix + 200 < startPeak.getMass()) {
+                                continue;
+                            }
+                        }
+
+                        int proteinId = tagProtein.proteinId;
+                        if (!proteinsForCheck.contains(proteinId)) {
+                            proteinsForCheck.add(proteinId);
+                            if (proteinsForCheck.size() > 100) {
+                                break;
                             }
                         }
                     }
                 }
-
-
+            }
             checkScanAgainstProteins(scanId, proteinsForCheck);
         }
     }
 
-    private static  boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
+    private static boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
         for (int proteinId : proteins) {
             double eValue = getEValueWrapper(scanId, proteinId);
             if (eValue < Configuration.EVALUE_LIMIT) {
@@ -186,7 +218,7 @@ public class FastSearch {
         }
         return ret;
     }
-    
+
     private static double getEValue(int scanId, int proteinId) throws Exception {
         String key = scanId + "_" + proteinId;
         double ans = Integer.MAX_VALUE;
@@ -206,7 +238,7 @@ public class FastSearch {
     }
 
     public static int[] getBestProtein(double[] p) {
-        int[] ans = new int[]{0,0};
+        int[] ans = new int[]{0, 0};
         int bestScore = 0;
         for (Protein protein : proteins) {
             if (protein.getProteinId() == 2535) {
@@ -233,11 +265,7 @@ public class FastSearch {
         return ans;
     }
 
-
-
-
-
-    private static int max(int ... scores) {
+    private static int max(int... scores) {
         int ans = 0;
         for (int score : scores) {
             if (score > ans) {
@@ -246,6 +274,7 @@ public class FastSearch {
         }
         return ans;
     }
+
     private static int getScoreY(double[] p, double[] yEnds) {
         return (int) Math.round(3 * ShiftEngine.getScore(p, yEnds, -Consts.WATER) + ShiftEngine.getScore(p, yEnds, 0));
     }
@@ -255,11 +284,23 @@ public class FastSearch {
     }
 
     private static int getScoreBM(double[] p, double[] bEnds) {
-        return (int) Math.round(3 * ShiftEngine.getScore(p, bEnds, -Acid.M.getMass()) + ShiftEngine.getScore(p, bEnds, - Acid.M.getMass() - Consts.AMMONIA));
+        return (int) Math.round(3 * ShiftEngine.getScore(p, bEnds, -Acid.M.getMass()) + ShiftEngine.getScore(p, bEnds, -Acid.M.getMass() - Consts.AMMONIA));
     }
 
     private static int getScoreBN(double[] p, double[] bEnds) {
         return (int) Math.round(3 * ShiftEngine.getScore(p, bEnds, -Consts.N));
+    }
+
+    public static class TagProtein {
+        int proteinId;
+        double prefix;
+        double suffix;
+
+        public TagProtein(int proteinId, double place, double suffix) {
+            this.proteinId = proteinId;
+            this.prefix = place;
+            this.suffix = suffix;
+        }
     }
 
 }
