@@ -104,7 +104,7 @@ public class FastSearch {
         System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
 
 
-        for (int len = 10; len >= 5; len--) {
+        for (int len = 10; len >= 4; len--) {
             System.out.println("processing tags of length " + len);
             checkTags(conf, len);
             System.out.println("results  " + goodRequest + " " + badRequest);
