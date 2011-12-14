@@ -25,6 +25,8 @@ public class FastSearch {
     private static Map<String, Double> evalues = new HashMap<String, Double>();
     private static PrintWriter cacheOut;
     private static Map<Integer, Integer> ans = new HashMap<Integer, Integer>();
+    private static final Set<Integer> unmatchedScans = new HashSet<Integer>();
+    private static final Set<Integer> discoveredProteins = new HashSet<Integer>();
 
     public static void main(String[] args) throws Exception {
         File cacheFile = new File("cache.txt");
@@ -51,78 +53,11 @@ public class FastSearch {
         Collections.sort(keys);
         EValueAdapter.init(conf);
 
-        long start = System.currentTimeMillis();
-        List<Integer> unmatchedScans = new ArrayList<Integer>();
-        Set<Integer> discoveredProteins = new HashSet<Integer>();
-
-        for (int scanId : keys) {
-            Scan scan = scans.get(scanId);
-            List<Peak> peaks = scan.getPeaks();
-            Collections.sort(peaks);
-            double[] p = new double[peaks.size()];
-            for (int i = 0; i < p.length; i++) {
-                p[i] = peaks.get(i).getMass(); //+ shift;
-            }
-            int proteinId = getBestProtein(p);
-            double eValue = getEValueWrapper(scanId, proteinId);
-            if (eValue < Configuration.EVALUE_LIMIT) {
-                System.out.println(scanId + " " + proteinId + " " + eValue);
-                count++;
-                discoveredProteins.add(proteinId);
-            } else {
-                unmatchedScans.add(scanId);
-            }
+        try {
+            doSearch(count, conf, keys);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        long finish = System.currentTimeMillis();
-        System.out.println(count + " matches  found in " + (finish - start));
-
-        List<Integer> unmatchedScans2 = new ArrayList<Integer>();
-        for (int scanId : unmatchedScans) {
-            if (checkScanAgainstProteins(scanId, discoveredProteins)) {
-                count++;
-            } else {
-                unmatchedScans2.add(scanId);
-            }
-        }
-
-        long finish2 = System.currentTimeMillis();
-        System.out.println(count + " matches  for plus " + (finish2 - finish));
-
-
-        List<Integer> unmatchedScans3 = new ArrayList<Integer>();
-        for (int scanId : unmatchedScans2) {
-            Scan scan = scans.get(scanId);
-            List<Peak> spectrum = scan.createSpectrumWithYPeaks(0);
-            GraphUtil.generateEdges(conf, spectrum);
-            Set<String> tags = GraphUtil.generateTags(conf, spectrum);
-            List<Integer> proteinsForCheck = new ArrayList<Integer>();
-            for (int len = 10; len >=5; len--) {
-                for (String tag : tags) {
-                    if (tag.length() == len) {
-                        for (Protein protein : proteins) {
-                            if (protein.getSimplifiedAcids().contains(tag)) {
-                                int proteinId = protein.getProteinId();
-                                if (!proteinsForCheck.contains(proteinId)) {
-                                       proteinsForCheck.add(proteinId);
-                                       if (proteinsForCheck.size() > 100) {
-                                           break;
-                                       }
-                                   }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (checkScanAgainstProteins(scanId, proteinsForCheck)) {
-                count++;
-            } else {
-                unmatchedScans3.add(scanId);
-            }
-        }
-
-        long finish3 = System.currentTimeMillis();
-        System.out.println(count + " matches  for plus " + (finish3 - finish2));
 
         //cacheOut.println("end matches");
         cacheOut.close();
@@ -145,6 +80,83 @@ public class FastSearch {
 
     }
 
+    private static void doSearch(int count, Configuration conf, List<Integer> keys) throws Exception {
+        long start = System.currentTimeMillis();
+        unmatchedScans.addAll(keys);
+
+        for (int scanId : keys) {
+            Scan scan = scans.get(scanId);
+            List<Peak> peaks = scan.getPeaks();
+            Collections.sort(peaks);
+            double[] p = new double[peaks.size()];
+            for (int i = 0; i < p.length; i++) {
+                p[i] = peaks.get(i).getMass(); //+ shift;
+            }
+            int[] ans = getBestProtein(p);
+            int proteinId = ans[0];
+            if (ans[1]>= 27) {
+                getEValueWrapper(scanId, proteinId);
+            }
+        }
+        long finish = System.currentTimeMillis();
+        System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
+
+
+
+
+        for (int len = 10; len >= 5; len--) {
+            System.out.println("processing tags of length " + len);
+            checkTags(conf, len);
+            System.out.println("results  " + goodRequest + " " + badRequest);
+        }
+
+        long finish2 = System.currentTimeMillis();
+        System.out.println(count + " matches  for plus " + (finish2 - finish));
+
+        List<Integer> unmatchedScans2 = new ArrayList<Integer>();
+        for (int scanId : unmatchedScans) {
+            if (checkScanAgainstProteins(scanId, discoveredProteins)) {
+                count++;
+            } else {
+                unmatchedScans2.add(scanId);
+            }
+        }
+
+
+        long finish3 = System.currentTimeMillis();
+        System.out.println(count + " matches  for plus " + (finish3 - finish2));
+    }
+
+    private static void checkTags(Configuration conf, int len) throws Exception {
+        List<Integer> scansForProcess = new ArrayList<Integer>();
+        scansForProcess.addAll(unmatchedScans);
+        for (int scanId : scansForProcess) {
+            Scan scan = scans.get(scanId);
+            List<Peak> spectrum = scan.createSpectrumWithYPeaks(0);
+            GraphUtil.generateEdges(conf, spectrum);
+            Set<String> tags = GraphUtil.generateTags(conf, spectrum);
+            List<Integer> proteinsForCheck = new ArrayList<Integer>();
+                for (String tag : tags) {
+                    if (tag.length() == len) {
+                        for (Protein protein : proteins) {
+                            if (protein.getSimplifiedAcids().contains(tag)) {
+                                int proteinId = protein.getProteinId();
+                                if (!proteinsForCheck.contains(proteinId)) {
+                                       proteinsForCheck.add(proteinId);
+                                       if (proteinsForCheck.size() > 100) {
+                                           break;
+                                       }
+                                   }
+                            }
+                        }
+                    }
+                }
+
+
+            checkScanAgainstProteins(scanId, proteinsForCheck);
+        }
+    }
+
     private static  boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
         for (int proteinId : proteins) {
             double eValue = getEValueWrapper(scanId, proteinId);
@@ -156,10 +168,21 @@ public class FastSearch {
         return false;
     }
 
+    private static int goodRequest = 0;
+    private static int badRequest = 0;
+
     private static double getEValueWrapper(int scanId, int proteinId) throws Exception {
         double ret = getEValue(scanId, proteinId);
         if (ret < Configuration.EVALUE_LIMIT) {
             ans.put(scanId, proteinId);
+            unmatchedScans.remove(scanId);
+            discoveredProteins.add(proteinId);
+            goodRequest++;
+        } else {
+            badRequest++;
+        }
+        if (badRequest > goodRequest) {
+            throw new Exception(badRequest + " > " + goodRequest);
         }
         return ret;
     }
@@ -182,8 +205,8 @@ public class FastSearch {
         return ans;
     }
 
-    public static int getBestProtein(double[] p) {
-        int ans = 0;
+    public static int[] getBestProtein(double[] p) {
+        int[] ans = new int[]{0,0};
         int bestScore = 0;
         for (Protein protein : proteins) {
             if (protein.getProteinId() == 2535) {
@@ -203,7 +226,8 @@ public class FastSearch {
 
             if (score > bestScore) {
                 bestScore = score;
-                ans = protein.getProteinId();
+                ans[0] = protein.getProteinId();
+                ans[1] = score;
             }
         }
         return ans;
