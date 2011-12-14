@@ -190,11 +190,14 @@ public class FastSearch {
     }
 
     private static boolean checkScanAgainstProteins(int scanId, Collection<Integer> proteins) throws Exception {
+        int size = proteins.size();
         for (int proteinId : proteins) {
-            double eValue = getEValueWrapper(scanId, proteinId);
-            if (eValue < Configuration.EVALUE_LIMIT) {
-                System.out.println(scanId + " " + proteinId + " " + eValue);
-                return true;
+            if (size < 5 || discoveredProteins.contains(proteinId)) {
+                double eValue = getEValueWrapper(scanId, proteinId);
+                if (eValue < Configuration.EVALUE_LIMIT) {
+                    System.out.println(scanId + " " + proteinId + " " + eValue + " " + size);
+                    return true;
+                }
             }
         }
         return false;
