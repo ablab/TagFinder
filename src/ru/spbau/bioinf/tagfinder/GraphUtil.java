@@ -1,13 +1,17 @@
 package ru.spbau.bioinf.tagfinder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class GraphUtil {
 
     public static final double EPSILON = 0.1;
+    
+    public static int TAG_LIMIT = 10;
 
     public static void generateEdges(Configuration conf, List<Peak> peaks) {
         int n = peaks.size();
@@ -104,12 +108,21 @@ public class GraphUtil {
     }
 
     public static Set<String> generateTags(Configuration conf, List<Peak> peaks) {
-         Set<String> tags = new HashSet<String>();
-         for (Peak peak : peaks) {
-             generateTags(conf, tags, "", peak);
-         }
-         return tags;
-     }
+        Set<String> tags = new HashSet<String>();
+        for (Peak peak : peaks) {
+            generateTags(conf, tags, "", peak);
+        }
+        return tags;
+    }
+
+    public static Map<String, Peak> generateTagsWithStarts(Configuration conf, List<Peak> peaks) {
+        Map<String, Peak> tags = new HashMap<String, Peak>();
+        for (Peak peak : peaks) {
+            generateTagsWithStarts(conf, tags, "", peak, peak);
+        }
+        return tags;
+    }    
+    
 
     public static void generateTags(Configuration conf, Set<String> tags, String prefix, Peak peak) {
         tags.add(prefix);
@@ -117,6 +130,21 @@ public class GraphUtil {
             for (Acid acid : Acid.values()) {
                 if (acid.match(conf.getEdgeLimits(peak, next))){
                     generateTags(conf, tags, prefix + acid.name(), next);
+                }
+            }
+        }
+    }
+
+    public static void generateTagsWithStarts(Configuration conf, Map<String, Peak> tags, String prefix, Peak peak, Peak start) {
+        tags.put(prefix, start);
+        if (prefix.length() > TAG_LIMIT) {
+            return;
+        }
+
+        for (Peak next : peak.getNext()) {
+            for (Acid acid : Acid.values()) {
+                if (acid.match(conf.getEdgeLimits(peak, next))){
+                    generateTagsWithStarts(conf, tags, prefix + acid.name(), next, start);
                 }
             }
         }
