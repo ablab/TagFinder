@@ -108,25 +108,7 @@ public class FastSearch {
             }
         }
         long finish = System.currentTimeMillis();
-        System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
-
-        List<Integer> forResearch = new ArrayList<Integer>();
-        forResearch.addAll(unmatchedScans);
-        for (int scanId : forResearch) {
-            Scan scan = scans.get(scanId);
-            List<Peak> peaks = scan.getPeaks();
-            Collections.sort(peaks);
-            double[] p = new double[peaks.size()];
-            for (int i = 0; i < p.length; i++) {
-                p[i] = peaks.get(i).getMass();
-            }
-            int[] ans = getBestProteinResearch(p);
-            int proteinId = ans[0];
-            if (ans[1] >= 6) {
-                getEValueWrapper(scanId, proteinId);
-            }
-        }
-        System.out.println("results for research: " + goodRequest + " " + badRequest);
+        System.out.println("results for first stage " + goodRequest + " " + badRequest + " time : " + (finish - start));
 
         for (int score = 26; score > 12; score--) {
             for (int[] pair : candidates[score]) {
@@ -143,6 +125,9 @@ public class FastSearch {
 
 
         checkTags(conf, 4);
+
+        researchAttempt();
+
         checkTags(conf, 3);
 
 
@@ -161,6 +146,26 @@ public class FastSearch {
 
         long finish3 = System.currentTimeMillis();
         System.out.println(count + " matches  for plus " + (finish3 - finish2));
+    }
+
+    private static void researchAttempt() throws Exception {
+        List<Integer> forResearch = new ArrayList<Integer>();
+        forResearch.addAll(unmatchedScans);
+        for (int scanId : forResearch) {
+            Scan scan = scans.get(scanId);
+            List<Peak> peaks = scan.getPeaks();
+            Collections.sort(peaks);
+            double[] p = new double[peaks.size()];
+            for (int i = 0; i < p.length; i++) {
+                p[i] = peaks.get(i).getMass();
+            }
+            int[] ans = getBestProteinResearch(p);
+            int proteinId = ans[0];
+            if (ans[1] >= 6) {
+                getEValueWrapper(scanId, proteinId);
+            }
+        }
+        System.out.println("results for research: " + goodRequest + " " + badRequest);
     }
 
     private static void checkTags(Configuration conf, int len) throws Exception {
