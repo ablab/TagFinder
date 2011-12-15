@@ -100,9 +100,6 @@ public class FastSearch {
                 p[i] = peaks.get(i).getMass(); //+ shift;
             }
             int[] ans = getBestProtein(p);
-            if (scanId == 2787) {
-                System.out.println(ans[0] + " " + ans[1]);
-            }
             int proteinId = ans[0];
             if (ans[1] >= 27) {
                 getEValueWrapper(scanId, proteinId);
@@ -112,6 +109,24 @@ public class FastSearch {
         }
         long finish = System.currentTimeMillis();
         System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
+
+        List<Integer> forResearch = new ArrayList<Integer>();
+        forResearch.addAll(unmatchedScans);
+        for (int scanId : forResearch) {
+            Scan scan = scans.get(scanId);
+            List<Peak> peaks = scan.getPeaks();
+            Collections.sort(peaks);
+            double[] p = new double[peaks.size()];
+            for (int i = 0; i < p.length; i++) {
+                p[i] = peaks.get(i).getMass();
+            }
+            int[] ans = getBestProteinResearch(p);
+            int proteinId = ans[0];
+            if (ans[1] >= 6) {
+                getEValueWrapper(scanId, proteinId);
+            }
+        }
+        System.out.println("results for research: " + goodRequest + " " + badRequest);
 
         for (int score = 26; score > 12; score--) {
             for (int[] pair : candidates[score]) {
@@ -294,6 +309,28 @@ public class FastSearch {
         return ans;
     }
 
+    public static int[] getBestProteinResearch(double[] spectrum) {
+        int[] ans = new int[]{0, 0};
+        int bestScore = 0;
+        for (Protein protein : proteins) {
+            if (protein.getProteinId() == 2535) {
+                continue;
+            }
+            double[] yEnds = protein.getYEnds();
+            if (yEnds.length < 1 || spectrum.length < 1) {
+                continue;
+            }
+            int score = getResearchYScore(yEnds, spectrum);
+
+            if (score > bestScore) {
+                bestScore = score;
+                ans[0] = protein.getProteinId();
+                ans[1] = score;
+            }
+        }
+        return ans;
+    }
+
     private static int max(int... scores) {
         int ans = 0;
         for (int score : scores) {
@@ -320,6 +357,48 @@ public class FastSearch {
         return (int) Math.round(3 * ShiftEngine.getScore(p, bEnds, -Consts.N));
     }
 
+    private static int getResearchYScore(double[] suffixes, double[] masses) {
+        List<Double> diffs = new ArrayList<Double>();
+        int pStart = 0;
+        for (int i = 0; i < masses.length; i++) {
+            double mass = masses[i];
+            while(suffixes[pStart] + 200 <= mass) {
+                pStart++;
+                if (pStart == suffixes.length) {
+                    break;
+                }
+            }
+            if (pStart == suffixes.length) {
+                break;
+            }
+            int cur = pStart;
+            while (suffixes[cur] - 200 < mass) {
+                diffs.add(mass - suffixes[cur]);
+                cur++;
+                if (cur == suffixes.length) {
+                    break;
+                }
+            }
+        }
+        Collections.sort(diffs);
+        int score = 0;
+        for (int i = 0; i < diffs.size(); i++) {
+            int newScore = 0;
+            double v = diffs.get(i);
+            for (int j = i + 1; j < diffs.size(); j++) {
+                if (diffs.get(j) < v + 0.2) {
+                    newScore++;
+                } else {
+                    break;
+                }
+            }
+            if (newScore > score) {
+                score = newScore;
+            }
+        }
+        return score;
+    }
+    
     public static class TagProtein {
         int proteinId;
         double prefix;
