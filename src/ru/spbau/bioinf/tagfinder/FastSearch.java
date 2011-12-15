@@ -128,6 +128,7 @@ public class FastSearch {
 
 
         checkTags(conf, 4);
+        checkTags(conf, 3);
 
 
         long finish2 = System.currentTimeMillis();
