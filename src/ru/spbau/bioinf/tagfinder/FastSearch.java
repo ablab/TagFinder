@@ -113,7 +113,7 @@ public class FastSearch {
         long finish = System.currentTimeMillis();
         System.out.println(ans.keySet().size() + " matches  found in " + (finish - start));
 
-        for (int score = 26; score > 15; score--) {
+        for (int score = 26; score > 12; score--) {
             for (int[] pair : candidates[score]) {
                 getEValueWrapper(pair[0], pair[1]);
             }
