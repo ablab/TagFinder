@@ -30,6 +30,8 @@ public class FastSearch {
     private static final Set<Integer> unmatchedScans = new HashSet<Integer>();
     private static final Set<Integer> discoveredProteins = new HashSet<Integer>();
 
+    private  static Set<Long> processed = new HashSet<Long>();
+
     public static void main(String[] args) throws Exception {
         File cacheFile = new File("cache.txt");
         BufferedReader in = ReaderUtil.createInputReader(cacheFile);
@@ -124,10 +126,9 @@ public class FastSearch {
         }
 
 
-        checkTags(conf, 4);
-
         researchAttempt();
 
+        checkTags(conf, 4);
         checkTags(conf, 3);
 
 
@@ -251,9 +252,12 @@ public class FastSearch {
 
     private static double getEValueWrapper(int scanId, int proteinId) throws Exception {
         double ret = getEValue(scanId, proteinId);
-        if (!unmatchedScans.contains(scanId)) {
+        long key = scanId * 1024L * 1024L + proteinId;
+        if (processed.contains(key)) {
             return ret;
         }
+        processed.add(key);
+
         if (ret < Configuration.EVALUE_LIMIT) {
             ans.put(scanId, proteinId);
             unmatchedScans.remove(scanId);
@@ -322,10 +326,11 @@ public class FastSearch {
                 continue;
             }
             double[] yEnds = protein.getYEnds();
+            double[] bEnds = protein.getBEnds();
             if (yEnds.length < 1 || spectrum.length < 1) {
                 continue;
             }
-            int score = getResearchYScore(yEnds, spectrum);
+            int score = max(getResearchScore(yEnds, spectrum), getResearchScore(bEnds, spectrum));
 
             if (score > bestScore) {
                 bestScore = score;
@@ -362,7 +367,7 @@ public class FastSearch {
         return (int) Math.round(3 * ShiftEngine.getScore(p, bEnds, -Consts.N));
     }
 
-    private static int getResearchYScore(double[] suffixes, double[] masses) {
+    private static int getResearchScore(double[] suffixes, double[] masses) {
         List<Double> diffs = new ArrayList<Double>();
         int pStart = 0;
         for (int i = 0; i < masses.length; i++) {
