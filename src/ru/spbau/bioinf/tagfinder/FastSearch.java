@@ -71,7 +71,9 @@ public class FastSearch {
         for (Integer scanId : msAlignResults.keySet()) {
             if (!ans.containsKey(scanId)) {
                 int proteinId = msAlignResults.get(scanId);
-                System.out.println(scanId + " " + proteinId + " " + evaluesOld.get(scanId) + " " + getEValue(scanId, proteinId));
+                Scan scan = scans.get(scanId);
+                System.out.println(scanId + " " + proteinId + " " + evaluesOld.get(scanId) + " " + getEValue(scanId, proteinId) + " "
+                        + scan.getPeaks().size() + " " + scan.getPrecursorMass() + " " + proteins.get(proteinId).getSimplifiedAcids().length() + " " + discoveredProteins.contains(proteinId));
             }
         }
         System.out.println("New matches ");
