@@ -8,13 +8,17 @@ public class KdTableGenerator {
 
     private static String file1 = "full_exp_base_proper_none";
     private static String file2 = "bar_exp_base_proper_none";
-    private static String file3 = "full_exp_base_correct_none";
-    private static String file4 = "bar_exp_base_correct_none";
+    private static String file3 = "full_exp_annotated_correct_none";
+    private static String file4 = "bar_exp_annotated_correct_none";
 
     public static void main(String[] args) throws Exception {
         for (int gap = 1; gap <= 3; gap++) {
             printTablesProper(gap);
         }
+        for (int gap = 1; gap <= 3; gap++) {
+            printTablesCorrect(gap);
+        }
+
     }
 
     public static void printTablesProper(int gap) throws Exception {
