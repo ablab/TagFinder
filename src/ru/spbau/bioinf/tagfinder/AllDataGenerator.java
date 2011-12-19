@@ -74,34 +74,48 @@ public class AllDataGenerator {
         TexTableGenerator.tablesCorrectErrAndAdv();
 
         System.out.println("\n\\begin{landscape}\n");
-        System.out.println("\\begin{table}[ht]\\footnotesize\n" +
-                "\\vspace{3mm}\n" +
+        System.out.println("\\begin{table}[t]\\footnotesize\n" +
+                "\\vspace{3mm}\\\n" +
                 "{\\centering\n" +
                 "\\begin{center}\n" +
-                "\\begin{tabular}{|c|c|}\n" +
-                "  \\hline\n" +
-                "  a pair of correct aa-s & an incorrect aa \\\\\n" +
-                "  \\hline\n" +
-                "  AG or GA & K \\\\\n" +
-                "  \\hline\n" +
-                "  AG or GA & Q \\\\\n" +
-                "  \\hline\n" +
-                "  AD or DA & \\multirow{3}{*}{W} \\\\\n" +
-                "  EG or GE & \\\\\n" +
-                "  SV or VS & \\\\\n" +
-                "  \\hline\n" +
-                "  GV or VG & R \\\\\n" +
-                "  \\hline\n" +
-                "  GG & N \\\\\n" +
-                "  \\hline\n" +
+                "\\begin{tabular}{|c|c|c|c|c|}\n" +
+                "\\hline\n" +
+                "scan & protein & tag score & E-value \\\\\n" +
+                "\\hline\n" +
+                "\\hline\n" +
+                "898 & 3299 & 1 & 5.97E-5\\\\\n" +
+                "\\hline\n" +
+                "904 & 3299 & 1 & 2.92E-4\\\\\n" +
+                "\\hline\n" +
+                "1059 & 3296 & 2 & 1.18E-5\\\\\n" +
+                "\\hline\n" +
+                "1127 & 3949 & 3 & 5.09E-4\\\\\n" +
+                "\\hline\n" +
+                "1214 & 3949 & 1 & 2.05E-3\\\\\n" +
+                "\\hline\n" +
+                "1219 & 3949 & 3 & 3.11E-5\\\\\n" +
+                "\\hline\n" +
+                "1220 & 3949 & 3 & 2.08E-3\\\\\n" +
+                "\\hline\n" +
+                "1243 & 3302 & 2 & 2.59E-5\\\\\n" +
+                "\\hline\n" +
+                "1250 & 3302 & 2 & 9.12E-6\\\\\n" +
+                "\\hline\n" +
+                "1252 & 3302 & 3 & 3.95E-4\\\\\n" +
+                "\\hline\n" +
+                "1342 & 1453 & 2 & 1.44E-4\\\\\n" +
+                "\\hline\n" +
+                "\\multirow{2}{*}{1675} & 2535 & 4 & 2.76E-6\\\\\n" +
+                "& 983 & 4 & 2.87E-6\\\\\n" +
+                "\\hline\n" +
                 "\\end{tabular}\n" +
                 "\\end{center}\n" +
                 "\\par}\n" +
                 "\\centering\n" +
-                "\\caption{Pairs of consecutive amino acids that can be mistaken for a single one.}\n" +
+                "\\caption{Tag-based matches for spectra unidentified by MS-Align+, along with the respective tag scores and E-values.}\n" +
                 "\\vspace{3mm}\n" +
-                "\\label{table:errors-vs}\n" +
-                "\\end{table}\n");
+                "\\label{table:unident-spectra}\n" +
+                "\\end{table}");
         System.out.println("\\end{landscape}");
 
         System.out.println("\n\n% TOP-SCORING TAGS\n");
