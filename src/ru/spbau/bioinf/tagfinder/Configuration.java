@@ -266,7 +266,7 @@ public class Configuration {
                 switch (ch) {
                     case '[':
                         int nextCur = match.indexOf(']', cur);
-                        mass += Double.parseDouble(match.substring(cur + 1, nextCur));
+                        mass += Double.parseDouble(match.substring(cur + 1, nextCur).replaceAll(",", "."));
                         cur = nextCur;
                         isWall = false;
                         break;
