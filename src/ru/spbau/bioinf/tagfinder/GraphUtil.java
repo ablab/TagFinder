@@ -100,6 +100,7 @@ public class GraphUtil {
                 for (double mass : masses) {
                     if (limits[0] < mass && limits[1] > mass) {
                         peak.addNext(next);
+                        //System.out.println(peak.getValue() + " " + next.getValue() + " " + peak.getPeakType().name() + " " + next.getPeakType().name());
                         break;
                     }
                 }
@@ -208,7 +209,7 @@ public class GraphUtil {
         return components;
     }
 
-    public static List<Peak> filterDuplicates(Configuration conf, List<Peak> peaks) {
+    public static List<Peak> filterDuplicates(Configuration conf, List<Peak> peaks, double[] proteinSpectrum, double precursorMass, String matchType) {
         for (int i = 0; i < peaks.size(); i++) {
             Peak p1 = peaks.get(i);
 
@@ -216,6 +217,13 @@ public class GraphUtil {
                 if (i != j) {
                     Peak p2 =  peaks.get(j);
                     if (Math.abs(p1.getValue() - p2.getValue()) < 0.1) {
+                        if (ValidTags.MATCH_CORRECT.equals(matchType)) {
+                            Set<Integer> s1 = ValidTags.getStarts(proteinSpectrum, precursorMass, p1, matchType);
+                            Set<Integer> s2 = ValidTags.getStarts(proteinSpectrum, precursorMass, p2, matchType);
+                            if (!s1.containsAll(s2) || !s2.containsAll(s1)) {
+                                continue;
+                            }
+                        }
                         if (!p1.getNext().containsAll(p2.getNext())) {
                             continue;
                         }
@@ -256,7 +264,8 @@ public class GraphUtil {
                                 peak.getNext().remove(p2);
                             }
                             peaks.remove(p2);
-                            return filterDuplicates(conf, peaks);
+                            //System.out.println("remove  = " + p2.getValue() );
+                            return filterDuplicates(conf, peaks, proteinSpectrum, precursorMass, matchType);
                         }
                     }
                 }

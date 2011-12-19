@@ -75,6 +75,16 @@ public class ValidTags {
         Configuration conf = new Configuration(args);
         ValidTags validTags = new ValidTags(conf);
 
+
+        //validTags.process(INPUT_VIRT, TARGET_BASE, MATCH_CORRECT, BY_NONE, BAR, false, false);
+        //System.out.println("by zero");
+        //validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false, false);
+        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, FULL, false, false);
+
+        //if (true)
+        //    return;
+
+
         validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, false, false);
         validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, BAR, false, false);
 
@@ -154,7 +164,7 @@ public class ValidTags {
         System.out.println("%fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(694);
+        //keys.clear(); keys.add(1367);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -339,12 +349,15 @@ public class ValidTags {
             filterMonotags(peaks);
         }
 
+        double precursorMass = scan.getPrecursorMass();
+
         //System.out.println("peaks.size() before duplicates= " + peaks.size());
-        peaks = GraphUtil.filterDuplicates(conf, peaks);
+        peaks = GraphUtil.filterDuplicates(conf, peaks, proteinSpectrum, precursorMass, matchType);
         //System.out.println("peaks.size() before after= " + peaks.size());
 
 
-        SpectrumResult spectrumResult = printGappedTagInfo(peaks, proteinSpectrum, scan.getPrecursorMass());
+
+        SpectrumResult spectrumResult = printGappedTagInfo(peaks, proteinSpectrum, precursorMass);
         return spectrumResult;
     }
 
@@ -369,7 +382,7 @@ public class ValidTags {
         return ans;
     }
 
-    private static void filterMonotags(List<Peak> peaks) {
+    public static void filterMonotags(List<Peak> peaks) {
         for (Peak peak : peaks) {
             for (Iterator<Peak> iterator = peak.getNext().iterator(); iterator.hasNext(); ) {
                 Peak next = iterator.next();
@@ -392,18 +405,7 @@ public class ValidTags {
             k = 0;
             d = 0;
             for (Peak peak : component) {
-                Set<Integer> starts = new HashSet<Integer>();
-                for (int i = 0; i < proteinSpectrum.length; i++) {
-                    if (MATCH_CORRECT.equals(matchType)) {
-                        double mass = proteinSpectrum[i];
-                        double limit = peak.getPeakType() == PeakType.Y ? TEN_PPM * 1.5 * precursorMass : TEN_PPM * peak.getMass();
-                        if (Math.abs(mass - peak.getValue()) < limit) {
-                            starts.add(i);
-                        }
-                    } else {
-                        starts.add(i);
-                    }
-                }
+                Set<Integer> starts = getStarts(proteinSpectrum, precursorMass, peak, matchType);
                 processGappedTags(stat, peak, 0, proteinSpectrum, starts);
             }
             KD newKD = new KD(k, d);
@@ -415,10 +417,26 @@ public class ValidTags {
         return new SpectrumResult(stat, kd);
     }
 
+    public static Set<Integer> getStarts(double[] proteinSpectrum, double precursorMass, Peak peak, String matchType) {
+        Set<Integer> starts = new HashSet<Integer>();
+        for (int i = 0; i < proteinSpectrum.length; i++) {
+            if (MATCH_CORRECT.equals(matchType)) {
+                double mass = proteinSpectrum[i];
+                double limit = peak.getPeakType() == PeakType.Y ? TEN_PPM * 1.5 * precursorMass : TEN_PPM * peak.getMass();
+                if (Math.abs(mass - peak.getValue()) < limit) {
+                    starts.add(i);
+                }
+            } else {
+                starts.add(i);
+            }
+        }
+        return starts;
+    }
+
     private Map<Peak, List<CorrectResult>> correctCache = new HashMap<Peak, List<CorrectResult>>();
 
     private void processGappedTags(long[][] stat, Peak peak, int prefix, double[] proteinSpectrum, Set<Integer> starts) {
-        //System.out.println(prefix + " " + peak.getValue() + " " + starts.iterator().next());
+        //System.out.println(prefix + " " + peak.getValue() + " " + peak.getPeakType().name() + " " + starts.size());
         List<CorrectResult> results = correctCache.get(peak);
         if (results != null) {
             for (CorrectResult result : results) {
