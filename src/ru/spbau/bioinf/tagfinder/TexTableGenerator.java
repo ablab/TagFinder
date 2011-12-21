@@ -151,9 +151,9 @@ public class TexTableGenerator {
             }
             String titlePrefix = "";
             if (rows > 3) {
-                titlePrefix = i > 3 ? "virt" : " exp";
+                titlePrefix = i > 3 ? "virt, " : " exp, ";
             }
-            gplFile.print("\"plots/" + label + ".dat\" using 1:" + (i + 1) + " title '" + titlePrefix + " " + gap + "-aa' with linespoints");
+            gplFile.print("\"plots/" + label + ".dat\" using 1:" + (i + 1) + " title '" + titlePrefix + "t=" + gap + "' with linespoints");
             if (i < rows) {
                 gplFile.println(", \\");
             }
