@@ -164,12 +164,12 @@ public class IntencityTableGenerator {
                 "set ylabel \"Percentage of spectra\"\n" +
                 "set xlabel \"Tag length\"\n" +
                 "plot");
-        gplFile.println("\"plots/" + label + ".dat\" using 1:2 title '1-aa +' with linespoints,\\");
-        gplFile.println("\"plots/" + label + ".dat\" using 1:3 title '1-aa -' with linespoints,\\");
-        gplFile.println("\"plots/" + label + ".dat\" using 1:4 title '2-aa +' with linespoints,\\");
-        gplFile.println("\"plots/" + label + ".dat\" using 1:5 title '2-aa -' with linespoints,\\");
-        gplFile.println("\"plots/" + label + ".dat\" using 1:6 title '3-aa +' with linespoints,\\");
-        gplFile.println("\"plots/" + label + ".dat\" using 1:7 title '3-aa -' with linespoints");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:2 title 't=1 +' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:3 title 't=1 -' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:4 title 't=2 +' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:5 title 't=2 -' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:6 title 't=3 +' with linespoints,\\");
+        gplFile.println("\"plots/" + label + ".dat\" using 1:7 title 't=3 -' with linespoints");
 
 
         gplFile.close();
