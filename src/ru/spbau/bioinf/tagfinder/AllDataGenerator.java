@@ -1,9 +1,14 @@
 package ru.spbau.bioinf.tagfinder;
 
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.PrintWriter;
+import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
+
 public class AllDataGenerator {
     public static void main(String[] args) throws Exception {
-        ValidTags2.main(args);
+        //ValidTags2.main(args);
         System.out.println("\\documentclass{article}[12pt]\n" +
                 "\n" +
                 "\\usepackage{amsmath}\n" +
@@ -144,5 +149,28 @@ public class AllDataGenerator {
         //KdTableGenerator.main(args);
         System.out.println("\n" +
                 "\\end{document}");
+
+        generateAaDat();
+    }
+
+    private static void generateAaDat() throws Exception {
+        String dir = "plots";
+        BufferedReader in1 = ReaderUtil.createInputReader(new File(dir, "correct-l-tags.dat"));
+        BufferedReader in2 = ReaderUtil.createInputReader(new File(dir, "correct-l-tags-err.dat"));
+        BufferedReader in3 = ReaderUtil.createInputReader(new File(dir, "correct-l-tags-adv.dat"));
+        PrintWriter out1 = ReaderUtil.createOutputFile(new File(dir, "1aa.dat"));
+        PrintWriter out2 = ReaderUtil.createOutputFile(new File(dir, "2aa.dat"));
+        PrintWriter out3 = ReaderUtil.createOutputFile(new File(dir, "3aa.dat"));
+        for (int i = 1; i <=14; i++) {
+            String[] d1 = in1.readLine().split(" ");
+            String[] d2 = in2.readLine().split(" ");
+            String[] d3 = in3.readLine().split(" ");
+            out1.println(i + " " + d1[1] + " " + d1[4] + " " + d2[1] + " " + d3[1]);
+            out2.println(i + " " + d1[2] + " " + d1[5] + " " + d2[2] + " " + d3[2]);
+            out3.println(i + " " + d1[3] + " " + d1[6] + " " + d2[3] + " " + d3[3]);
+        }
+        out1.close();
+        out2.close();
+        out3.close();
     }
 }
