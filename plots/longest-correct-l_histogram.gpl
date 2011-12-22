@@ -1,0 +1,13 @@
+set terminal postscript eps color 
+set out "longest-correct-l.eps"
+set style data histogram
+set style histogram cluster gap 1
+set style fill solid border -1
+set ylabel "spectra (%)"
+set xlabel "tag length (l)"
+plot"plots/longest-correct-l.dat" using 2 title ' exp, t=1', \
+"plots/longest-correct-l.dat" using 3 title ' exp, t=2', \
+"plots/longest-correct-l.dat" using 4 title ' exp, t=3', \
+"plots/longest-correct-l.dat" using 5 title 'virt, t=1', \
+"plots/longest-correct-l.dat" using 6 title 'virt, t=2', \
+"plots/longest-correct-l.dat" using 7 title 'virt, t=3'
