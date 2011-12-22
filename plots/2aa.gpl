@@ -1,0 +1,9 @@
+set terminal postscript eps color 
+set out "2aa.eps"
+set ylabel "correct l-tags (%)"
+set xlabel "tag length (l)"
+plot \
+"plots/2aa.dat" using 1:3 title 'virt basic' with linespoints, \
+"plots/2aa.dat" using 1:2 title ' exp basic' with linespoints, \
+"plots/2aa.dat" using 1:4 title ' exp extended' with linespoints, \
+"plots/2aa.dat" using 1:5 title ' exp combined' with linespoints
