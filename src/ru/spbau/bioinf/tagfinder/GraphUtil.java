@@ -1,6 +1,7 @@
 package ru.spbau.bioinf.tagfinder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,7 +12,7 @@ public class GraphUtil {
 
     public static final double EPSILON = 0.1;
     
-    public static int TAG_LIMIT = 10;
+    public static int TAG_LIMIT = 15;
 
     public static void generateEdges(Configuration conf, List<Peak> peaks) {
         int n = peaks.size();
@@ -71,6 +72,7 @@ public class GraphUtil {
         for (Peak peak : peaks) {
             peak.clearEdges();
         }
+        Collections.sort(peaks);
         int n = peaks.size();
         List<Double> masses = new ArrayList<Double>();
         Acid[] values = Acid.values();
