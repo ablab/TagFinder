@@ -129,10 +129,10 @@ public class TexTableGenerator {
         tableId++;
 
         PrintWriter dataFile = ReaderUtil.createOutputFile(new File("plots", label + ".dat"));
-        for (int i = 0; i < 14; i++) {
-            dataFile.print((i + 1  + columnHeaderDelta) + " ");
+        for (int i = columnHeaderDelta; i < 14; i++) {
+            dataFile.print((i + 1) + " ");
             for (int col = 0; col < rows; col++) {
-                dataFile.print(data[col][i] + " ");
+                dataFile.print(data[col][i - columnHeaderDelta] + " ");
             }
             dataFile.println();
         }
@@ -142,7 +142,7 @@ public class TexTableGenerator {
         gplFile.print("set terminal postscript eps color \n" +
                 "set out \"" + label + ".eps\"\n" +
                 "set ylabel \"" + header.replaceAll("\\$\\\\ell\\$", "l") + "\"\n" +
-                "set xlabel \"Tag length\"\n" +
+                "set xlabel \"tag length (l)\"\n" +
                 "plot");
         for (int i = 1; i <= rows; i++) {
             int gap = i;
