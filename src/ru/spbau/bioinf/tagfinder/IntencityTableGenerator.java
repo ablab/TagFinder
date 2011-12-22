@@ -25,7 +25,7 @@ public class IntencityTableGenerator {
         double[][] res;
         res = new double[100][3];
         printTable(res, file2, "Percentage of spectra in the $\\STbar$ data set, such that all their top-scoring tags of length $\\ell$ are correct (+) or incorrect (-).", "all-top-scoring");
-        TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct top-scoring tags  of a given length", "", "avg-top-scoring");
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct top-scoring tags of a given length", "correct top-scoring tags", "avg-top-scoring");
     }
 
     private static void printTable(double[][] res, String file, String caption, String label) throws Exception {
@@ -161,8 +161,8 @@ public class IntencityTableGenerator {
         PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", label + ".gpl"));
         gplFile.print("set terminal postscript eps color\n" +
                 "set out \"" + label + ".eps\"\n" +
-                "set ylabel \"Percentage of spectra\"\n" +
-                "set xlabel \"Tag length\"\n" +
+                "set ylabel \"spectra (%)\"\n" +
+                "set xlabel \"tag length (l)\"\n" +
                 "plot");
         gplFile.println("\"plots/" + label + ".dat\" using 1:2 title 't=1 +' with linespoints,\\");
         gplFile.println("\"plots/" + label + ".dat\" using 1:3 title 't=1 -' with linespoints,\\");
