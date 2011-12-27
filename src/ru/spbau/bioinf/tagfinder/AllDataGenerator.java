@@ -8,7 +8,7 @@ import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
 public class AllDataGenerator {
     public static void main(String[] args) throws Exception {
-        //ValidTags2.main(args);
+        ValidTags2.main(args);
         System.out.println("\\documentclass{article}[12pt]\n" +
                 "\n" +
                 "\\usepackage{amsmath}\n" +
