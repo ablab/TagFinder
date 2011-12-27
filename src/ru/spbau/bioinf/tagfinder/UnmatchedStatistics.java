@@ -9,7 +9,7 @@ import java.util.Map;
 public class UnmatchedStatistics {
 
     public static void main(String[] args) throws Exception {
-        tableSixteen();
+        //tableSixteen();
         tableUnident();
     }
 
@@ -18,19 +18,54 @@ public class UnmatchedStatistics {
 
         conf = new Configuration(new String[]{});
         Map<Integer, Integer> msAlignResults = conf.getMSAlignResults();
+        Map<Integer, Double> evalues = conf.getEvalues();
         Map<Integer, Scan> scans = conf.getScans();
         List<Integer> keys = new ArrayList<Integer>();
         keys.addAll(scans.keySet());
         Collections.sort(keys);
         List<Scan> unmatched = new ArrayList<Scan>();
+        int total = 0;
+        int good = 0;
+        for (Scan scan : scans.values()) {
+            if (scan.getPeaks().size() < 10) {
+                continue;
+            }
+            if (scan.getPrecursorMass() < 2500) {
+                continue;
+            }
+
+
+
+            total++;
+            if (evalues.get(scan.getId()) > 0.0024) {
+                continue;
+            }
+
+            good++;
+        }
+        //System.out.println("total = " + total);
+        //System.out.println("good = " + good);
+        //System.out.println("msAlignResults = " + msAlignResults.keySet().size());
 
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
-            if (!msAlignResults.containsKey(scanId)) {
-                unmatched.add(scan);
+
+            if (scan.getPeaks().size() < 10) {
+                continue;
             }
+            if (scan.getPrecursorMass() < 2500) {
+                continue;
+            }
+
+            if (evalues.containsKey(scanId) && evalues.get(scanId) < 0.0024) {
+                continue;
+            }
+
+            unmatched.add(scan);
+
         }
+        //System.out.println(unmatched.size());
 
         printStat(conf, unmatched, "The number and percentage of unidentified spectra with a given maximum tag length~$k$, for all the observed tag lengths.", "unident-tags");
     }
