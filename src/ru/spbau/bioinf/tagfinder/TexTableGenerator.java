@@ -139,7 +139,7 @@ public class TexTableGenerator {
         dataFile.close();
 
         PrintWriter gplFile = ReaderUtil.createOutputFile(new File("plots", label + ".gpl"));
-        gplFile.print("set terminal postscript eps color \"Helvetica\" 20\n" +
+        gplFile.print("set terminal postscript eps color \"Helvetica\" 22\n" +
                 "set out \"" + label + ".eps\"\n" +
                 "set ylabel \"" + header.replaceAll("\\$\\\\ell\\$", "l") + "\"\n" +
                 "set xlabel \"tag length (l)\"\n" +
