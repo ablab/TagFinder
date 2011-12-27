@@ -2,7 +2,6 @@ package ru.spbau.bioinf.tagfinder;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.sql.Time;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -77,13 +76,15 @@ public class ValidTags2 {
         ValidTags2 validTags = new ValidTags2(conf);
 
         long start = System.currentTimeMillis();
-        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, false, false);
-        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, true, false);
-        validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_MORE, FULL, false, false);
+        //validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_MORE, FULL, false, false);
+        //validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, false, false);
+        //validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, true, false);
+
+
         System.out.println("time: " + (System.currentTimeMillis() - start));
 
         if (true) {
-            return;
+            //return;
         }
         
         
@@ -185,7 +186,7 @@ public class ValidTags2 {
         System.out.println("%fileName = " + fileName);
         kdStat = new HashMap<KD, Integer>();
 
-        //keys.clear(); keys.add(1367);
+        //keys.clear(); keys.add(3000);
         for (int key : keys) {
             Scan scan = scans.get(key);
             int scanId = scan.getId();
@@ -393,10 +394,6 @@ public class ValidTags2 {
         if (BY_NONE.equals(monoType)) {
             filterMonotags(peaks);
         }
-
-        
-
-
 
         SpectrumResult spectrumResult = printGappedTagInfo(peaks, proteinSpectrum, precursorMass);
         return spectrumResult;
