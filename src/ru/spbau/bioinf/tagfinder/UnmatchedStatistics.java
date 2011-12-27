@@ -24,6 +24,7 @@ public class UnmatchedStatistics {
         keys.addAll(scans.keySet());
         Collections.sort(keys);
         List<Scan> unmatched = new ArrayList<Scan>();
+        /*
         int total = 0;
         int good = 0;
         for (Scan scan : scans.values()) {
@@ -42,7 +43,7 @@ public class UnmatchedStatistics {
             }
 
             good++;
-        }
+        } */
         //System.out.println("total = " + total);
         //System.out.println("good = " + good);
         //System.out.println("msAlignResults = " + msAlignResults.keySet().size());
