@@ -1,4 +1,4 @@
-set terminal postscript eps color "Helvetica" 22
+set terminal postscript eps color lw 4 "Helvetica" 22
 set out "1-aa.eps"
 set ylabel "correct l-tags (%)"
 set xlabel "tag length (l)"
