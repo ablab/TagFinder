@@ -1,0 +1,7 @@
+set terminal postscript eps color lw 4 "Helvetica" 22
+set out "l-mono-correct-rel.eps"
+set ylabel "mono-l-tags (%)"
+set xlabel "tag length (l)"
+plot"plots/l-mono-correct-rel.dat" using 1:2 title 't=1' with linespoints, \
+"plots/l-mono-correct-rel.dat" using 1:3 title 't=2' with linespoints, \
+"plots/l-mono-correct-rel.dat" using 1:4 title 't=3' with linespoints
