@@ -61,6 +61,7 @@ public class AllDataGenerator {
         System.out.println("\n");
 
         CalculateRelation.tableCorrectVsProper();
+        CalculateRelation.tableMonoCorrect();
 
         System.out.println();
 
