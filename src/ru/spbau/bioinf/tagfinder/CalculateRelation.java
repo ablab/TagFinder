@@ -14,9 +14,10 @@ public class CalculateRelation {
     public static final int MAX_TAG = 100;
 
     public static void main(String[] args) throws Exception {
-        tableCorrectVsProper();
-        tableLongestCorrect();
-        tableMono();
+        //tableCorrectVsProper();
+        //tableLongestCorrect();
+        //tableMono();
+        tableMonoCorrect();
     }
 
     public static void tableCorrectVsProper() throws Exception {
@@ -29,8 +30,8 @@ public class CalculateRelation {
     public static void tableLongestCorrect() throws Exception {
         double[][] res;
         res = new double[6][];
-        correctD(res, 0, "bar_exp_annotated_correct_none");
-        correctD(res, 3, "bar_virt_annotated_correct_zero");
+        correctD(res, 0, "full_exp_annotated_correct_none");
+        correctD(res, 3, "full_virt_annotated_correct_zero");
         TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra", -1, "longest-correct-l");
     }
 
@@ -38,6 +39,12 @@ public class CalculateRelation {
         double[][] res = new double[3][];
         generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", ALL_TO_ALL);
         TexTableGenerator.createThreeRowsTable(res, "Average percentage of mono-$\\ell$-tags w.r.t. all $\\ell$-tags", "mono-$\\ell$-tags", "l-mono");
+    }
+
+    public static void  tableMonoCorrect() throws Exception {
+        double[][] res = new double[3][];
+        generateRelationData(res, 0, "bar_virt_annotated_correct_none", "bar_virt_annotated_correct_zero", GOOD_TO_GOOD);
+        TexTableGenerator.createThreeRowsTable(res, "Average percentage of correct mono-$\\ell$-tags w.r.t. correct $\\ell$-tags", "mono-$\\ell$-tags", "l-mono-correct-rel");
     }
 
     private static void generateRelationData(double[][] res, int start, String firstTable, String secondTable, int mode) throws Exception {
