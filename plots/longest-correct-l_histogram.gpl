@@ -1,4 +1,4 @@
-set terminal postscript eps color lw 4 "Helvetica" 10
+set terminal postscript eps color lw 1 "Helvetica" 10
 set out "longest-correct-l.eps"
 set size ratio 0.4
 set style data histogram
