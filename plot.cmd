@@ -16,3 +16,4 @@ call gnuplot  plots/2aa.gpl
 call gnuplot  plots/3aa.gpl 
 
 call gnuplot  plots/longest-correct-l_histogram.gpl 
+call gnuplot  plots/l-mono-correct-rel.gpl 
