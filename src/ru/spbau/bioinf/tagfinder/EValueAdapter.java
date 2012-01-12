@@ -10,6 +10,9 @@ public class EValueAdapter {
 
     private static IdEValue eValueCalculator;
 
+    public static String getVersion() {
+        return "zero0.6";
+    }
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
         init(conf);
