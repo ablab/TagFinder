@@ -1,7 +1,9 @@
 package ru.spbau.bioinf.palign;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -74,13 +76,33 @@ public class Aligner {
         String sequence = protein.getSimplifiedAcids();
 
         List<Double> diffsB = getDiffs(masses, sequence);
-        Cleavage cleavage = getCleavage(peaks, sequence, bestShift(diffsB), false);
-        alignment.addCleavage(cleavage);
+        double[] centers = bestShifts(diffsB);
+        for (int i = 0; i < centers.length; i++) {
+            double center = centers[i];
+            Cleavage cleavage = getCleavage(peaks, sequence, center, false);
+            //if (cleavage.getSupports().size() < 10) {
+            if (cleavage.getModification() != 0 && cleavage.getSupports().size() < 10) {
+                continue;
+            }
+            alignment.addCleavage(cleavage);
+            break;
+        }
+
 
         String reverseSequence = new StringBuilder(sequence).reverse().toString();
         List<Double> diffsY = getDiffs(masses, reverseSequence);
-        cleavage = getCleavage(peaks, reverseSequence, bestShift(diffsY), true);
-        alignment.addCleavage(cleavage);
+
+        centers = bestShifts(diffsY);
+        for (int i = 0; i < centers.length; i++) {
+            double center = centers[i];
+            Cleavage cleavage = getCleavage(peaks, reverseSequence, center, true);
+            //if (cleavage.getSupports().size() < 10) {
+            if (cleavage.getModification() != 0 && cleavage.getSupports().size() < 10) {
+                continue;
+            }
+            alignment.addCleavage(cleavage);
+            break;
+        }
 
         return alignment;
     }
@@ -130,7 +152,7 @@ public class Aligner {
         return cleavage;
     }
 
-    private static double bestShift(List<Double> diffsB) {
+    private static double[] bestShifts(List<Double> diffsB) {
         List<LinkedList<Double>> clusters = new ArrayList<LinkedList<Double>>();
         LinkedList<Double> nonsense = new LinkedList<Double>();
         nonsense.add(-10E100d);
@@ -147,6 +169,7 @@ public class Aligner {
         }
 
         double[] centers = new double[clusters.size()];
+        final int[] scores = new int[clusters.size()];
 
         for (int i = 0; i < centers.length; i++) {
             LinkedList<Double> cluster = clusters.get(i);
@@ -156,10 +179,6 @@ public class Aligner {
             }
             centers[i] = v / cluster.size();
         }
-
-
-        int bestScore = 0;
-        int bestClusterId = 0;
 
         for (int i = 1; i < clusters.size(); i++) {
             LinkedList<Double> cluster = clusters.get(i);
@@ -191,14 +210,25 @@ public class Aligner {
 
                 j++;
             }
-            if (score > bestScore) {
-                bestScore = score;
-                bestClusterId = i;
-            }
+            scores[i] = score;
         }
 
+        Integer[] order = new Integer[clusters.size()];
+        for (int i = 0; i < order.length; i++) {
+            order[i] = i;            
+        }
+        Arrays.sort(order, new Comparator<Integer>() {
+            public int compare(Integer o1, Integer o2) {
+               return scores[o2] - scores[o1];
+            }
+        });
 
-        return centers[bestClusterId];
+        double[] ans = new double[clusters.size()];
+        for (int i = 0; i < ans.length; i++) {
+            ans[i] = centers[order[i]];
+        }
+
+        return ans;
     }
 
     private static List<Double> getDiffs(double[] masses, String sequence) {
