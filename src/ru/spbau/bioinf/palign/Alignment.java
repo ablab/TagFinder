@@ -22,6 +22,16 @@ public class Alignment {
     private List<Cleavage> cleavages = new ArrayList<Cleavage>();
 
     public void addCleavage(Cleavage cleavage) {
+        for (int i = 0; i < cleavages.size(); i++) {
+            Cleavage old =  cleavages.get(i);
+            if (old.getPosition() == cleavage.getPosition() && old.getDirection() == cleavage.getDirection()) {
+                if (Math.abs(old.getModification()) > Math.abs(cleavage.getModification())) {
+                    cleavages.remove(i);
+                    cleavages.add(i, cleavage);
+                }
+                return;    
+            }
+        }
         cleavages.add(cleavage);
     }
 
