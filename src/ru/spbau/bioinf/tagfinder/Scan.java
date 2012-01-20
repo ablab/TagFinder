@@ -151,6 +151,19 @@ public class Scan {
         return peaks;
     }
 
+    private double[] masses = null;
+
+    public double[] getMasses() {
+        if (masses == null) {
+            Collections.sort(peaks);
+            double[] p = new double[peaks.size()];
+            for (int i = 0; i < p.length; i++) {
+                p[i] = peaks.get(i).getMass();
+            }
+            masses = p;
+        }
+        return masses;
+    }
     public void save(File dir) throws IOException {
         File file = new File(dir, "scan_" + name.replaceAll("/", "_") + ".env");
         PrintWriter out = ReaderUtil.createOutputFile(file);
