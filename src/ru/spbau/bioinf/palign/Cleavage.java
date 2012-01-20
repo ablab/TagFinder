@@ -28,6 +28,18 @@ public class Cleavage {
         return supports;
     }
 
+    public int getPosition() {
+        return position;
+    }
+
+    public int getDirection() {
+        return direction;
+    }
+
+    public double getModification() {
+        return modification;
+    }
+
     public Element toXml() {
         Element xml = new Element("cleavage");
         XmlUtil.addElement(xml, "position", position);
