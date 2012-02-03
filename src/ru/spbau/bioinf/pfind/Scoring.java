@@ -92,6 +92,28 @@ public enum Scoring {
             }
             return score * 2/Math.sqrt(masses.length);
         }        
+    },
+
+    TAG_SCORE {
+        @Override
+        public double getScore(Scan scan, Protein protein) {
+            List<String> tags = scan.getTags(null);
+            double maxLen = 0;
+            String seq = protein.getSimplifiedAcids();
+            for (String tag : tags) {
+                int len = tag.length();
+                if (len <= maxLen) {
+                    break;
+                }
+                if (seq.contains(tag)) {
+                    maxLen = len;
+                }
+            }
+            if (maxLen == 0) {
+                return 0;
+            }
+            return (10 + maxLen * 1d) / Math.sqrt(scan.getPeaks().size());
+        }
     }
     ;
 
