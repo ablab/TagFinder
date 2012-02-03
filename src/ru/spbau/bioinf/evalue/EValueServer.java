@@ -11,6 +11,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -28,11 +31,15 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.jdom.Element;
 import org.jdom.transform.JDOMSource;
+import ru.spbau.bioinf.mzpeak.MzPoint;
+import ru.spbau.bioinf.mzpeak.MzReader;
+import ru.spbau.bioinf.mzpeak.MzScan;
 import ru.spbau.bioinf.palign.Aligner;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.EValueAdapter;
 import ru.spbau.bioinf.tagfinder.Protein;
 import ru.spbau.bioinf.tagfinder.Scan;
+import ru.spbau.bioinf.tagfinder.util.XmlUtil;
 
 
 public class EValueServer extends AbstractHandler {
@@ -40,6 +47,7 @@ public class EValueServer extends AbstractHandler {
 
     private static Logger log = Logger.getLogger(EValueServer.class);
     private static List<Protein> proteins;
+    private static Map<Integer, MzScan> mzScans;
 
     public static void main(String[] args) throws Exception {
         init(args);
@@ -54,6 +62,7 @@ public class EValueServer extends AbstractHandler {
         EValueAdapter.init(conf);
         scans = conf.getScans();
         proteins = conf.getProteins();
+        mzScans = MzReader.getMzScans();
         DbUtil.initDatabase();
     }
 
@@ -66,7 +75,40 @@ public class EValueServer extends AbstractHandler {
             if (path.endsWith("evalue")) {
                 out.println(Double.toString(getEvalue(scanId, proteinId)));
             } else if (path.endsWith("align")) {
-                Element alignment = Aligner.findAlignment(scans.get(scanId), proteins.get(proteinId)).toXml();
+                MzScan mzScan = mzScans.get(scanId);
+                Scan scan = scans.get(scanId);
+                Element alignment = Aligner.findAlignment(scan, proteins.get(proteinId), mzScan).toXml();
+
+                List<double[]> peaks = new ArrayList<double[]>();                
+                for (MzPoint point : mzScan.getPoints()) {
+                    double mz = point.getMass();
+                    for (int charge = 1; charge <= 30; charge++) {
+                        double mass = charge * mz - charge;
+                        if (mass > 0 && mass < scan.getPrecursorMass()) {
+                            peaks.add(new double[]{mass, point.getIntencity()});                            
+                        }
+                    }
+                }
+                Collections.sort(peaks, new Comparator<double[]>() {
+                    public int compare(double[] o1, double[] o2) {
+                        double d = o1[0] - o2[0];
+                        if (d < 0) {
+                            return -1;
+                        }
+                        if (d > 0) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                });
+                        
+                StringBuilder peaksList = new StringBuilder();
+                for (double[] peak : peaks) {
+                    peaksList.append("[" + peak[0] + "," + peak[1] + "],");
+                }
+                
+                XmlUtil.addElement(alignment, "peaks", peaksList.toString());
+
                 Processor processor = new Processor(false);
                 XdmNode source = processor.newDocumentBuilder().build(new JDOMSource(alignment));
                 Serializer ser = new Serializer();
