@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import ru.spbau.bioinf.evalue.EValueServer;
+import ru.spbau.bioinf.mzpeak.MzReader;
+import ru.spbau.bioinf.mzpeak.MzScan;
 import ru.spbau.bioinf.tagfinder.Acid;
 import ru.spbau.bioinf.tagfinder.Configuration;
 import ru.spbau.bioinf.tagfinder.Consts;
@@ -19,6 +21,7 @@ public class Aligner {
 
     private static List<Protein> proteins;
     private static Map<Integer,Scan> scans;
+    private static Map<Integer, MzScan> mzScans;
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration(args);
@@ -58,14 +61,18 @@ public class Aligner {
     }
 
     public static int findAlignment(int scanId, int proteinId) {
+        if (mzScans == null) {
+            mzScans = MzReader.getMzScans();
+        }
         Scan scan = scans.get(scanId);
         Protein protein = proteins.get(proteinId);
-        Alignment alignment = findAlignment(scan, protein);
+        Alignment alignment = findAlignment(scan, protein, mzScans.get(scanId));
 
-        return alignment.getCleavages().get(0).getSupports().size();
+        List<Cleavage> cleavages = alignment.getCleavages();
+        return cleavages.size() > 0 ? cleavages.get(0).getSupports().size() : 0;
     }
 
-    public static Alignment findAlignment(Scan scan, Protein protein) {
+    public static Alignment findAlignment(Scan scan, Protein protein, MzScan mzScan) {
         Alignment alignment = new Alignment(scan, protein);
         List<Peak> peaks = scan.getPeaks();
         Collections.sort(peaks);
@@ -104,6 +111,12 @@ public class Aligner {
             break;
         }
 
+        for (Cleavage cleavage : alignment.getCleavages()) {
+            for (PeptideSupport support : cleavage.getSupports()) {
+                support.addScanInfo(mzScan);
+            }
+        }
+
         return alignment;
     }
 
@@ -129,17 +142,29 @@ public class Aligner {
             proteinModification = 0;
         }
 
-        Cleavage cleavage = new Cleavage(isReverse ? len - cleavagePos : cleavagePos, isReverse ? - 1 : 1, proteinModification);
+        Cleavage cleavage = new Cleavage(isReverse ? len - cleavagePos : cleavagePos, isReverse ? - 1 : 1, proteinModification, sequence.substring(cleavagePos));
         double peptideMass = 0;
+        int[] atomCount = new int[5];
+
         for (int pos = cleavagePos; pos < len; pos++) {
-            peptideMass += Acid.getAcid(sequence.charAt(pos)).getMass();
+            Acid acid = Acid.getAcid(sequence.charAt(pos));
+
+            int[] add = new int[0];
+            if (acid != null) {
+                peptideMass += acid.getMass();
+                add = acid.getAtomCount();
+            }
+            for (int i = 0; i < add.length; i++) {
+                atomCount[i] += add[i];
+            }
+            double expectedMass = peptideMass + proteinModification;
             PeptideSupport support = null;
             for (Peak peak : peaks) {
                 for (ModificationType modificationType : ModificationType.values()) {
-                    double error = modificationType.getError(peak, peptideMass + proteinModification);
+                    double error = modificationType.getError(peak, expectedMass);
                     if (Math.abs(error) < 0.2) {
                         if (support == null) {
-                            support = new PeptideSupport(isReverse ? len - pos - 1 : pos + 1);
+                            support = new PeptideSupport(expectedMass, isReverse ? len - pos - 1 : pos + 1, atomCount.clone(), proteinModification);
                         }
                         support.addModification(new PeptideModification(peak, modificationType, error));
                     }
