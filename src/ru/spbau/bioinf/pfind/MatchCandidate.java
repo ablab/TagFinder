@@ -45,6 +45,11 @@ public class MatchCandidate implements Comparable<MatchCandidate> {
         }
         return ans;
     }
+
+    public Map<Scoring, Double> getScores() {
+        return scores;
+    }
+
     public int compareTo(MatchCandidate o) {
         double diff = getMaxScore() - o.getMaxScore();
         if (diff < 0) {
