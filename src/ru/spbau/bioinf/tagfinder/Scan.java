@@ -4,6 +4,8 @@ import edu.ucsd.msalign.res.MassConstant;
 import edu.ucsd.msalign.spec.peak.DeconvPeak;
 import edu.ucsd.msalign.spec.sp.Ms;
 import edu.ucsd.msalign.spec.sp.MsHeader;
+import java.util.Comparator;
+import java.util.Iterator;
 import org.jdom.Element;
 import ru.spbau.bioinf.tagfinder.util.ReaderUtil;
 
@@ -164,6 +166,41 @@ public class Scan {
         }
         return masses;
     }
+    
+    
+    private List<String> tags = null;
+
+    public List<String> getTags(Configuration conf) {
+        if (tags == null) {
+            List<Peak> allPeaks = createSpectrumWithYPeaks(0);
+            GraphUtil.generateEdges(conf, allPeaks);
+            tags = new ArrayList<String>();
+            tags.addAll(GraphUtil.generateTags(conf, allPeaks));
+            for (Iterator<String> iterator = tags.iterator(); iterator.hasNext(); ) {
+                String tag = iterator.next();
+                if (tag.length() < 5) {
+                    iterator.remove();
+                }
+            }
+            /*
+            if (tags.size() > 10) {
+                while (tags.size() > 10) {
+                    tags.remove(0);
+                }
+            }
+            if (tags.size() > 0) {
+                System.out.println("tags size filter " + tags.size());
+            } */
+            Collections.sort(tags, new Comparator<String>() {
+                public int compare(String o1, String o2) {
+                    return o2.length() - o1.length();
+                }
+            });
+            
+        }
+        return tags;
+    }
+
     public void save(File dir) throws IOException {
         File file = new File(dir, "scan_" + name.replaceAll("/", "_") + ".env");
         PrintWriter out = ReaderUtil.createOutputFile(file);
