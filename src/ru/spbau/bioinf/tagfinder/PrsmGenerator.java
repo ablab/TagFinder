@@ -13,12 +13,15 @@ public class PrsmGenerator {
         Map<Integer,Scan> scans = conf.getScans();
         List<Protein> proteins = conf.getProteins();
         Map<Integer, Integer> results = conf.getMSAlignResults();
-        for (int scanId : results.keySet()) {
+        for (int scanId : scans.keySet()) {
             Document doc = new Document();
             Element prsm = new Element("prsm");
             doc.setRootElement(prsm);
             prsm.addContent(scans.get(scanId).toXml());
-            prsm.addContent(proteins.get(results.get(scanId)).toXml());
+            Integer proteinId = results.get(scanId);
+            if (proteinId != null) {
+                prsm.addContent(proteins.get(proteinId).toXml());
+            }
             XmlUtil.saveXml(doc, new File(conf.getXmlPrsmDir(),"scan" + scanId + ".xml"));
         }
     }
