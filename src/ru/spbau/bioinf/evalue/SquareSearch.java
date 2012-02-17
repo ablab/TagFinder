@@ -38,7 +38,7 @@ public class SquareSearch {
         }
 
         for (Integer proteinId : proteinIds) {
-            log.debug("Processing protein " + proteinId);
+            System.out.println("Processing protein " + proteinId);
             for (Integer scanId : scans.keySet()) {
                 EValueServer.getEvalue(scanId, proteinId);
             }
