@@ -4,16 +4,15 @@ package ru.spbau.bioinf.evalue;
 import edu.ucsd.msalign.align.prsm.PrSM;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -21,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.stream.StreamSource;
 import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XsltCompiler;
@@ -31,7 +31,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.jdom.Element;
 import org.jdom.transform.JDOMSource;
-import ru.spbau.bioinf.mzpeak.MzPoint;
 import ru.spbau.bioinf.mzpeak.MzReader;
 import ru.spbau.bioinf.mzpeak.MzScan;
 import ru.spbau.bioinf.palign.Aligner;
@@ -48,6 +47,7 @@ public class EValueServer extends AbstractHandler {
     private static Logger log = Logger.getLogger(EValueServer.class);
     private static List<Protein> proteins;
     private static Map<Integer, MzScan> mzScans;
+    public static final String PARAMETER_PROTEIN_ID = "proteinId";
 
     public static void main(String[] args) throws Exception {
         init(args);
@@ -70,37 +70,25 @@ public class EValueServer extends AbstractHandler {
         PrintWriter out = response.getWriter();
         try {
             int scanId = Integer.parseInt(httpServletRequest.getParameter("scanId"));
-            int proteinId = Integer.parseInt(httpServletRequest.getParameter("proteinId"));
+            int proteinId = 0;
+            if (httpServletRequest.getParameterMap().containsKey(PARAMETER_PROTEIN_ID)) {
+                proteinId = Integer.parseInt(httpServletRequest.getParameter(PARAMETER_PROTEIN_ID));
+            }
             String path = request.getPathInfo();
             if (path.endsWith("evalue")) {
                 out.println(Double.toString(getEvalue(scanId, proteinId)));
+            } else if (path.endsWith("mzscan")) {
+                MzScan mzScan = mzScans.get(scanId);
+                Scan scan = scans.get(scanId);
+                Element xml = mzScan.toXml();
+                XmlUtil.addElement(xml, "precursor-mass", scan.getPrecursorMass());
+                xslOutput(out, xml, "mzscan.xsl");
             } else if (path.endsWith("align")) {
                 MzScan mzScan = mzScans.get(scanId);
                 Scan scan = scans.get(scanId);
                 Element alignment = Aligner.findAlignment(scan, proteins.get(proteinId), mzScan).toXml();
 
-                List<double[]> peaks = new ArrayList<double[]>();                
-                for (MzPoint point : mzScan.getPoints()) {
-                    double mz = point.getMass();
-                    for (int charge = 1; charge <= 30; charge++) {
-                        double mass = charge * mz - charge;
-                        if (mass > 0 && mass < scan.getPrecursorMass()) {
-                            peaks.add(new double[]{mass, point.getIntencity()});                            
-                        }
-                    }
-                }
-                Collections.sort(peaks, new Comparator<double[]>() {
-                    public int compare(double[] o1, double[] o2) {
-                        double d = o1[0] - o2[0];
-                        if (d < 0) {
-                            return -1;
-                        }
-                        if (d > 0) {
-                            return 1;
-                        }
-                        return 0;
-                    }
-                });
+                List<double[]> peaks = mzScan.getPeaks(scan.getPrecursorMass());
                         
                 StringBuilder peaksList = new StringBuilder();
                 for (double[] peak : peaks) {
@@ -109,19 +97,7 @@ public class EValueServer extends AbstractHandler {
                 
                 XmlUtil.addElement(alignment, "peaks", peaksList.toString());
 
-                Processor processor = new Processor(false);
-                XdmNode source = processor.newDocumentBuilder().build(new JDOMSource(alignment));
-                Serializer ser = new Serializer();
-                ser.setOutputProperty(Serializer.Property.METHOD, "html");
-                ser.setOutputProperty(Serializer.Property.INDENT, "yes");
-                ser.setOutputWriter(out);
-
-                XsltCompiler comp = processor.newXsltCompiler();
-                XsltTransformer trans = comp.compile(new StreamSource(
-                        new InputStreamReader(new FileInputStream(new File("xsl", "alignment.xsl")), "UTF-8"))).load();
-                trans.setInitialContextNode(source);
-                trans.setDestination(ser);
-                trans.transform();
+                xslOutput(out, alignment, "alignment.xsl");
 
                 //XmlUtil.outputter.output(alignment, out);
             }
@@ -131,6 +107,22 @@ public class EValueServer extends AbstractHandler {
         } finally {
             out.close();
         }
+    }
+
+    private void xslOutput(PrintWriter out, Element xml, String xsl) throws SaxonApiException, UnsupportedEncodingException, FileNotFoundException {
+        Processor processor = new Processor(false);
+        XdmNode source = processor.newDocumentBuilder().build(new JDOMSource(xml));
+        Serializer ser = new Serializer();
+        ser.setOutputProperty(Serializer.Property.METHOD, "html");
+        ser.setOutputProperty(Serializer.Property.INDENT, "yes");
+        ser.setOutputWriter(out);
+
+        XsltCompiler comp = processor.newXsltCompiler();
+        XsltTransformer trans = comp.compile(new StreamSource(
+                new InputStreamReader(new FileInputStream(new File("xsl", xsl)), "UTF-8"))).load();
+        trans.setInitialContextNode(source);
+        trans.setDestination(ser);
+        trans.transform();
     }
 
 
