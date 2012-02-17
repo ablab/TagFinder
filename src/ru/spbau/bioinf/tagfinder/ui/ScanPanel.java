@@ -164,12 +164,12 @@ public class ScanPanel extends JPanel {
         return proteinId;
     }
 
-    public PrSM[][][] calculateEValue() {
+    public List<PrSM[]> calculateEValue() {
         if (proteinId < 0) {
             return null;
         }
         System.out.println("Start computing E-value...");
-        PrSM[][][] prsms = null;
+        List<PrSM[]> prsms = null;
         try {
             prsms = EValueAdapter.calculateEValue(scanView.getScan(), proteinId);
             return  prsms;
