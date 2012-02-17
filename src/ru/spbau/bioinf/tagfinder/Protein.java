@@ -22,6 +22,7 @@ public class Protein {
         XmlUtil.addElement(protein, "protein-id", proteinId);
         XmlUtil.addElement(protein, "protein-name", name);
         XmlUtil.addElement(protein, "protein-sequence", sequence);
+        XmlUtil.addElement(protein, "protein-mass", getMass());
         return protein;
     }
 
@@ -45,6 +46,11 @@ public class Protein {
     }
 
     private double[] yends = null;
+
+    public double getMass() {
+        getBEnds();
+        return bends[bends.length - 1];
+    }
 
     public double[] getYEnds() {
         if (yends != null) {
