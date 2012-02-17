@@ -11,6 +11,8 @@
                 <h3>Alignment for scan #<xsl:value-of select="scan/scan-id"/> and protein #<xsl:value-of select="protein/protein-id"/></h3>
 
                 <div><xsl:value-of select="peaks-described"/> peaks described out of <xsl:value-of select="peaks-total"/> peaks total.</div>
+                <div>Precursor mass <xsl:value-of select="scan/precursor-mass"/></div>
+                <div>Protein mass <xsl:value-of select="protein/protein-mass"/></div>
 
                 <script>
                     var width = 50;
@@ -51,8 +53,12 @@
     function drawPeaks(targetParam, emassParam, modificationParam) {
         if (targetParam != null) {
             target = targetParam;
-            emass = emassParam;
-            modification = modificationParam;
+        }
+        if (emassParam == null) {
+            emass = [];
+        }
+        if (modificationParam == null) {
+            modification = 0;
         }
         var scale = document.getElementById('scale').value;
         var x;
@@ -87,7 +93,9 @@
             }
         }
     }
-</script>                    
+</script>
+                    <br/>
+                    <xsl:apply-templates select="scan/peaks/peak" mode="deconv"/>
                 <br/>
                 <xsl:apply-templates select="cleavage"/>
                 </span>
@@ -108,6 +116,10 @@
             <xsl:apply-templates select="tpeak" mode="data"/>
             ]
         </script>
+    </xsl:template>
+
+    <xsl:template match="peak" mode="deconv">
+        <a href="#" onclick="drawPeaks({mass}, null, null); return false"><xsl:value-of select="mass"/>&#160;<xsl:value-of select="intencity"/></a> <br/>
     </xsl:template>
 
 
