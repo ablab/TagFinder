@@ -29,11 +29,11 @@ public class TagFinder extends JFrame {
 
     private Configuration conf;
     private List<Protein> proteins;
-    private Map<Integer,Integer> msAlignResults;
-    private Map<Integer,Scan> scans;
+    private Map<Integer, Integer> msAlignResults;
+    private Map<Integer, Scan> scans;
     private JTabbedPane tabs;
     private List<JPanel> tabsList = new ArrayList<JPanel>();
-    private JLabel status =  new JLabel();
+    private JLabel status = new JLabel();
 
     public TagFinder(String[] args) throws Exception {
         super("TagFinder");
@@ -92,7 +92,7 @@ public class TagFinder extends JFrame {
                     updateStatus("Computing E-value...");
                     new SwingWorker() {
 
-                        private PrSM[][][] prsms;
+                        private List<PrSM[]> prsms;
                         private ScanPanel scanPanel;
 
                         @Override
@@ -107,20 +107,13 @@ public class TagFinder extends JFrame {
                             double bestEvalue = -1;
                             String text = "";
                             if (prsms != null) {
-                                for (int i = 0; i < prsms.length; i++) {
-                                    if (prsms[i] != null) {
-                                        for (int j = 0; j < 4; j++) {
-                                            if (prsms[i][j] != null) {
-                                                for (int k = 0; k < prsms[i][j].length; k++) {
-                                                    if (prsms[i][j][k] != null) {
-                                                        PrSM prsm = prsms[i][j][k];
-                                                        double eValue = prsm.getEValue();
-                                                        if (bestEvalue < 0 || bestEvalue > eValue) {
-                                                            bestEvalue = eValue;
-                                                            text = "Scan " + scanPanel.getScanId() + " protein " + scanPanel.getProteinId() + " shift " + i + " alignment type " + j + " score " + prsm.getUniqueScr() + " E-value " + eValue;
-                                                        }
-                                                    }
-                                                }
+                                if (prsms != null) {
+                                    for (PrSM[] prsmA : prsms) {
+                                        for (PrSM prsm : prsmA) {
+                                            double eValue = prsm.getEValue();
+                                            if (bestEvalue < 0 || bestEvalue > eValue) {
+                                                bestEvalue = eValue;
+                                                text = "Scan " + scanPanel.getScanId() + " protein " + scanPanel.getProteinId() + " shift " + prsm.getInterShiftNum() + " alignment type " + prsm.getEValueAlignType() + " score " + prsm.getUniqueScr() + " E-value " + eValue;
                                             }
                                         }
                                     }
