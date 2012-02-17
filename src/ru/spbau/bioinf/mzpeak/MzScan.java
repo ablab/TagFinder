@@ -3,8 +3,11 @@ package ru.spbau.bioinf.mzpeak;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import org.jdom.Element;
+import ru.spbau.bioinf.tagfinder.util.XmlUtil;
 
 public class MzScan {
     
@@ -14,6 +17,32 @@ public class MzScan {
 
     public MzScan(int scanNamber) {
         this.scanId = scanNamber;
+    }
+
+    public List<double[]> getPeaks(double precursorMass) {
+        List<double[]> peaks = new ArrayList<double[]>();
+        for (MzPoint point : points) {
+            double mz = point.getMass();
+            for (int charge = 1; charge <= 30; charge++) {
+                double mass = charge * mz - charge;
+                if (mass > 0 && mass < precursorMass) {
+                    peaks.add(new double[]{mass, point.getIntencity()});
+                }
+            }
+        }
+        Collections.sort(peaks, new Comparator<double[]>() {
+            public int compare(double[] o1, double[] o2) {
+                double d = o1[0] - o2[0];
+                if (d < 0) {
+                    return -1;
+                }
+                if (d > 0) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
+        return peaks;
     }
 
     public int getScanId() {
@@ -132,5 +161,14 @@ public class MzScan {
         }
         return total / masses.size();
         
+    }
+    
+    public Element toXml() {
+        Element xml = new Element("mzscan");
+        XmlUtil.addElement(xml, "scan-id", scanId);
+        for (MzPoint point : points) {
+            xml.addContent(point.toXml());
+        }
+        return xml;
     }
 }
