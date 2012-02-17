@@ -1,5 +1,8 @@
 package ru.spbau.bioinf.mzpeak;
 
+import org.jdom.Element;
+import ru.spbau.bioinf.tagfinder.util.XmlUtil;
+
 public class MzPoint implements Comparable<MzPoint> {
 
     private double mass;
@@ -26,5 +29,12 @@ public class MzPoint implements Comparable<MzPoint> {
             return 1;
         }
         return 0;
+    }
+    
+    public Element toXml() {
+        Element xml = new Element("mzpeak");
+        XmlUtil.addElement(xml, "mass", mass);
+        XmlUtil.addElement(xml, "intencity", intencity);
+        return xml;
     }
 }
