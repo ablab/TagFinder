@@ -6,11 +6,17 @@ import edu.ucsd.msalign.align.prsm.PrSM;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,20 +37,11 @@ public class FastSearch {
     private static final Set<Integer> discoveredProteins = new HashSet<Integer>();
 
     private  static Set<Long> processed = new HashSet<Long>();
+    private static long finish;
+    private static long start;
 
     public static void main(String[] args) throws Exception {
-        File cacheFile = new File("cache.txt");
-        BufferedReader in = ReaderUtil.createInputReader(cacheFile);
-        cacheOut = new PrintWriter(new OutputStreamWriter(
-                new FileOutputStream(cacheFile, true), "UTF-8"));
-        do {
-            String s = in.readLine();
-            if (s == null) {
-                break;
-            }
-            String[] data = s.split(" ");
-            evalues.put(data[0] + "_" + data[1], Double.parseDouble(data[2]));
-        } while (true);
+        //initCache();
 
         int count = 0;
         Configuration conf = new Configuration(args);
@@ -64,7 +61,7 @@ public class FastSearch {
         }
 
         //cacheOut.println("end matches");
-        cacheOut.close();
+        //cacheOut.close();
         System.out.println("PrSM found " + ans.keySet().size());
         Map<Integer, Double> evaluesOld = conf.getEvalues();
         System.out.println("MS-Align only");
@@ -86,33 +83,26 @@ public class FastSearch {
 
     }
 
+    private static void initCache() throws IOException {
+        File cacheFile = new File("cache.txt");
+        BufferedReader in = ReaderUtil.createInputReader(cacheFile);
+        cacheOut = new PrintWriter(new OutputStreamWriter(
+                new FileOutputStream(cacheFile, true), "UTF-8"));
+        do {
+            String s = in.readLine();
+            if (s == null) {
+                break;
+            }
+            String[] data = s.split(" ");
+            evalues.put(data[0] + "_" + data[1], Double.parseDouble(data[2]));
+        } while (true);
+    }
+
     private static void doSearch(int count, Configuration conf, List<Integer> keys) throws Exception {
-        long start = System.currentTimeMillis();
+        start = System.currentTimeMillis();
         unmatchedScans.addAll(keys);
 
-        List<int[]>[] candidates = new List[27];
-        for (int i = 0; i < candidates.length; i++) {
-            candidates[i] = new ArrayList<int[]>();
-        }
-
-        for (int scanId : keys) {
-            Scan scan = scans.get(scanId);
-            List<Peak> peaks = scan.getPeaks();
-            Collections.sort(peaks);
-            double[] p = new double[peaks.size()];
-            for (int i = 0; i < p.length; i++) {
-                p[i] = peaks.get(i).getMass(); //+ shift;
-            }
-            int[] ans = getBestProtein(p);
-            int proteinId = ans[0];
-            if (ans[1] >= 27) {
-                getEValueWrapper(scanId, proteinId);
-            } else {
-                candidates[ans[1]].add(new int[] {scanId, ans[0]});
-            }
-        }
-        long finish = System.currentTimeMillis();
-        System.out.println("results for first stage " + goodRequest + " " + badRequest + " time : " + (finish - start));
+        List<int[]>[] candidates = doEdgeSearch(keys, 0);
 
         for (int score = 26; score > 12; score--) {
             for (int[] pair : candidates[score]) {
@@ -121,6 +111,13 @@ public class FastSearch {
             System.out.println("results for score " + score + ": " + goodRequest + " " + badRequest);
         }
 
+        List<int[]>[] candidates2 = doEdgeSearch(keys, 1);
+        for (int score = 26; score > 12; score--) {
+            for (int[] pair : candidates2[score]) {
+                //getEValueWrapper(pair[0], pair[1]);
+            }
+            System.out.println("results for score " + score + ": " + goodRequest + " " + badRequest);
+        }
 
         for (int len = 10; len >= 5; len--) {
             checkTags(conf, len);
@@ -149,6 +146,37 @@ public class FastSearch {
 
         long finish3 = System.currentTimeMillis();
         System.out.println(count + " matches  for plus " + (finish3 - finish2));
+    }
+
+    private static List<int[]>[] doEdgeSearch(List<Integer> keys, int depth) throws Exception {
+        List<int[]>[] candidates = new List[27];
+        for (int i = 0; i < candidates.length; i++) {
+            candidates[i] = new ArrayList<int[]>();
+        }
+
+        for (int scanId : keys) {
+            Scan scan = scans.get(scanId);
+            List<Peak> peaks = scan.getPeaks();
+            Collections.sort(peaks);
+            double[] p = new double[peaks.size()];
+            for (int i = 0; i < p.length; i++) {
+                p[i] = peaks.get(i).getMass(); //+ shift;
+            }
+            int[] ans = getBestProtein(p, depth);
+            int proteinId = ans[0];
+            getEValueWrapper(scanId, proteinId);
+            if (ans[1] >= 27) {
+                double v = getEValueWrapper(scanId, proteinId);
+                if (v > Configuration.EVALUE_LIMIT) {
+                    //System.out.println(scan.getId() + " " + proteinId + " " + ans[1] + " " + v + " " + proteins.get(proteinId).getName());
+                }
+            } else {
+                candidates[ans[1]].add(new int[]{scanId, ans[0]});
+            }
+        }
+        finish = System.currentTimeMillis();
+        System.out.println("results for first stage " + goodRequest + " " + badRequest + " time : " + (finish - start));
+        return candidates;
     }
 
     private static void researchAttempt() throws Exception {
@@ -209,9 +237,9 @@ public class FastSearch {
                         Peak startPeak = tags.get(tag);
                         if (startPeak.getPeakType() == PeakType.Y) {
                             if (tagProtein.suffix + 200 < startPeak.getMass()) {
-                                if (scanId == 2843) {
-                                    System.out.println(tagProtein.suffix + " " + startPeak.getMass());
-                                }
+                                //if (scanId == 2843) {
+                                //    System.out.println(tagProtein.suffix + " " + startPeak.getMass());
+                                //}
                                 continue;
                             }
                         } else {
@@ -249,7 +277,7 @@ public class FastSearch {
         return false;
     }
 
-    private static int goodRequest = 0;
+    private static int goodRequest = 3000;
     private static int badRequest = 0;
 
     private static double getEValueWrapper(int scanId, int proteinId) throws Exception {
@@ -264,6 +292,7 @@ public class FastSearch {
             ans.put(scanId, proteinId);
             unmatchedScans.remove(scanId);
             discoveredProteins.add(proteinId);
+            System.out.println(scanId + " " + proteinId + " " + ret);
             goodRequest++;
         } else {
             badRequest++;
@@ -277,24 +306,42 @@ public class FastSearch {
     private static double getEValue(int scanId, int proteinId) throws Exception {
         String key = scanId + "_" + proteinId;
         double ans = Integer.MAX_VALUE;
-        if (evalues.containsKey(key)) {
-            return evalues.get(key);
-        } else {
+        //if (evalues.containsKey(key)) {
+        //    return evalues.get(key);
+        //} else {
+            URL server = new URL("http://127.0.0.1:8080/evalue?scanId=" + scanId + "&proteinId="+proteinId);
+            URLConnection conn = server.openConnection();
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(
+                            conn.getInputStream()));
+            try {
+                return Double.parseDouble(in.readLine());
+            } finally {
+                in.close();
+            }
+            /*
+            String response = ""; 
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                System.out.println(inputLine);
+            }
+            in.close();            
             PrSM prsm = EValueAdapter.getBestEValue(scans.get(scanId), proteinId);
             if (prsm != null) {
                 ans = prsm.getEValue();
             }
             evalues.put(key, ans);
+
         }
 
         cacheOut.println(scanId + " " + proteinId + " " + ans);
         cacheOut.flush();
         return ans;
+        */
     }
 
-    public static int[] getBestProtein(double[] p) {
-        int[] ans = new int[]{0, 0};
-        int bestScore = 0;
+    public static int[] getBestProtein(double[] p, int pos) {
+        int[][] ans = new int[pos+2][2];
         for (Protein protein : proteins) {
             if (protein.getProteinId() == 2535) {
                 continue;
@@ -311,13 +358,17 @@ public class FastSearch {
                     getScoreBN(p, bEnds)
             );
 
-            if (score > bestScore) {
-                bestScore = score;
-                ans[0] = protein.getProteinId();
-                ans[1] = score;
+            if (score > 0) {
+                ans[ans.length - 1] = new int[] {protein.getProteinId(), score};
+                Arrays.sort(ans, new Comparator<int[]>() {
+                    public int compare(int[] o1, int[] o2) {
+                        return o2[1] - o1[1];
+                    }
+                });
             }
+
         }
-        return ans;
+        return ans[pos];
     }
 
     public static int[] getBestProteinResearch(double[] spectrum) {
