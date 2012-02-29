@@ -60,11 +60,15 @@ public class ValidTags2 {
 
     public static DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance();
 
+    public static DecimalFormat df1 = (DecimalFormat) NumberFormat.getNumberInstance();
+
     static {
         df.setMaximumFractionDigits(2);
         DecimalFormatSymbols dfs = new DecimalFormatSymbols();
         dfs.setDecimalSeparator('.');
         df.setDecimalFormatSymbols(dfs);
+        df1.setMaximumFractionDigits(1);
+        df1.setDecimalFormatSymbols(dfs);
     }
 
     private boolean addOnes = false;
@@ -83,11 +87,6 @@ public class ValidTags2 {
 
         System.out.println("time: " + (System.currentTimeMillis() - start));
 
-        if (true) {
-            //return;
-        }
-        
-        
         validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, FULL, false, false);
         validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, FULL, false, false);
 
@@ -95,14 +94,6 @@ public class ValidTags2 {
             //return;
         }
 
-
-        //validTags.process(INPUT_VIRT, TARGET_BASE, MATCH_CORRECT, BY_NONE, BAR, false, false);
-        //System.out.println("by zero");
-        //validTags.process(INPUT_VIRT, TARGET_ANNOTATED, MATCH_CORRECT, BY_ZERO, BAR, false, false);
-        validTags.process(INPUT_EXP, TARGET_ANNOTATED, MATCH_CORRECT, BY_NONE, FULL, false, false);
-
-        //if (true)
-        //    return;
 
 
         validTags.process(INPUT_EXP, TARGET_BASE, MATCH_CORRECT, BY_NONE, FULL, false, false);
@@ -196,7 +187,8 @@ public class ValidTags2 {
                 if (usedProteins.contains(proteinId) && datasetType == BAR) {
                     continue;
                 }
-                double[] proteinSpectrum = TARGET_ANNOTATED.equals(targetType) ? annotatedSpectrums.get(scanId) : ShiftEngine.getSpectrum(proteins.get(proteinId).getSimplifiedAcids());
+                double[] proteinSpectrum = new double[0];
+                proteinSpectrum = TARGET_ANNOTATED.equals(targetType) ? annotatedSpectrums.get(scanId) : ShiftEngine.getSpectrum(proteins.get(proteinId).getSimplifiedAcids());
                 long[][] stat = new long[1000][2];
                 if (needIntencity) {
                     boolean[] done = new boolean[stat.length];
