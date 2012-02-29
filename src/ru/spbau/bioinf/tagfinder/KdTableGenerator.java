@@ -168,9 +168,12 @@ public class KdTableGenerator {
         int[] stat = new int[100];
         for (int row = 0; row <= 6; row++) {
             if (row == 6) {
-                System.out.print("\\ge");
+                System.out.print("$\\ge");
             }
-            System.out.print(row + " ");
+            System.out.print(row);
+            if (row == 6) {
+                System.out.print(" $ ");
+            }
             for (int d = 0; d <= maxD; d++) {
                 if (d > 19 && d < 25) {
                     continue;
@@ -199,7 +202,7 @@ public class KdTableGenerator {
                 continue;
             }
             System.out.print(" & ");            
-            System.out.print(ValidTags2.df.format(stat[d] * 100d /total));
+            System.out.print(ValidTags2.df1.format(stat[d] * 100d /total));
         }
         System.out.println("\\\\\n");
         System.out.println("  \\hline\n" +
