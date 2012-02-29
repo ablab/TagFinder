@@ -17,7 +17,7 @@ import java.util.Properties;
 
 public class Configuration {
 
-    public static final double EVALUE_LIMIT = 0.0024;
+    public static final double EVALUE_LIMIT = 0.2404;
 
     private File proteinDatabase;
 
@@ -54,7 +54,7 @@ public class Configuration {
     }
 
     private void init(String[] args) {
-        String dataset = "data/salmonella5";
+        String dataset = "data/salmonella8";
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -178,14 +178,14 @@ public class Configuration {
         } else {
             File resultTable = new File(inputDir, "result_table.txt");
             BufferedReader input = ReaderUtil.createInputReader(resultTable);
-            //input.readLine();
+            input.readLine();
             while ((s = input.readLine()) != null) {
                 String[] data = ReaderUtil.getDataArray(s);
-                int scanId = Integer.parseInt(data[5]);
+                int scanId = Integer.parseInt(data[3]);
                 int spectrumId = Integer.parseInt(data[2]);
                 spectrums.put(spectrumId, scanId);
-                int proteinId = Integer.parseInt(data[3]);
-                double EValue = Double.parseDouble(data[data.length - 4]);
+                int proteinId = Integer.parseInt(data[8]);
+                double EValue = Double.parseDouble(data[data.length - 2]);
                 evalues.put(scanId, EValue);
                 if (EValue < EVALUE_LIMIT) {
                     ans.put(scanId, proteinId);
@@ -212,7 +212,7 @@ public class Configuration {
 
     public Map<Integer, List<Peak>> getMSAlignPeaks(Map<Integer, Scan> scans) throws IOException {
         getMSAlignResults();
-        BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "no_digestion_result_detail.txt"));
+        BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "result_detail.txt"));
         Map<Integer, List<Peak>> ans = new HashMap<Integer, List<Peak>>();
         String s;
         Properties properties;
@@ -244,14 +244,14 @@ public class Configuration {
 
     public Map<Integer, double[]> getAnnotatedSpectrums() throws IOException {
         BufferedReader input = ReaderUtil.createInputReader(new File(inputDir, "result_table.txt"));
-        //input.readLine();
+        input.readLine();
         Map<Integer, double[]> ans = new HashMap<Integer, double[]>();
         String s;
         while ((s = input.readLine()) != null) {
             String[] data = s.split("[\t]");
-            int scanId = Integer.parseInt(data[5]);
+            int scanId = Integer.parseInt(data[3]);
             spectrums.put(Integer.parseInt(data[2]), scanId);
-            String match = data[data.length - 8];
+            String match = data[data.length - 7];
             List<Double> values = new ArrayList<Double>();
             int brackets = 0;
             match = match.substring(match.indexOf(".") + 1, match.lastIndexOf("."));
