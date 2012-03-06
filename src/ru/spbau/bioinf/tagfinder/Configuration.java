@@ -17,7 +17,7 @@ import java.util.Properties;
 
 public class Configuration {
 
-    public static final double EVALUE_LIMIT = 0.2404;
+    public static final double EVALUE_LIMIT = 0.0001;
 
     private File proteinDatabase;
 
@@ -54,7 +54,7 @@ public class Configuration {
     }
 
     private void init(String[] args) {
-        String dataset = "data/salmonella8";
+        String dataset = "data/salmonella7";
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
