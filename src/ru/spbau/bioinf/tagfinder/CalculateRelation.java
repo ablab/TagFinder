@@ -30,8 +30,8 @@ public class CalculateRelation {
     public static void tableLongestCorrect() throws Exception {
         double[][] res;
         res = new double[6][];
-        correctD(res, 0, "full_exp_annotated_correct_none");
-        correctD(res, 3, "full_virt_annotated_correct_zero");
+        correctD(res, 0, "bar_exp_annotated_correct_none");
+        correctD(res, 3, "bar_virt_annotated_correct_zero");
         TexTableGenerator.createSixRowsTable(res, "Percentage of spectra, the longest correct tag in which has a given length", "spectra", -1, "longest-correct-l");
     }
 
