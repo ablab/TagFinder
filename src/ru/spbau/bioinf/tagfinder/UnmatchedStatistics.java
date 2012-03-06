@@ -59,7 +59,7 @@ public class UnmatchedStatistics {
                 continue;
             }
 
-            if (evalues.containsKey(scanId) && evalues.get(scanId) < 0.0024) {
+            if (evalues.containsKey(scanId) && evalues.get(scanId) < 0.0052) {
                 continue;
             }
 
